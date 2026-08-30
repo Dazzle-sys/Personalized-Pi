@@ -6,13 +6,13 @@
 
 # Pi Agent Harness（本地复刻）
 
-> 本仓库是 [Pi Agent Harness](https://github.com/earendil-works/pi) 的**本地复刻**，仅做两类定制：**i18n 中文化**与 **B.AI 提供商**。核心目的让「跟上游同步」保持低成本、可回滚。
+> 本仓库是 [Pi Agent Harness](https://github.com/earendil-works/pi) 的**本地复刻**，在 i18n 中文化之外还扩展到 B.AI / command-code 提供商与 provider 配置向导（详见[与上游的差异](#与上游的差异)）。核心目的让「跟上游同步」保持低成本、可回滚。
 >
 > **注意**：这是一份本地复刻源码，**并未**以 `@earendil-works/*` 发布到 npm。请从源码运行（见 [快速开始](#快速开始)），不要 `npm install -g`（那会装上官方包）。
 
 ## 与上游的差异
 
-只定制两处，其余能力与上游一致：
+除以下定制外，其余能力与上游一致：
 
 ### i18n 中文化
 
@@ -25,6 +25,14 @@
 ### B.AI 提供商
 
 OpenAI 兼容端点 `https://api.b.ai/v1`，认证用 `BAI_API_KEY`。模型目录、目录校准与回退逻辑见 [Provider 配置](packages/coding-agent/docs/providers.md#bai-fork-custom)。
+
+### Command-code 提供商
+
+OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider`，认证用 `COMMANDCODE_API_KEY`（`packages/ai/src/providers/commandcode.ts`）。模型目录与 E2E 覆盖见 [Provider 配置](packages/coding-agent/docs/providers.md#command-code-fork-custom)。
+
+### Provider 配置向导
+
+交互模式输入 `/provider`，按字段引导填写 `apiKey`、`baseUrl`、可选授权头等，写入 `~/.pi/agent/models.json`（并发安全，见 `packages/coding-agent/src/modes/interactive/components/provider-wizard.ts` 与 `core/models-config-writer.ts`）。
 
 ## 快速开始
 
@@ -74,12 +82,17 @@ echo 'alias pi="$HOME/pi/pi-test.sh"' >> ~/.bashrc   # 或 ~/.zshrc
 source ~/.bashrc
 ```
 
-### 配置 B.AI
+### 配置提供商
 
 ```bash
+# B.AI
 export BAI_API_KEY=sk-xxxxxxxx
+# Command Code
+export COMMANDCODE_API_KEY=sk-xxxxxxxx
 pi
 ```
+
+也可在交互模式输入 `/provider` 用向导写入 `~/.pi/agent/models.json`（provider 级配置，与环境变量二选一）。
 
 ### 启用简体中文
 
@@ -92,7 +105,7 @@ pi
 
 ## 维护与同步上游
 
-复刻仓库与上游依赖 [同步纪律](docs/upstream-merge-discipline.md)：**永不 rebase 上游，只用 merge**。同步流程、冲突处置规则（含 zh-CN 词典、`t()` 包装、`generate-models.ts` 三类高冲突区）与 i18n 冲突面管控见该文档。
+复刻仓库与上游依赖 [同步纪律](docs/upstream-merge-discipline.md)：**永不 rebase 上游，只用 merge**。同步流程、冲突处置规则与 i18n 冲突面管控见该文档。
 
 变更遵循上游 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)（新条目写入 `## [Unreleased]`，已发布版本段落不可修改）与 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)（`{feat,fix,docs}[(scope)]: <message>`）。
 
