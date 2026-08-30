@@ -1,5 +1,6 @@
 - The replica project should promptly write the implemented features to the root 'README.md'.
-- Fully integrate I18N without affecting LLM
+- Fully integrate I18N without affecting LLM.
+- Fork customizations (see docs/upstream-merge-discipline.md): i18n zh-CN, B.A.I + command-code providers, provider wizard / models-config-writer, Bedrock type-hardening casts, .gitleaks.toml allowlist.
 
 # Development Rules
 
