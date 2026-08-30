@@ -9,6 +9,11 @@
 ### Changed
 
 - Localized built-in component strings (settings/select hints, loader default message, editor paste markers and scroll border, alt-screen search bar, clipboard flash, image fallback, main-screen crash message); paste-marker parsing now derives its regex from the active locale. English output is unchanged.
+- Right-clicking an active text selection in the fullscreen TUI copies it to the clipboard instead of pasting.
+
+### Removed
+
+- Removed the alt-screen right-click paste handler (`onRightClickPaste`, enabled on Windows only); right-click no longer pastes in fullscreen because the terminal forwards mouse events to the TUI.
 
 ## [0.84.4] - 2026-08-28
 
@@ -494,7 +499,6 @@
 - Fixed slash-command Tab completion from immediately chaining into argument autocomplete after completing the command name, restoring flows like `/model` that submit into a selector dialog ([#2577](https://github.com/badlogic/pi-mono/issues/2577))
 - Fixed stale content and incorrect viewport tracking after TUI content shrinks or transient components inflate the working area ([#2126](https://github.com/badlogic/pi-mono/pull/2126) by [@Perlence](https://github.com/Perlence))
 - Fixed `@` autocomplete to debounce editor-triggered searches, cancel in-flight `fd` lookups cleanly, and keep suggestions visible while results refresh ([#1278](https://github.com/badlogic/pi-mono/issues/1278))
-
 
 ## [0.62.0] - 2026-03-23
 

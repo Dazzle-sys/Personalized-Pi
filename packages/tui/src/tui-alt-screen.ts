@@ -155,8 +155,6 @@ export interface TuiAltScreenOptions {
 	searchCurrentMatchStyle?: (text: string) => string;
 	/** Open an OSC 8 hyperlink activated with a primary-button click. */
 	openUrl?: (url: string) => void;
-	/** Handle an unmodified secondary-button press for clipboard paste. Currently enabled on Windows only. */
-	onRightClickPaste?: () => void;
 	/** Automatically copy selected text to the clipboard on mouse release (default: true). */
 	copyOnSelect?: boolean;
 	/**
@@ -202,7 +200,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	private readonly searchMatchStyle: (text: string) => string;
 	private readonly searchCurrentMatchStyle: (text: string) => string;
 	private readonly openUrl?: (url: string) => void;
-	private readonly onRightClickPaste?: () => void;
 	private copyOnSelect: boolean;
 	private readonly copySelection?: (text: string) => Promise<boolean>;
 
@@ -226,7 +223,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		this.searchMatchStyle = options.searchMatchStyle ?? ((text) => `\x1b[4m${text}\x1b[24m`);
 		this.searchCurrentMatchStyle = options.searchCurrentMatchStyle ?? ((text) => `\x1b[1;7m${text}\x1b[22;27m`);
 		this.openUrl = options.openUrl;
-		this.onRightClickPaste = options.onRightClickPaste;
 		this.copyOnSelect = options.copyOnSelect ?? true;
 		this.copySelection = options.copySelection;
 		this.addInputListener((data) => this.handleViewportInput(data));
@@ -594,7 +590,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		}
 		const mouseEvent = this.parseSgrMouseEvent(data);
 		if (mouseEvent) {
-			if (this.handleRightClickPaste(mouseEvent)) return { consume: true };
+			if (this.handleRightClickCopy(mouseEvent)) return { consume: true };
 			const handled = this.handleScrollbarMouseEvent(mouseEvent);
 			if (!this.scrollbarDrag) this.updateScrollbarHover(mouseEvent.x, mouseEvent.y);
 			if (!handled) this.handleSelectionMouseEvent(mouseEvent);
@@ -722,22 +718,17 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		};
 	}
 
-	private handleRightClickPaste(event: SgrMouseEvent): boolean {
-		if (
-			!this.onRightClickPaste ||
-			process.platform !== "win32" ||
-			process.env.TERM_PROGRAM?.toLowerCase() === "vscode" ||
-			event.release ||
-			event.button !== 2
-		) {
-			return false;
+	private handleRightClickCopy(event: SgrMouseEvent): boolean {
+		if (event.release || event.button !== 2) return false;
+		// Right-click on an active selection copies it; paste is left to the terminal emulator.
+		// Note: fullscreen mode enables SGR mouse reporting (see ENABLE_*_MOUSE), so the terminal
+		// forwards the right-click to the app rather than pasting on its own. Keyboard paste
+		// (Ctrl+V / Shift+Insert) remains the fullscreen paste path.
+		if (this.hasActiveSelection()) {
+			void this.copySelectionToClipboard();
+			return true;
 		}
-		try {
-			this.onRightClickPaste();
-		} catch {
-			// Clipboard paste is best-effort.
-		}
-		return true;
+		return false;
 	}
 
 	private getScrollbarTargetAt(x: number, y: number): ScrollbarTarget | undefined {

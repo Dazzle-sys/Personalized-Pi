@@ -55,6 +55,7 @@ import {
 	getAuthPath,
 	getDebugLogPath,
 	getDocsPath,
+	getPromptHistoryPath,
 	VERSION,
 } from "../../config.ts";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.ts";
@@ -373,7 +374,6 @@ interface InteractiveTuiOptions {
 	showHardwareCursor: boolean;
 	logDirectory: string;
 	terminal?: Terminal;
-	onRightClickPaste?: () => void;
 	fullscreenCopyOnSelect?: boolean;
 }
 
@@ -386,7 +386,6 @@ export function createInteractiveTui(options: InteractiveTuiOptions): TuiMainScr
 			searchMatchStyle: (text) => theme.underline(styleSearchMatch(text)),
 			searchCurrentMatchStyle: (text) => theme.bold(theme.inverse(styleSearchMatch(text))),
 			openUrl: openBrowser,
-			onRightClickPaste: options.onRightClickPaste,
 			copyOnSelect: options.fullscreenCopyOnSelect,
 			copySelection: async (text) => {
 				try {
@@ -420,7 +419,7 @@ export function createInteractiveTuiReference(getTui: () => TUI): TUI {
 					methodTui = currentTui;
 					method = currentMethod;
 				}
-				return Reflect.apply(method, methodTui, args);
+				return method.apply(methodTui, args);
 			};
 		},
 		set: (_target, property, value) => {
@@ -562,9 +561,6 @@ export class InteractiveMode {
 	private customHeader: (Component & { dispose?(): void }) | undefined = undefined;
 
 	private options: InteractiveModeOptions;
-	private readonly onRightClickPaste = (): void => {
-		void this.handleRightClickPaste();
-	};
 	private autoTrustOnReloadCwd: string | undefined;
 	private themeController: InteractiveThemeController;
 
@@ -600,7 +596,6 @@ export class InteractiveMode {
 			tuiMode,
 			showHardwareCursor: this.settingsManager.getShowHardwareCursor(),
 			logDirectory: getAgentDir(),
-			onRightClickPaste: this.onRightClickPaste,
 			fullscreenCopyOnSelect: this.settingsManager.getFullscreenCopyOnSelect(),
 		});
 		this.ui = createInteractiveTuiReference(() => this.renderer);
@@ -620,10 +615,16 @@ export class InteractiveMode {
 		setKeybindings(this.keybindings);
 		const editorPaddingX = this.settingsManager.getEditorPaddingX();
 		const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
-		this.defaultEditor = new CustomEditor(this.ui, getEditorTheme(), this.keybindings, {
-			paddingX: editorPaddingX,
-			autocompleteMaxVisible,
-		});
+		this.defaultEditor = new CustomEditor(
+			this.ui,
+			getEditorTheme(),
+			this.keybindings,
+			{
+				paddingX: editorPaddingX,
+				autocompleteMaxVisible,
+			},
+			getPromptHistoryPath(),
+		);
 		this.editor = this.defaultEditor;
 		this.editorContainer = new Container();
 		this.editorContainer.addChild(this.editor as Component);
@@ -894,7 +895,6 @@ export class InteractiveMode {
 			showHardwareCursor,
 			logDirectory: getAgentDir(),
 			terminal,
-			onRightClickPaste: this.onRightClickPaste,
 			fullscreenCopyOnSelect: this.settingsManager.getFullscreenCopyOnSelect(),
 		});
 		nextUi.setClearOnShrink(clearOnShrink);
@@ -2756,7 +2756,10 @@ export class InteractiveMode {
 			}
 
 			// If extending CustomEditor, copy app-level handlers
-			// Use duck typing since instanceof fails across jiti module boundaries
+			// Use duck typing since instanceof fails across jiti module boundaries.
+			// SAFETY: newEditor is duck-typed as structurally compatible with CustomEditor; only
+			// actionHandlers/onEscape/onCtrlD are touched below, so the cross-module instance check
+			// is unnecessary and casting to Record<string, unknown> is safe.
 			const customEditor = newEditor as unknown as Record<string, unknown>;
 			if ("actionHandlers" in customEditor && customEditor.actionHandlers instanceof Map) {
 				if (!customEditor.onEscape) {
@@ -2976,20 +2979,6 @@ export class InteractiveMode {
 		this.defaultEditor.onPasteImage = () => {
 			void this.handleClipboardPaste();
 		};
-	}
-
-	private async handleRightClickPaste(): Promise<void> {
-		const target = this.renderer.getFocusedComponent();
-		const handleInput = target?.handleInput;
-		if (!target || !handleInput) return;
-		try {
-			const text = await readClipboardText();
-			if (!text || this.renderer.getFocusedComponent() !== target) return;
-			handleInput.call(target, `\x1b[200~${text}\x1b[201~`);
-			this.ui.requestRender();
-		} catch {
-			// Silently ignore clipboard errors (may not have permission, etc.)
-		}
 	}
 
 	private async handleClipboardPaste(): Promise<void> {
@@ -4078,13 +4067,19 @@ export class InteractiveMode {
 		this.isShuttingDown = true;
 		try {
 			this.unregisterSignalHandlers();
-		} catch {}
+		} catch {
+			// Best-effort cleanup during an uncaught crash; never let cleanup throw.
+		}
 		try {
 			killTrackedDetachedChildren();
-		} catch {}
+		} catch {
+			// Best-effort cleanup during an uncaught crash; never let cleanup throw.
+		}
 		try {
 			this.ui.stop();
-		} catch {}
+		} catch {
+			// Best-effort cleanup during an uncaught crash; never let cleanup throw.
+		}
 		console.error(`${APP_NAME} exiting due to uncaughtException:`);
 		console.error(error);
 		process.exit(1);

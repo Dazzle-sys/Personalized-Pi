@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { Editor, type EditorOptions, type EditorTheme, type TUI } from "@earendil-works/pi-tui";
 import type { AppKeybinding, KeybindingsManager } from "../../../core/keybindings.ts";
 
@@ -15,9 +17,35 @@ export class CustomEditor extends Editor {
 	/** Handler for extension-registered shortcuts. Returns true if handled. */
 	public onExtensionShortcut?: (data: string) => boolean;
 
-	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, options?: EditorOptions) {
-		super(tui, theme, options);
+	private historyPath?: string;
+
+	constructor(
+		tui: TUI,
+		theme: EditorTheme,
+		keybindings: KeybindingsManager,
+		options?: EditorOptions,
+		historyPath?: string,
+	) {
+		super(tui, theme, loadInitialHistory(options, historyPath));
 		this.keybindings = keybindings;
+		this.historyPath = historyPath;
+	}
+
+	override addToHistory(text: string): void {
+		super.addToHistory(text);
+		if (this.historyPath) {
+			try {
+				const dir = dirname(this.historyPath);
+				if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
+				// Atomic write (tmp + rename): a crash mid-write keeps the previous complete history
+				// instead of a truncated JSON that would read back as empty history.
+				const tmpPath = `${this.historyPath}.tmp`;
+				writeFileSync(tmpPath, JSON.stringify(this.getHistory()), { mode: 0o600 });
+				renameSync(tmpPath, this.historyPath);
+			} catch {
+				// Ignore history write failures (read-only FS, etc.)
+			}
+		}
 	}
 
 	/**
@@ -86,5 +114,22 @@ export class CustomEditor extends Editor {
 
 		// Pass to parent for editor handling
 		super.handleInput(data);
+	}
+}
+
+/** Load persisted history into the editor's initial history; tolerate missing/corrupt file. */
+function loadInitialHistory(
+	options: EditorOptions | undefined,
+	historyPath: string | undefined,
+): EditorOptions | undefined {
+	if (!historyPath || !existsSync(historyPath)) return options;
+	try {
+		const parsed = JSON.parse(readFileSync(historyPath, "utf-8")) as unknown;
+		if (!Array.isArray(parsed)) return options;
+		const entries = parsed.filter((item): item is string => typeof item === "string");
+		return { ...options, initialHistory: entries };
+	} catch {
+		// Ignore corrupt history file
+		return options;
 	}
 }

@@ -561,6 +561,11 @@ export function getSettingsPath(): string {
 	return join(getAgentDir(), "settings.json");
 }
 
+/** Get path to the persistent prompt history file */
+export function getPromptHistoryPath(): string {
+	return join(getAgentDir(), "prompt-history.json");
+}
+
 /** Get path to tools directory */
 export function getToolsDir(): string {
 	return join(getAgentDir(), "tools");
