@@ -60,7 +60,9 @@ Unified LLM API with provider collections, automatic auth resolution, token and 
 - **Ant Ling**
 - **Azure OpenAI (Responses)**
 - **OpenAI Codex** (ChatGPT Plus/Pro subscription, requires OAuth, see below)
+- **B.AI**
 - **DeepSeek**
+- **Command Code** (OpenAI- and Anthropic-compatible aggregator, see `COMMANDCODE_API_KEY`)
 - **NVIDIA NIM**
 - **Anthropic**
 - **Google**
@@ -411,12 +413,14 @@ const credential = {
 Built-in providers resolve these env vars (Node.js; in browsers pass `apiKey` explicitly):
 
 | Provider | Environment Variable(s) |
-|----------|------------------------|
+| ---------- | ------------------------ |
 | OpenAI | `OPENAI_API_KEY` |
 | Ant Ling | `ANT_LING_API_KEY` |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_BASE_URL` (e.g. `https://{resource}.ai.azure.com`) or `AZURE_OPENAI_RESOURCE_NAME`. Supports `*.openai.azure.com`, `*.cognitiveservices.azure.com` and `*.ai.azure.com`; root endpoints auto-normalize to `/openai/v1`. Optional: `AZURE_OPENAI_API_VERSION` (default `v1`), `AZURE_OPENAI_DEPLOYMENT_NAME_MAP`. |
+| B.AI | `BAI_API_KEY` |
 | Anthropic | `ANTHROPIC_API_KEY` or `ANTHROPIC_OAUTH_TOKEN` |
 | DeepSeek | `DEEPSEEK_API_KEY` |
+| Command Code | `COMMANDCODE_API_KEY` |
 | NVIDIA NIM | `NVIDIA_API_KEY` |
 | Google | `GEMINI_API_KEY` |
 | Vertex AI | `GOOGLE_CLOUD_API_KEY` or `GOOGLE_CLOUD_PROJECT` (or `GCLOUD_PROJECT`) + `GOOGLE_CLOUD_LOCATION` + ADC |
@@ -607,6 +611,7 @@ for await (const event of s) {
 ```
 
 **Important notes about partial tool arguments:**
+
 - During `toolcall_delta` events, `arguments` contains the best-effort parse of partial JSON
 - Fields may be missing or incomplete - always check for existence before use
 - String values may be truncated mid-word
@@ -654,7 +659,7 @@ for await (const event of s) {
 All streaming events emitted during assistant message generation:
 
 | Event Type | Description | Key Properties |
-|------------|-------------|----------------|
+| ------------ | ------------- | ---------------- |
 | `start` | Stream begins | `partial`: Initial assistant message structure |
 | `text_start` | Text block starts | `contentIndex`: Position in content array |
 | `text_delta` | Text chunk received | `delta`: New text, `contentIndex`: Position |
@@ -1150,7 +1155,7 @@ const s = stream(claudeModel, context, {
 Built-in API implementations live under `./api/<api-id>`:
 
 | API id | Options type |
-|--------|--------------|
+| -------- | -------------- |
 | `anthropic-messages` | `AnthropicOptions` |
 | `openai-completions` | `OpenAICompletionsOptions` |
 | `openai-responses` | `OpenAIResponsesOptions` |
@@ -1284,6 +1289,7 @@ console.log(faux.state.callCount);
 ```
 
 Notes:
+
 - Responses are consumed from a queue in request start order.
 - If the queue is empty, the faux provider returns an assistant error message with `errorMessage: "No more faux responses queued"`.
 - Use `faux.setResponses([...])` to replace the remaining queue and `faux.appendResponses([...])` to add more responses.
@@ -1577,7 +1583,7 @@ import { getModel, complete } from '@earendil-works/pi-ai/compat';
 Compat is a strict superset of the root entrypoint, so a file can switch its import path wholesale. It will be removed in a future release; migrate to `createModels()` + provider factories:
 
 | Old | New |
-|-----|-----|
+| ----- | ----- |
 | `getModel('openai', 'gpt-4o-mini')` | `models.getModel('openai', 'gpt-4o-mini')` or `getBuiltinModel()` from `providers/all` |
 | `getModels('anthropic')` / `getProviders()` | `models.getModels('anthropic')` / `models.getProviders()` or `getBuiltin*` |
 | `stream(model, ctx, opts)` (env-key injection) | `models.stream(model, ctx, opts)` (provider auth resolution) |

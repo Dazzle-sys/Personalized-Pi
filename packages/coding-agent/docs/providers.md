@@ -67,12 +67,14 @@ pi
 ```
 
 | Provider | Environment Variable | `auth.json` key |
-|----------|----------------------|------------------|
+| ---------- | ---------------------- | ------------------ |
 | Anthropic | `ANTHROPIC_API_KEY` | `anthropic` |
 | Ant Ling | `ANT_LING_API_KEY` | `ant-ling` |
 | Azure OpenAI Responses | `AZURE_OPENAI_API_KEY` | `azure-openai-responses` |
+| B.AI | `BAI_API_KEY` | `bai` |
 | OpenAI | `OPENAI_API_KEY` | `openai` |
 | DeepSeek | `DEEPSEEK_API_KEY` | `deepseek` |
+| Command Code | `COMMANDCODE_API_KEY` | `commandcode` |
 | NVIDIA NIM | `NVIDIA_API_KEY` | `nvidia` |
 | Google Gemini | `GEMINI_API_KEY` | `google` |
 | Amazon Bedrock | `AWS_BEARER_TOKEN_BEDROCK` | `amazon-bedrock` |
@@ -106,6 +108,15 @@ pi
 
 Reference for environment variables and `auth.json` keys: [`const envMap`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts) in [`packages/ai/src/env-api-keys.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts).
 
+### B.AI (fork custom)
+
+B.AI 是 OpenAI 兼容聚合端点 `https://api.b.ai/v1`，认证用 `BAI_API_KEY`。本复刻对其做了定制：
+
+- 模型目录由 `packages/ai/scripts/generate-models.ts` 中的 B.AI 元数据表生成，共 **44 个模型**，覆盖 GPT、Claude、Gemini、DeepSeek、GLM、MiniMax、Kimi、Qwen 等家族。
+- `BAI_API_KEY` 存在且可连通时，经 `GET /v1/models` 做 best-effort 目录校准并输出远程差异报告；失败或无 key 时回退本地目录，不阻塞构建。
+
+在交互界面的 `/login` 里选择 B.AI，或在环境中 `export BAI_API_KEY=sk-xxxxxxxx` 后启动 pi。
+
 #### Auth File
 
 Store credentials in `~/.pi/agent/auth.json`:
@@ -130,6 +141,15 @@ Store credentials in `~/.pi/agent/auth.json`:
   "xiaomi-token-plan-sgp": { "type": "api_key", "key": "..." }
 }
 ```
+
+### Command Code (fork custom)
+
+Command Code 是 OpenAI/Anthropic 兼容聚合端点 `https://api.commandcode.ai/provider`，认证用 `COMMANDCODE_API_KEY`。本复刻对其做了定制：
+
+- 模型目录经 `GET /provider/v1/models` 动态拉取（该端点公开），覆盖 GPT、Claude、DeepSeek、Kimi、Qwen、GLM、Gemini、Grok、MiMo 等家族；Claude 模型走 Anthropic Messages 端点，其余模型走 OpenAI Chat Completions 端点。
+- `COMMANDCODE_API_KEY` 存在且可连通时自动刷新目录；失败或未配置时回退到内置的少量基线模型（DeepSeek、GPT-5、Claude 各一），不阻塞启动。
+
+在交互界面的 `/login` 里选择 Command Code，或在环境中 `export COMMANDCODE_API_KEY=user_xxx` 后启动 pi。
 
 `qwen-token-plan-individual` uses the same international endpoint and `QWEN_TOKEN_PLAN_API_KEY` as
 `qwen-token-plan`, but limits the picker to the models documented for Individual subscriptions. The existing
@@ -161,22 +181,29 @@ Use this when pi should use different provider settings than the project shell e
 The `key` field supports command execution, environment interpolation, and literals:
 
 - **Shell command:** `"!command"` at the start executes the whole value as a command and uses stdout (cached for process lifetime)
+
   ```json
   { "type": "api_key", "key": "!security find-generic-password -ws 'anthropic'" }
   { "type": "api_key", "key": "!op read 'op://vault/item/credential'" }
   ```
+
 - **Environment interpolation:** `"$ENV_VAR"` or `"${ENV_VAR}"` uses the value of the named variable. Interpolation works inside larger literals.
+
   ```json
   { "type": "api_key", "key": "$MY_ANTHROPIC_KEY" }
   { "type": "api_key", "key": "${KEY_PREFIX}_${KEY_SUFFIX}" }
   ```
+
   `$FOO_BAR` is the variable `FOO_BAR`; use `${FOO}_BAR` when `BAR` is literal text. Missing environment variables make the value unresolved.
 - **Escapes:** `"$$"` emits a literal `"$"`; `"$!"` emits a literal `"!"` without triggering command execution.
+
   ```json
   { "type": "api_key", "key": "$$literal-dollar-prefix" }
   { "type": "api_key", "key": "$!literal-bang-prefix" }
   ```
+
 - **Literal value:** Used directly. Plain uppercase strings such as `MY_API_KEY` are literals; use `$MY_API_KEY` for environment variables.
+
   ```json
   { "type": "api_key", "key": "sk-ant-..." }
   { "type": "api_key", "key": "public" }
@@ -263,7 +290,7 @@ Routes to OpenAI, Anthropic, and Workers AI through Cloudflare AI Gateway. Worke
 AI Gateway authentication uses `CLOUDFLARE_API_KEY` as `cf-aig-authorization`. Upstream authentication can be one of:
 
 | Mode | Request auth | Upstream auth |
-|------|--------------|---------------|
+| ------ | -------------- | --------------- |
 | Workers AI | Cloudflare token only | Cloudflare-native |
 | Unified billing | Cloudflare token only | Cloudflare handles upstream auth and deducts credits |
 | Stored BYOK | Cloudflare token only | Cloudflare injects provider keys stored in the AI Gateway dashboard |

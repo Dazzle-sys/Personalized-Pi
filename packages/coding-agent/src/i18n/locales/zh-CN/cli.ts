@@ -112,6 +112,8 @@ export const zhCN: Translations = {
 	"Google Gemini API key": "Google Gemini API 密钥",
 	"Groq API key": "Groq API 密钥",
 	"Cerebras API key": "Cerebras API 密钥",
+	"B.AI API key": "B.AI API 密钥",
+	"Command Code API key": "Command Code API 密钥",
 	"xAI Grok API key": "xAI Grok API 密钥",
 	"Fireworks API key": "Fireworks API 密钥",
 	"Together AI API key": "Together AI API 密钥",

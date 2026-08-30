@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added the Command Code provider, an OpenAI- and Anthropic-compatible aggregator upstream of GPT, Claude, DeepSeek, Kimi, Qwen, GLM, Gemini, and other models via `https://api.commandcode.ai/provider` (`COMMANDCODE_API_KEY`).
+
+- Added the B.AI provider, an OpenAI-compatible aggregator exposing upstream GPT, Claude, Gemini, DeepSeek, and other models via `https://api.b.ai/v1` (`BAI_API_KEY`).
+
 ## [0.84.4] - 2026-08-28
 
 ### Added
@@ -375,6 +381,7 @@
 ## [0.80.6] - 2026-07-09
 
 ### Added
+
 - Added a separate opt-in `max` thinking level, including native `xhigh` and `max` support for GPT-5.6 and Anthropic adaptive-thinking effort metadata matching Anthropic's documentation: `max` on all adaptive Claude models, native `xhigh` on Opus 4.7/4.8, Sonnet 5, and Fable 5 only.
 - Added request-wide input-token pricing tiers to model cost metadata and usage cost calculation.
 
@@ -823,6 +830,7 @@ Migration guide:
 ### Breaking Changes
 
 - Replaced `OpenAICompletionsCompat.reasoningEffortMap` with top-level `Model.thinkingLevelMap` for model-specific thinking controls ([#3208](https://github.com/badlogic/pi-mono/issues/3208)). Migration: move mappings from `model.compat.reasoningEffortMap` to `model.thinkingLevelMap`. See `packages/ai/README.md#custom-models` and `packages/coding-agent/docs/models.md#thinking-level-map`. Map values keep the same provider-specific string semantics, and `null` marks a pi thinking level unsupported. Example:
+
   ```ts
   // Before
   compat: { reasoningEffortMap: { high: "high", xhigh: "max" } }
@@ -830,6 +838,7 @@ Migration guide:
   // After
   thinkingLevelMap: { minimal: null, low: null, medium: null, high: "high", xhigh: "max" }
   ```
+
 - Removed `supportsXhigh()`. Migration: use `getSupportedThinkingLevels(model).includes("xhigh")` or `clampThinkingLevel(model, requestedLevel)` instead ([#3208](https://github.com/badlogic/pi-mono/issues/3208)).
 
 ### Added
@@ -2020,7 +2029,7 @@ _Dedicated to Peter's shoulder ([@steipete](https://twitter.com/steipete))_
   - Corrected cache_read: $1.50 → $0.50 per MTok
   - Corrected cache_write: $18.75 → $6.25 per MTok
   - Added manual override in `scripts/generate-models.ts` until upstream fix is merged
-  - Submitted PR to models.dev: https://github.com/sst/models.dev/pull/439
+  - Submitted PR to models.dev: <https://github.com/sst/models.dev/pull/439>
 
 ## [0.9.4] - 2025-11-26
 

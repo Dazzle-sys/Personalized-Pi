@@ -126,6 +126,12 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 		argumentHint: "<provider>",
 	},
 	{
+		name: "provider",
+		get description() {
+			return t("Add a custom provider interactively (writes models.json)");
+		},
+	},
+	{
 		name: "logout",
 		get description() {
 			return t("Remove provider authentication");

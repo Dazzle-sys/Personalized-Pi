@@ -85,12 +85,14 @@ import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/
 import { configureHttpDispatcher, formatHttpIdleTimeoutMs } from "../../core/http-dispatcher.ts";
 import { type AppKeybinding, KeybindingsManager } from "../../core/keybindings.ts";
 import { createCompactionSummaryMessage } from "../../core/messages.ts";
+import type { ModelsJsonProvider } from "../../core/model-config.ts";
 import {
 	defaultModelPerProvider,
 	findExactModelReferenceMatch,
 	resolveModelScopeFromModels,
 } from "../../core/model-resolver.ts";
 import { CredentialSynchronizationError } from "../../core/model-runtime.ts";
+import { upsertProvider } from "../../core/models-config-writer.ts";
 import { DefaultPackageManager } from "../../core/package-manager.ts";
 import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
@@ -138,6 +140,7 @@ import {
 	formatAuthSelectorProviderType,
 	OAuthSelectorComponent,
 } from "./components/oauth-selector.ts";
+import { ProviderWizardDialog } from "./components/provider-wizard.ts";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
 import { SessionSelectorComponent } from "./components/session-selector.ts";
 import { SettingsSelectorComponent } from "./components/settings-selector.ts";
@@ -3113,6 +3116,11 @@ export class InteractiveMode {
 				await this.handleLoginCommand(providerRef);
 				return;
 			}
+			if (text === "/provider") {
+				this.editor.setText("");
+				await this.handleProviderCommand();
+				return;
+			}
 			if (text === "/logout") {
 				this.showOAuthSelector("logout");
 				this.editor.setText("");
@@ -5575,6 +5583,76 @@ export class InteractiveMode {
 				provider.id.toLowerCase() === normalizedProviderRef ||
 				provider.name.toLowerCase() === normalizedProviderRef,
 		);
+	}
+
+	private async handleProviderCommand(): Promise<void> {
+		const restoreEditor = () => {
+			this.editorContainer.clear();
+			this.editorContainer.addChild(this.editor);
+			this.ui.setFocus(this.editor);
+			this.ui.requestRender();
+		};
+
+		// askChoice runs *after* a selector closes; re-show the wizard so the
+		// remaining prompts keep rendering in the same dialog. `dialog` is
+		// assigned before run() calls askChoice, so the closure's reference is
+		// never null at call time.
+		const askChoice = (message: string, choices: readonly string[]) =>
+			new Promise<string | undefined>((resolve) => {
+				this.showSelector((done) => {
+					const selector = new ExtensionSelectorComponent(
+						message,
+						[...choices],
+						(optionLabel) => {
+							done();
+							this.editorContainer.clear();
+							this.editorContainer.addChild(dialog!);
+							this.ui.setFocus(dialog!);
+							this.ui.requestRender();
+							resolve(optionLabel);
+						},
+						() => {
+							done();
+							this.editorContainer.clear();
+							this.editorContainer.addChild(dialog!);
+							this.ui.setFocus(dialog!);
+							this.ui.requestRender();
+							resolve(undefined);
+						},
+					);
+					return { component: selector, focus: selector };
+				});
+			});
+
+		let dialog: ProviderWizardDialog | undefined;
+		dialog = new ProviderWizardDialog(
+			this.ui,
+			(providerId: string, config: ModelsJsonProvider) => {
+				try {
+					upsertProvider(providerId, config);
+				} catch (error) {
+					restoreEditor();
+					this.showError(
+						t("Failed to write models.json: {error}", {
+							error: error instanceof Error ? error.message : String(error),
+						}),
+					);
+					return;
+				}
+				restoreEditor();
+				void this.session.modelRuntime.refresh({ allowNetwork: false });
+				this.showStatus(t("Saved provider {provider}.", { provider: providerId }));
+			},
+			() => restoreEditor(),
+			askChoice,
+		);
+
+		this.editorContainer.clear();
+		this.editorContainer.addChild(dialog);
+		this.ui.setFocus(dialog);
+		this.ui.requestRender();
+
+		await dialog.run();
 	}
 
 	private async handleLoginCommand(providerRef?: string): Promise<void> {

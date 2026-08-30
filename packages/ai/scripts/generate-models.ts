@@ -1193,6 +1193,55 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 	}
 }
 
+/**
+ * Reconcile the local B.A.I catalog against the remote GET /v1/models id list.
+ *
+ * B.A.I is a standard OpenAI-compatible aggregator: its /v1/models returns
+ * only model ids, not pricing/context/reasoning metadata (those are
+ * OpenRouter-specific extensions). The local `catalog` is therefore the
+ * authoritative source of full metadata (cost, context window, compat). This
+ * function never invents metadata for models it does not know: remote ids
+ * missing from the local catalog are reported and skipped, so the directory
+ * stays accurate. When BAI_API_KEY is absent or the request fails (e.g. CI
+ * has no key, or an egress-IP mismatch returns 401), the local catalog is
+ * returned unchanged.
+ * ponytail: egress-IP-bound B.A.I key, so CI fetch is expected to fail —
+ * best-effort reconciliation only, never a build block.
+ */
+async function reconcileBaiCatalog(
+	catalog: Model<"openai-completions">[],
+): Promise<Model<"openai-completions">[]> {
+	const apiKey = process.env.BAI_API_KEY;
+	if (!apiKey) {
+		console.info("B.A.I: BAI_API_KEY not set, keeping local catalog.");
+		return catalog;
+	}
+	try {
+		console.info("B.A.I: reconciling against GET /v1/models ...");
+		const response = await fetch("https://api.b.ai/v1/models", {
+			headers: { Authorization: `Bearer ${apiKey}` },
+		});
+		if (!response.ok) throw new Error(`B.A.I returned ${response.status}`);
+		const data = (await response.json()) as { data?: { id: string }[] };
+		const remoteIds = new Set((data.data ?? []).map((model) => model.id));
+
+		const localIds = new Set(catalog.map((model) => model.id));
+		const remoteOnly = [...remoteIds].filter((id) => !localIds.has(id));
+		const localOnly = [...localIds].filter((id) => !remoteIds.has(id));
+		if (remoteOnly.length) {
+			console.warn(`B.A.I: ${remoteOnly.length} remote model(s) not in local catalog (skipped, add metadata to include): ${remoteOnly.join(", ")}`);
+		}
+		if (localOnly.length) {
+			console.warn(`B.A.I: ${localOnly.length} local model(s) missing from remote /v1/models (may be retired): ${localOnly.join(", ")}`);
+		}
+		console.info(`B.A.I: reconciled (${localIds.size} local, ${remoteIds.size} remote).`);
+		return catalog;
+	} catch (error) {
+		console.error("B.A.I: /v1/models reconciliation failed, keeping local catalog:", error);
+		return catalog;
+	}
+}
+
 function processZaiModels(data: ModelsDevCatalog): Model<Api>[] {
 	const variants = [
 		{
@@ -2605,6 +2654,565 @@ async function generateModels() {
 		},
 	];
 	allModels.push(...deepseekV4Models);
+
+	// B.AI (https://b.ai) is an OpenAI-compatible aggregator. The catalog is the
+	// static list returned by GET /v1/models for a standard account. Costs are
+	// B.AI standard reference prices (Credits/Token == USD/1M tokens) from
+	// https://docs.b.ai/llmservice/pricing-and-usage/; DeepSeek time-based
+	// pricing uses the Idle tier. Context/max-tokens come from B.AI model pages
+	// when available, otherwise the upstream vendor's published specs. The
+	// deepseek-v4-* models stream reasoning_content, so they need DeepSeek-style
+	// compat instead of the openai-completions default.
+	const baiDeepSeekCompat: OpenAICompletionsCompat = {
+		supportsStore: false,
+		supportsDeveloperRole: false,
+		maxTokensField: "max_tokens",
+		requiresReasoningContentOnAssistantMessages: true,
+		thinkingFormat: "deepseek",
+	};
+	const baiModels: Model<"openai-completions">[] = [
+		{
+			id: "deepseek-v4-flash",
+			name: "DeepSeek V4 Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.22, output: 0.66, cacheRead: 0.0073, cacheWrite: 0.22 },
+			contextWindow: 1000000,
+			maxTokens: 384000,
+			compat: baiDeepSeekCompat,
+		},
+		{
+			id: "deepseek-v4-flash-vision-exp",
+			name: "DeepSeek V4 Flash Vision Exp",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text", "image"],
+			cost: { input: 0.22, output: 0.66, cacheRead: 0.0073, cacheWrite: 0.22 },
+			contextWindow: 1000000,
+			maxTokens: 384000,
+			compat: baiDeepSeekCompat,
+		},
+		{
+			id: "deepseek-v4-pro",
+			name: "DeepSeek V4 Pro",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.66, output: 1.98, cacheRead: 0.022, cacheWrite: 0.66 },
+			contextWindow: 1000000,
+			maxTokens: 384000,
+			compat: baiDeepSeekCompat,
+		},
+		{
+			id: "minimax-m3",
+			name: "MiniMax M3",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.3 },
+			contextWindow: 1048576,
+			maxTokens: 512000,
+		},
+		{
+			id: "minimax-m2.7",
+			name: "MiniMax M2.7",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },
+			contextWindow: 204800,
+			maxTokens: 131072,
+		},
+		{
+			id: "kimi-k3",
+			name: "Kimi K3",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3 },
+			contextWindow: 1048576,
+			maxTokens: 131072,
+		},
+		{
+			id: "kimi-k2.6",
+			name: "Kimi K2.6",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.95, output: 4, cacheRead: 0.1615, cacheWrite: 0.95 },
+			contextWindow: 262144,
+			maxTokens: 262144,
+		},
+		{
+			id: "qwen3.8-flash",
+			name: "Qwen3.8-Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.16, output: 0.47, cacheRead: 0.016, cacheWrite: 0.16 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "qwen3.8-27b",
+			name: "Qwen3.8-27B",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.22, output: 1.6, cacheRead: 0.022, cacheWrite: 0.22 },
+			contextWindow: 131072,
+			maxTokens: 16384,
+		},
+		{
+			id: "qwen3.8-max",
+			name: "Qwen3.8-Max",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 2, output: 6, cacheRead: 0.25, cacheWrite: 2 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "hy3",
+			name: "Hy3",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.132, output: 0.528, cacheRead: 0.033, cacheWrite: 0.132 },
+			contextWindow: 262144,
+			maxTokens: 131072,
+		},
+		{
+			id: "mimo-v2.5-pro",
+			name: "MiMo-V2.5-Pro",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.435, output: 0.87, cacheRead: 0.0036, cacheWrite: 0.435 },
+			contextWindow: 1048576,
+			maxTokens: 131072,
+		},
+		{
+			id: "mimo-v2.5",
+			name: "MiMo-V2.5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.14, output: 0.28, cacheRead: 0.0028, cacheWrite: 0.14 },
+			contextWindow: 1048576,
+			maxTokens: 131072,
+		},
+		{
+			id: "glm-5.3-flash",
+			name: "GLM-5.3-Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.075, output: 0.25, cacheRead: 0.015, cacheWrite: 0.075 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "glm-5.3",
+			name: "GLM-5.3",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.4, output: 4.4, cacheRead: 0.28, cacheWrite: 1.4 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "glm-5.2",
+			name: "GLM-5.2",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.4, output: 4.4, cacheRead: 0.28, cacheWrite: 1.4 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "glm-5.1",
+			name: "GLM-5.1",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.4, output: 4.4, cacheRead: 0.28, cacheWrite: 1.4 },
+			contextWindow: 200000,
+			maxTokens: 131072,
+		},
+		{
+			id: "gpt-5.6-sol",
+			name: "GPT-5.6 Sol",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 4, output: 20, cacheRead: 0.4, cacheWrite: 5 },
+			contextWindow: 1050000,
+			maxTokens: 131072,
+		},
+		{
+			id: "gpt-5.6-terra",
+			name: "GPT-5.6 Terra",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 2, output: 12, cacheRead: 0.2, cacheWrite: 2.5 },
+			contextWindow: 1050000,
+			maxTokens: 131072,
+		},
+		{
+			id: "gpt-5.6-luna",
+			name: "GPT-5.6 Luna",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.2, output: 1.2, cacheRead: 0.02, cacheWrite: 0.25 },
+			contextWindow: 1050000,
+			maxTokens: 131072,
+		},
+		{
+			id: "gpt-5.5",
+			name: "GPT-5.5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 30, cacheRead: 0.5, cacheWrite: 5 },
+			contextWindow: 272000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.5-instant",
+			name: "GPT-5.5 Instant",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 30, cacheRead: 0.5, cacheWrite: 5 },
+			contextWindow: 272000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.4",
+			name: "GPT-5.4",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 2.5, output: 15, cacheRead: 0.25, cacheWrite: 2.5 },
+			contextWindow: 272000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.4-pro",
+			name: "GPT-5.4 Pro",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 30, output: 180, cacheRead: 3, cacheWrite: 30 },
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.4-mini",
+			name: "GPT-5.4 Mini",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.75, output: 4.5, cacheRead: 0.075, cacheWrite: 0.75 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.4-nano",
+			name: "GPT-5.4 Nano",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.2, output: 1.25, cacheRead: 0.02, cacheWrite: 0.2 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5.2",
+			name: "GPT-5.2",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.75, output: 14, cacheRead: 0.175, cacheWrite: 1.75 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5-mini",
+			name: "GPT-5 Mini",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.25, output: 2, cacheRead: 0.025, cacheWrite: 0.25 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		},
+		{
+			id: "gpt-5-nano",
+			name: "GPT-5 Nano",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.05, output: 0.4, cacheRead: 0.005, cacheWrite: 0.05 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		},
+		{
+			id: "claude-opus-5",
+			name: "Claude Opus 5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-fable-5",
+			name: "Claude Fable 5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 10, output: 50, cacheRead: 1, cacheWrite: 12.5 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-opus-4.8",
+			name: "Claude Opus 4.8",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-opus-4.7",
+			name: "Claude Opus 4.7",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-opus-4.6",
+			name: "Claude Opus 4.6",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-opus-4.5",
+			name: "Claude Opus 4.5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-sonnet-5",
+			name: "Claude Sonnet 5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-sonnet-4.6",
+			name: "Claude Sonnet 4.6",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-sonnet-4.5",
+			name: "Claude Sonnet 4.5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "claude-haiku-4.5",
+			name: "Claude Haiku 4.5",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		},
+		{
+			id: "gemini-3.1-pro",
+			name: "Gemini 3.1 Pro",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 2, output: 12, cacheRead: 0.2, cacheWrite: 2 },
+			contextWindow: 1000000,
+			maxTokens: 64000,
+		},
+		{
+			id: "gemini-3-flash",
+			name: "Gemini 3 Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.5, output: 3, cacheRead: 0.05, cacheWrite: 0.5 },
+			contextWindow: 1000000,
+			maxTokens: 65536,
+		},
+		{
+			id: "gemini-3.5-flash",
+			name: "Gemini 3.5 Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.5, output: 9, cacheRead: 0.15, cacheWrite: 1.5 },
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		},
+		{
+			id: "gemini-3.5-flash-lite",
+			name: "Gemini 3.5 Flash-Lite",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0.3, output: 2.5, cacheRead: 0.03, cacheWrite: 0.3 },
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		},
+		{
+			id: "gemini-3.6-flash",
+			name: "Gemini 3.6 Flash",
+			api: "openai-completions",
+			baseUrl: "https://api.b.ai/v1",
+			provider: "bai",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 1.5, output: 7.5, cacheRead: 0.15, cacheWrite: 1.5 },
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		},
+	];
+	// B.AI validates chat/completions roles against
+	// ['system', 'assistant', 'user', 'tool', 'function'] — it rejects
+	// `developer`, so every B.AI model must disable the developer role.
+	for (const model of baiModels) {
+		model.compat = {
+			...(model.compat ?? {}),
+			supportsDeveloperRole: false,
+		};
+	}
+	allModels.push(...(await reconcileBaiCatalog(baiModels)));
 
 	const antLingCompat: OpenAICompletionsCompat = {
 		supportsStore: false,

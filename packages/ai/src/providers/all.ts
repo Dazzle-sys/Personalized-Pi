@@ -6,10 +6,12 @@ import { amazonBedrockProvider } from "./amazon-bedrock.ts";
 import { antLingProvider } from "./ant-ling.ts";
 import { anthropicProvider } from "./anthropic.ts";
 import { azureOpenAIResponsesProvider } from "./azure-openai-responses.ts";
+import { baiProvider } from "./bai.ts";
 import { basetenProvider } from "./baseten.ts";
 import { cerebrasProvider } from "./cerebras.ts";
 import { cloudflareAIGatewayProvider } from "./cloudflare-ai-gateway.ts";
 import { cloudflareWorkersAIProvider } from "./cloudflare-workers-ai.ts";
+import { commandcodeProvider } from "./commandcode.ts";
 import modelDataManifest from "./data/.manifest.json" with { type: "json" };
 import { deepseekProvider } from "./deepseek.ts";
 import { fireworksProvider } from "./fireworks.ts";
@@ -92,10 +94,12 @@ export function builtinProviders(): Provider[] {
 		antLingProvider(),
 		anthropicProvider(),
 		azureOpenAIResponsesProvider(),
+		baiProvider(),
 		basetenProvider(),
 		cerebrasProvider(),
 		cloudflareAIGatewayProvider(),
 		cloudflareWorkersAIProvider(),
+		commandcodeProvider(),
 		deepseekProvider(),
 		fireworksProvider(),
 		githubCopilotProvider(),

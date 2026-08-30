@@ -401,11 +401,13 @@ ${chalk.bold(t("Environment Variables:"))}
   AZURE_OPENAI_RESOURCE_NAME       - ${t("Azure OpenAI resource name (alternative to base URL)")}
   AZURE_OPENAI_API_VERSION         - ${t("Azure OpenAI API version (default: v1)")}
   AZURE_OPENAI_DEPLOYMENT_NAME_MAP - ${t("Azure OpenAI model=deployment map (comma-separated)")}
+  BAI_API_KEY                      - ${t("B.AI API key")}
   DEEPSEEK_API_KEY                 - ${t("DeepSeek API key")}
   NVIDIA_API_KEY                   - ${t("NVIDIA NIM API key")}
   GEMINI_API_KEY                   - ${t("Google Gemini API key")}
   GROQ_API_KEY                     - ${t("Groq API key")}
   CEREBRAS_API_KEY                 - ${t("Cerebras API key")}
+  COMMANDCODE_API_KEY              - ${t("Command Code API key")}
   XAI_API_KEY                      - ${t("xAI Grok API key")}
   FIREWORKS_API_KEY                - ${t("Fireworks API key")}
   TOGETHER_API_KEY                 - ${t("Together AI API key")}

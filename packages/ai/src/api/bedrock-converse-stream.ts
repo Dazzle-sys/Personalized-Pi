@@ -983,7 +983,12 @@ function convertMessages(
 						}
 						case "toolCall":
 							contentBlocks.push({
-								toolUse: { toolUseId: c.id, name: c.name, input: sanitizeBedrockDocument(c.arguments) },
+								toolUse: {
+									toolUseId: c.id,
+									name: c.name,
+									// SAFETY: tool arguments are arbitrary JSON; Bedrock toolUse.input accepts any document value.
+									input: sanitizeBedrockDocument(c.arguments as unknown as DocumentType),
+								},
 							});
 							break;
 						case "thinking": {
