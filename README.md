@@ -34,6 +34,12 @@ OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider`，认证用 
 
 交互模式输入 `/provider`，按字段引导填写 `apiKey`、`baseUrl`、可选授权头等，写入 `~/.pi/agent/models.json`（并发安全，见 `packages/coding-agent/src/modes/interactive/components/provider-wizard.ts` 与 `core/models-config-writer.ts`）。
 
+### TUI 默认使用 alt-screen 渲染器
+
+默认 TUI 渲染器从 `regular`（main-screen，依赖终端 scrollback）改为 `fullscreen`（alt-screen）。后者自己托管 viewport，在流式输出与 markdown reflow 期间能**保留用户手动滚动位置**，规避上游已知的“视口上方行变化时 `ESC[3J` 清空 scrollback、阅读位置被拽回顶部”问题（上游 earendil-works/pi #7304）。
+
+仅在 `/settings` 或 `--tui-mode regular` 显式选择时才回退到旧的 main-screen。
+
 ## 快速开始
 
 先从源码安装依赖并运行：

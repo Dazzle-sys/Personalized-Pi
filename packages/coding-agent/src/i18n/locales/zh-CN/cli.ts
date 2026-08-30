@@ -67,7 +67,7 @@ export const zhCN: Translations = {
 	"Export session file to HTML and exit": "将会话文件导出为 HTML 并退出",
 	"List available models (with optional fuzzy search)": "列出可用模型（可选模糊搜索）",
 	"Force verbose startup (overrides quietStartup setting)": "强制详细启动（覆盖 quietStartup 设置）",
-	"TUI mode: regular (default) or fullscreen": "TUI 模式：regular（默认）或 fullscreen",
+	"TUI mode: fullscreen (default) or regular": "TUI 模式：fullscreen（默认）或 regular",
 	"Trust project-local files for this run": "信任本次运行的项目本地文件",
 	"Ignore project-local files for this run": "忽略本次运行的项目本地文件",
 	"Disable startup network operations (same as PI_OFFLINE=1)": "禁用启动时的网络操作（等同 PI_OFFLINE=1）",

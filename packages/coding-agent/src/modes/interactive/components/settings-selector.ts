@@ -686,7 +686,7 @@ export class SettingsSelectorComponent extends Container {
 			{
 				id: "tui-mode",
 				label: t("TUI mode"),
-				description: t("Interface layout; fullscreen mode is experimental"),
+				description: t("Interface layout; fullscreen (alt-screen) is the default"),
 				currentValue: config.tuiMode,
 				values: ["regular", "fullscreen"],
 			},

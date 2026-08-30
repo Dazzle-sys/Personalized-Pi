@@ -318,7 +318,7 @@ ${chalk.bold(t("Options:"))}
   --export <file>                ${t("Export session file to HTML and exit")}
   --list-models [search]         ${t("List available models (with optional fuzzy search)")}
   --verbose                      ${t("Force verbose startup (overrides quietStartup setting)")}
-  --tui-mode <mode>              ${t("TUI mode: regular (default) or fullscreen")}
+  --tui-mode <mode>              ${t("TUI mode: fullscreen (default) or regular")}
   --approve, -a                  ${t("Trust project-local files for this run")}
   --no-approve, -na              ${t("Ignore project-local files for this run")}
   --offline                      ${t("Disable startup network operations (same as PI_OFFLINE=1)")}

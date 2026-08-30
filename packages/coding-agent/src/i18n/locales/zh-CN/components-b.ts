@@ -183,7 +183,7 @@ export const zhCN: Translations = {
 	"(clear override)": "（清除覆盖）",
 	"Revert to global default ({level})": "恢复为全局默认（{level}）",
 	"TUI mode": "TUI 模式",
-	"Interface layout; fullscreen mode is experimental": "界面布局；全屏模式为实验性功能",
+	"Interface layout; fullscreen (alt-screen) is the default": "界面布局；fullscreen（备用屏）为默认",
 	"Fullscreen exit output": "全屏退出输出",
 	"Print the transcript or only a session resume hint when exiting fullscreen mode":
 		"退出全屏模式时输出完整会话记录或仅显示恢复提示",

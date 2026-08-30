@@ -10,6 +10,10 @@
 
 - Added full Simplified Chinese localization for interactive UI (menus, selectors, settings, status/warning/error messages, startup help, `/hotkeys`), CLI help and diagnostics, package-manager output, and the built-in llama.cpp extension. Language resolution: `language` setting, then `PI_LOCALE`/`LC_ALL`/`LC_MESSAGES`/`LANG`, then English. Strings sent to the model (system prompt, tool descriptions, tool results, compaction prompts) intentionally remain in English.
 
+### Changed
+
+- The default TUI renderer is now the alt-screen `fullscreen` mode, which owns the viewport and preserves the user's manually scrolled position during streaming and markdown reflow; the legacy main-screen renderer is used only when `regular` is selected explicitly (via `/settings` or `--tui-mode regular`) ([#7304](https://github.com/earendil-works/pi/issues/7304)).
+
 ### Fixed
 
 - Model-facing error strings (shell configuration, extension blocking) are no longer localized; tool results sent to the model stay in English.
