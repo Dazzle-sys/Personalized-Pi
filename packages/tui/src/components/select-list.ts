@@ -1,3 +1,4 @@
+import { t } from "../i18n/i18n.ts";
 import { getKeybindings } from "../keybindings.ts";
 import type { Component } from "../tui.ts";
 import { truncateToWidth, visibleWidth } from "../utils.ts";
@@ -76,7 +77,7 @@ export class SelectList implements Component {
 
 		// If no items match filter, show message
 		if (this.filteredItems.length === 0) {
-			lines.push(this.theme.noMatch("  No matching commands"));
+			lines.push(this.theme.noMatch(t("  No matching commands")));
 			return lines;
 		}
 

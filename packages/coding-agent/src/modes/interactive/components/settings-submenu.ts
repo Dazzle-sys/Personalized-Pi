@@ -9,6 +9,7 @@ import {
 	type SelectListLayoutOptions,
 	Spacer,
 	Text,
+	t,
 } from "@earendil-works/pi-tui";
 import { getSelectListTheme, theme } from "../theme/theme.ts";
 
@@ -86,8 +87,8 @@ export class SelectSubmenu extends Container {
 		// Hint
 		this.addChild(new Spacer(1));
 		const hint = submenuOptions?.searchable
-			? "  Type to filter \u00b7 Enter to select \u00b7 Esc to go back"
-			: "  Enter to select \u00b7 Esc to go back";
+			? t("  Type to filter \u00b7 Enter to select \u00b7 Esc to go back")
+			: t("  Enter to select \u00b7 Esc to go back");
 		this.addChild(new Text(theme.fg("dim", hint), 0, 0));
 	}
 
@@ -201,7 +202,7 @@ export class SteppedSubmenu extends Container {
 	private buildStep(stepIndex: number): Component {
 		const step = this.steps[stepIndex];
 		const total = this.steps.length;
-		const stepLabel = total > 1 ? `Step ${stepIndex + 1}/${total} \u00b7 ` : "";
+		const stepLabel = total > 1 ? t("Step {current}/{total} · ", { current: stepIndex + 1, total }) : "";
 
 		const title = typeof step.title === "function" ? step.title(this.context) : step.title;
 		const desc = typeof step.description === "function" ? step.description(this.context) : step.description;

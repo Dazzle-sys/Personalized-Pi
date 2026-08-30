@@ -3,7 +3,7 @@
  */
 
 import type { Api, Model } from "@earendil-works/pi-ai";
-import { fuzzyFilter } from "@earendil-works/pi-tui";
+import { fuzzyFilter, t } from "@earendil-works/pi-tui";
 import chalk from "chalk";
 import { formatNoModelsAvailableMessage } from "../core/auth-guidance.ts";
 import type { ModelRuntime } from "../core/model-runtime.ts";
@@ -33,7 +33,7 @@ export async function listModels(
 ): Promise<void> {
 	const loadError = modelRuntime.getError();
 	if (loadError) {
-		console.error(chalk.yellow(`Warning: errors loading models.json:\n${loadError}`));
+		console.error(chalk.yellow(t("Warning: errors loading models.json:\n{error}", { error: loadError })));
 	}
 
 	const models = [...(await modelRuntime.getAvailable(undefined, { signal }))];
@@ -50,7 +50,7 @@ export async function listModels(
 	}
 
 	if (filteredModels.length === 0) {
-		console.log(`No models matching "${searchPattern}"`);
+		console.log(t('No models matching "{pattern}"', { pattern: searchPattern }));
 		return;
 	}
 
@@ -67,17 +67,17 @@ export async function listModels(
 		model: m.id,
 		context: formatTokenCount(m.contextWindow),
 		maxOut: formatTokenCount(m.maxTokens),
-		thinking: m.reasoning ? "yes" : "no",
-		images: m.input.includes("image") ? "yes" : "no",
+		thinking: m.reasoning ? t("yes") : t("no"),
+		images: m.input.includes("image") ? t("yes") : t("no"),
 	}));
 
 	const headers = {
-		provider: "provider",
-		model: "model",
-		context: "context",
-		maxOut: "max-out",
-		thinking: "thinking",
-		images: "images",
+		provider: t("provider"),
+		model: t("model"),
+		context: t("context"),
+		maxOut: t("max-out"),
+		thinking: t("thinking"),
+		images: t("images"),
 	};
 
 	const widths = {

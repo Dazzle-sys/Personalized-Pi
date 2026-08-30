@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added a minimal runtime i18n module: `t()` resolves English source strings (optionally containing `{name}` placeholders) against the active locale, plus `setLocale()`, `registerTranslations()`, `getLocale()`, `hasTranslations()`, `normalizeLocaleTag()`, `getAvailableLocales()`, `resolveLocaleFromEnv()` (reads `PI_LOCALE`, `LC_ALL`, `LC_MESSAGES`, `LANG`), and built-in Simplified Chinese translations exported as `zhCNTranslations`.
+
+### Changed
+
+- Localized built-in component strings (settings/select hints, loader default message, editor paste markers and scroll border, alt-screen search bar, clipboard flash, image fallback, main-screen crash message); paste-marker parsing now derives its regex from the active locale. English output is unchanged.
+
 ## [0.84.4] - 2026-08-28
 
 ### Added

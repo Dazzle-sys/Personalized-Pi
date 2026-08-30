@@ -7,6 +7,7 @@
  */
 
 import type { AssistantMessage, ImageContent } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import type { AgentSessionRuntime } from "../core/agent-session-runtime.ts";
 import { flushRawStdout, waitForRawStdoutBackpressure, writeRawStdout } from "../core/output-guard.ts";
 import { killTrackedDetachedChildren } from "../utils/shell.ts";
@@ -99,7 +100,7 @@ export async function runPrintMode(runtimeHost: AgentSessionRuntime, options: Pr
 				},
 			},
 			onError: (err) => {
-				console.error(`Extension error (${err.extensionPath}): ${err.error}`);
+				console.error(t("Extension error ({path}): {error}", { path: err.extensionPath, error: err.error }));
 			},
 		});
 
@@ -143,7 +144,10 @@ export async function runPrintMode(runtimeHost: AgentSessionRuntime, options: Pr
 			if (lastMessage?.role === "assistant") {
 				const assistantMsg = lastMessage as AssistantMessage;
 				if (assistantMsg.stopReason === "error" || assistantMsg.stopReason === "aborted") {
-					console.error(assistantMsg.errorMessage || `Request ${assistantMsg.stopReason}`);
+					console.error(
+						assistantMsg.errorMessage ||
+							(assistantMsg.stopReason === "aborted" ? t("Request aborted") : t("Request failed")),
+					);
 					exitCode = 1;
 				} else {
 					for (const content of assistantMsg.content) {

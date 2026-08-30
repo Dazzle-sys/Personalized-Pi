@@ -70,6 +70,7 @@ Use `/trust` in interactive mode to save a project trust decision for future ses
 | `fullscreenExitOutput` | string | `"transcript"` | Fullscreen exit output: `"transcript"` prints the final transcript and resume hint, while `"resume-hint"` restores the previous screen and prints only the resume hint. Has no effect in regular TUI mode |
 | `fullscreenScrollbar` | string | `"auto"` | Fullscreen transcript scrollbar: `"auto"` shows it temporarily while scrolling, `"always"` reserves the rightmost column and keeps it visible, and `"hidden"` hides it. Has no effect in regular TUI mode |
 | `fullscreenCopyOnSelect` | boolean | `true` | Automatically copy selected text in fullscreen mode. When disabled, selections stay highlighted and `Ctrl+X` copies the active selection |
+| `language` | string | `"auto"` | Interface language: `"auto"` follows the system locale (`PI_LOCALE`, then `LC_ALL`/`LC_MESSAGES`/`LANG`), or an explicit tag such as `"en"` or `"zh-CN"`. See [Language](#language) |
 
 For VS Code, include `--wait` so pi resumes after the editor exits:
 
@@ -78,6 +79,12 @@ For VS Code, include `--wait` so pi resumes after the editor exits:
   "externalEditor": "code --wait"
 }
 ```
+
+### Language
+
+With `language` set to `"auto"` (default) the interface follows the first of `PI_LOCALE`, `LC_ALL`, `LC_MESSAGES`, and `LANG` that resolves to a supported locale, falling back to English. Setting an explicit tag such as `"en"` or `"zh-CN"` overrides the environment. Changes from `/settings` apply immediately.
+
+Simplified Chinese (`zh-CN`) ships built in. Strings sent to the model (system prompt, tool descriptions, tool results, compaction prompts) always stay in English. Print and JSON modes (`-p`, `--mode json`) always emit English system messages regardless of the locale.
 
 ### Telemetry and update checks
 

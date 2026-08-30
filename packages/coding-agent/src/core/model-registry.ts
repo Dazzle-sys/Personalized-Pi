@@ -10,6 +10,7 @@ import type {
 	Provider,
 	ProviderHeaders,
 } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import type { ModelRuntime } from "./model-runtime.ts";
 import type { AuthStatus, ProviderConfigInput } from "./provider-composer.ts";
 
@@ -67,7 +68,7 @@ export class ModelRegistry {
 			if (!resolution) {
 				const compatibility = this.runtime.getCompatibilityRequestConfig(model);
 				if (compatibility.authHeader) {
-					return { ok: false, error: `No API key found for "${model.provider}"` };
+					return { ok: false, error: t('No API key found for "{provider}"', { provider: model.provider }) };
 				}
 				return { ok: true, headers: compatibility.headers };
 			}
@@ -86,7 +87,7 @@ export class ModelRegistry {
 				ok: false,
 				error:
 					message === "authHeader requires a resolved API key"
-						? `No API key found for "${model.provider}"`
+						? t('No API key found for "{provider}"', { provider: model.provider })
 						: message,
 			};
 		}
@@ -132,7 +133,7 @@ export class ModelRegistry {
 	registerProvider(providerName: string, config: ProviderConfigInput): void;
 	registerProvider(providerOrName: Provider | string, config?: ProviderConfigInput): void {
 		if (typeof providerOrName === "string") {
-			if (!config) throw new Error("Provider config is required when registering by name");
+			if (!config) throw new Error(t("Provider config is required when registering by name"));
 			this.runtime.registerProvider(providerOrName, config);
 			return;
 		}

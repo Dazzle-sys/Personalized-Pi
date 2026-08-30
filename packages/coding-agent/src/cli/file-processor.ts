@@ -4,6 +4,7 @@
 
 import { access, readFile, stat } from "node:fs/promises";
 import type { ImageContent } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import chalk from "chalk";
 import { resolve } from "path";
 import { resolveReadPath } from "../core/tools/path-utils.ts";
@@ -35,7 +36,7 @@ export async function processFileArguments(fileArgs: string[], options?: Process
 		try {
 			await access(absolutePath);
 		} catch {
-			console.error(chalk.red(`Error: File not found: ${absolutePath}`));
+			console.error(chalk.red(t("Error: File not found: {path}", { path: absolutePath })));
 			process.exit(1);
 		}
 
@@ -78,7 +79,9 @@ export async function processFileArguments(fileArgs: string[], options?: Process
 				text += `<file name="${absolutePath}">\n${content}\n</file>\n`;
 			} catch (error: unknown) {
 				const message = error instanceof Error ? error.message : String(error);
-				console.error(chalk.red(`Error: Could not read file ${absolutePath}: ${message}`));
+				console.error(
+					chalk.red(t("Error: Could not read file {path}: {error}", { path: absolutePath, error: message })),
+				);
 				process.exit(1);
 			}
 		}

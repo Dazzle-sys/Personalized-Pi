@@ -1,4 +1,5 @@
 import type { CredentialStore } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import { resolveCliModel } from "../core/model-resolver.ts";
 import { ModelRuntime } from "../core/model-runtime.ts";
 import { InMemoryCodingAgentModelsStore } from "../core/models-store.ts";
@@ -29,11 +30,11 @@ export async function checkProviderAuth(
 	if (cliModel) {
 		const resolved = resolveCliModel({ cliProvider, cliModel, modelRuntime });
 		if (resolved.error || !resolved.model) {
-			throw new AuthCommandError(resolved.error ?? `Unable to resolve model "${cliModel}"`);
+			throw new AuthCommandError(resolved.error ?? t('Unable to resolve model "{model}"', { model: cliModel }));
 		}
 		provider = resolved.model.provider;
 	}
-	if (!provider) throw new AuthCommandError("Unable to resolve an auth provider");
+	if (!provider) throw new AuthCommandError(t("Unable to resolve an auth provider"));
 	if (modelRuntime.getError()) {
 		return { status: "invalid", provider, reason: "invalid_state" };
 	}

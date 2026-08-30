@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { t } from "@earendil-works/pi-tui";
 import * as undici from "undici";
 
 export const DEFAULT_HTTP_IDLE_TIMEOUT_MS = 300_000;
@@ -81,7 +82,7 @@ function createUndiciOriginDispatcher(origin: string | URL, options: object): un
 export function configureHttpDispatcher(timeoutMs: number = DEFAULT_HTTP_IDLE_TIMEOUT_MS): void {
 	const normalizedTimeoutMs = parseHttpIdleTimeoutMs(timeoutMs);
 	if (normalizedTimeoutMs === undefined) {
-		throw new Error(`Invalid HTTP idle timeout: ${String(timeoutMs)}`);
+		throw new Error(t("Invalid HTTP idle timeout: {value}", { value: String(timeoutMs) }));
 	}
 	const dispatcher = withUndiciErrorListener(
 		new undici.EnvHttpProxyAgent({

@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import { APP_NAME } from "../config.ts";
 import type { SourceInfo } from "./source-info.ts";
 
@@ -16,28 +17,148 @@ export interface BuiltinSlashCommand {
 	argumentHint?: string;
 }
 
+// Descriptions resolve lazily via getters so t() runs at read time with the
+// active locale instead of once at module load.
 export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
-	{ name: "settings", description: "Open settings menu" },
-	{ name: "model", description: "Select model (opens selector UI)", argumentHint: "<provider/model>" },
-	{ name: "tree", description: "Navigate session tree (switch branches)" },
-	{ name: "thinking", description: "Set thinking level", argumentHint: "<level>" },
-	{ name: "scoped-models", description: "Enable/disable models for Ctrl+P cycling" },
-	{ name: "export", description: "Export session (HTML default, or specify path: .html/.jsonl)" },
-	{ name: "import", description: "Import and resume a session from a JSONL file" },
-	{ name: "share", description: "Share session as a secret GitHub gist" },
-	{ name: "copy", description: "Copy last agent message to clipboard" },
-	{ name: "name", description: "Set session display name" },
-	{ name: "session", description: "Show session info and stats" },
-	{ name: "changelog", description: "Show changelog entries" },
-	{ name: "hotkeys", description: "Show all keyboard shortcuts" },
-	{ name: "fork", description: "Create a new fork from a previous user message" },
-	{ name: "clone", description: "Duplicate the current session at the current position" },
-	{ name: "trust", description: "Save project trust decision for future sessions" },
-	{ name: "login", description: "Configure provider authentication", argumentHint: "<provider>" },
-	{ name: "logout", description: "Remove provider authentication" },
-	{ name: "new", description: "Start a new session" },
-	{ name: "compact", description: "Manually compact the session context" },
-	{ name: "resume", description: "Resume a different session" },
-	{ name: "reload", description: "Reload keybindings, extensions, skills, prompts, themes, and context files" },
-	{ name: "quit", description: `Quit ${APP_NAME}` },
+	{
+		name: "settings",
+		get description() {
+			return t("Open settings menu");
+		},
+	},
+	{
+		name: "model",
+		get description() {
+			return t("Select model (opens selector UI)");
+		},
+		argumentHint: "<provider/model>",
+	},
+	{
+		name: "tree",
+		get description() {
+			return t("Navigate session tree (switch branches)");
+		},
+	},
+	{
+		name: "thinking",
+		get description() {
+			return t("Set thinking level");
+		},
+		argumentHint: "<level>",
+	},
+	{
+		name: "scoped-models",
+		get description() {
+			return t("Enable/disable models for Ctrl+P cycling");
+		},
+	},
+	{
+		name: "export",
+		get description() {
+			return t("Export session (HTML default, or specify path: .html/.jsonl)");
+		},
+	},
+	{
+		name: "import",
+		get description() {
+			return t("Import and resume a session from a JSONL file");
+		},
+	},
+	{
+		name: "share",
+		get description() {
+			return t("Share session as a secret GitHub gist");
+		},
+	},
+	{
+		name: "copy",
+		get description() {
+			return t("Copy last agent message to clipboard");
+		},
+	},
+	{
+		name: "name",
+		get description() {
+			return t("Set session display name");
+		},
+	},
+	{
+		name: "session",
+		get description() {
+			return t("Show session info and stats");
+		},
+	},
+	{
+		name: "changelog",
+		get description() {
+			return t("Show changelog entries");
+		},
+	},
+	{
+		name: "hotkeys",
+		get description() {
+			return t("Show all keyboard shortcuts");
+		},
+	},
+	{
+		name: "fork",
+		get description() {
+			return t("Create a new fork from a previous user message");
+		},
+	},
+	{
+		name: "clone",
+		get description() {
+			return t("Duplicate the current session at the current position");
+		},
+	},
+	{
+		name: "trust",
+		get description() {
+			return t("Save project trust decision for future sessions");
+		},
+	},
+	{
+		name: "login",
+		get description() {
+			return t("Configure provider authentication");
+		},
+		argumentHint: "<provider>",
+	},
+	{
+		name: "logout",
+		get description() {
+			return t("Remove provider authentication");
+		},
+	},
+	{
+		name: "new",
+		get description() {
+			return t("Start a new session");
+		},
+	},
+	{
+		name: "compact",
+		get description() {
+			return t("Manually compact the session context");
+		},
+	},
+	{
+		name: "resume",
+		get description() {
+			return t("Resume a different session");
+		},
+	},
+	{
+		name: "reload",
+		get description() {
+			return t("Reload keybindings, extensions, skills, prompts, themes, and context files");
+		},
+	},
+	{
+		name: "quit",
+		get description() {
+			return t("Quit {app}", { app: APP_NAME });
+		},
+	},
 ];

@@ -1,7 +1,7 @@
 import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from "node:path";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import type { Api, ImageContent, Model, TextContent } from "@earendil-works/pi-ai";
-import { Text } from "@earendil-works/pi-tui";
+import { Text, t } from "@earendil-works/pi-tui";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";
@@ -148,10 +148,10 @@ function formatCompactReadCall(
 	args: ReadRenderArgs | undefined,
 	theme: Theme,
 ): string {
-	const expandHint = theme.fg("dim", ` (${keyText("app.tools.expand")} to expand)`);
+	const expandHint = theme.fg("dim", ` (${keyText("app.tools.expand")} ${t("to expand")})`);
 	if (classification.kind === "skill") {
 		return (
-			theme.fg("customMessageLabel", `\x1b[1m[skill]\x1b[22m `) +
+			theme.fg("customMessageLabel", `\x1b[1m${t("[skill]")}\x1b[22m `) +
 			theme.fg("customMessageText", classification.label) +
 			formatReadLineRange(args, theme) +
 			expandHint
@@ -159,7 +159,7 @@ function formatCompactReadCall(
 	}
 
 	return (
-		theme.fg("toolTitle", theme.bold(`read ${classification.kind}`)) +
+		theme.fg("toolTitle", theme.bold(t(`read ${classification.kind}`))) +
 		" " +
 		theme.fg("accent", classification.label) +
 		formatReadLineRange(args, theme) +
@@ -190,17 +190,30 @@ function formatReadResult(
 	const remaining = lines.length - maxLines;
 	let text = `\n${displayLines.map((line) => (lang ? replaceTabs(line) : theme.fg("toolOutput", replaceTabs(line)))).join("\n")}`;
 	if (remaining > 0) {
-		text += `${theme.fg("muted", `\n... (${remaining} more lines,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+		text += `${theme.fg("muted", t("\n... ({count} more lines,", { count: remaining }))} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", t(")"))}`;
 	}
 
 	const truncation = result.details?.truncation;
 	if (truncation?.truncated) {
 		if (truncation.firstLineExceedsLimit) {
-			text += `\n${theme.fg("warning", `[First line exceeds ${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit]`)}`;
+			text += `\n${theme.fg("warning", t("[First line exceeds {size} limit]", { size: formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES) }))}`;
 		} else if (truncation.truncatedBy === "lines") {
-			text += `\n${theme.fg("warning", `[Truncated: showing ${truncation.outputLines} of ${truncation.totalLines} lines (${truncation.maxLines ?? DEFAULT_MAX_LINES} line limit)]`)}`;
+			text += `\n${theme.fg(
+				"warning",
+				t("[Truncated: showing {shown} of {total} lines ({limit} line limit)]", {
+					shown: truncation.outputLines,
+					total: truncation.totalLines,
+					limit: truncation.maxLines ?? DEFAULT_MAX_LINES,
+				}),
+			)}`;
 		} else {
-			text += `\n${theme.fg("warning", `[Truncated: ${truncation.outputLines} lines shown (${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit)]`)}`;
+			text += `\n${theme.fg(
+				"warning",
+				t("[Truncated: {count} lines shown ({size} limit)]", {
+					count: truncation.outputLines,
+					size: formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES),
+				}),
+			)}`;
 		}
 	}
 	return text;

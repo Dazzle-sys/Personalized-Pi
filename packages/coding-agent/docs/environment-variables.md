@@ -90,6 +90,7 @@ These variables are read by Pi itself:
 | `PI_HYPERLINKS` | Override OSC 8 hyperlink detection with `1`, `0`, or `auto` |
 | `PI_IMAGE_PROTOCOL` | Override inline image detection with `kitty`, `iterm2`, `none`, or `auto` |
 | `PI_TRUE_COLOR` | Override truecolor detection with `1`, `0`, or `auto` |
+| `PI_LOCALE` | Override the interface language with a locale tag such as `zh-CN`; falls back to `LC_ALL`, `LC_MESSAGES`, `LANG`, then English. The `language` setting takes precedence |
 | `PI_TUI_ESC_TIMEOUT` | How long to wait after a lone ESC before treating it as Escape, in milliseconds; defaults to `100` over SSH and `10` otherwise. Increase if Alt-key input is misread as Escape |
 | `VISUAL`, `EDITOR` | External editor fallback when `externalEditor` is unset |
 | `HTTP_PROXY`, `HTTPS_PROXY` | Proxy outbound HTTP requests |

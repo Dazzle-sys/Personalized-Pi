@@ -34,6 +34,7 @@ function getEnv(): NodeJS.ProcessEnv {
 
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import type { Readable } from "node:stream";
+import { t } from "@earendil-works/pi-tui";
 import ignore from "ignore";
 import { minimatch } from "minimatch";
 import { gt, maxSatisfying, rcompare, satisfies, valid, validRange } from "semver";
@@ -1006,7 +1007,7 @@ export class DefaultPackageManager implements PackageManager {
 		const parsed = this.parseSource(source);
 		const scope: SourceScope = options?.local ? "project" : "user";
 		this.assertProjectTrustedForScope(scope);
-		await this.withProgress("install", source, `Installing ${source}...`, async () => {
+		await this.withProgress("install", source, t("Installing {source}...", { source }), async () => {
 			if (parsed.type === "npm") {
 				await this.installNpm(parsed, scope, false);
 				return;
@@ -1018,11 +1019,11 @@ export class DefaultPackageManager implements PackageManager {
 			if (parsed.type === "local") {
 				const resolved = this.resolvePath(parsed.path);
 				if (!existsSync(resolved)) {
-					throw new Error(`Path does not exist: ${resolved}`);
+					throw new Error(t("Path does not exist: {path}", { path: resolved }));
 				}
 				return;
 			}
-			throw new Error(`Unsupported install source: ${source}`);
+			throw new Error(t("Unsupported install source: {source}", { source }));
 		});
 	}
 
@@ -1035,7 +1036,7 @@ export class DefaultPackageManager implements PackageManager {
 		const parsed = this.parseSource(source);
 		const scope: SourceScope = options?.local ? "project" : "user";
 		this.assertProjectTrustedForScope(scope);
-		await this.withProgress("remove", source, `Removing ${source}...`, async () => {
+		await this.withProgress("remove", source, t("Removing {source}...", { source }), async () => {
 			if (parsed.type === "npm") {
 				await this.uninstallNpm(parsed, scope);
 				return;
@@ -1047,7 +1048,7 @@ export class DefaultPackageManager implements PackageManager {
 			if (parsed.type === "local") {
 				return;
 			}
-			throw new Error(`Unsupported remove source: ${source}`);
+			throw new Error(t("Unsupported remove source: {source}", { source }));
 		});
 	}
 
@@ -1137,9 +1138,14 @@ export class DefaultPackageManager implements PackageManager {
 		if (gitCandidates.length > 0) {
 			const gitTasks = gitCandidates.map(
 				(entry) => async () =>
-					this.withProgress("update", entry.source, `Updating ${entry.source}...`, async () => {
-						await this.updateGit(entry.parsed, entry.scope);
-					}),
+					this.withProgress(
+						"update",
+						entry.source,
+						t("Updating {source}...", { source: entry.source }),
+						async () => {
+							await this.updateGit(entry.parsed, entry.scope);
+						},
+					),
 			);
 			tasks.push(this.runWithConcurrency(gitTasks, GIT_UPDATE_CONCURRENCY).then(() => {}));
 		}
@@ -1168,8 +1174,18 @@ export class DefaultPackageManager implements PackageManager {
 			return;
 		}
 
-		const sourceLabel = sources.length === 1 ? sources[0].source : `${scope} npm packages`;
-		const message = sources.length === 1 ? `Updating ${sources[0].source}...` : `Updating ${scope} npm packages...`;
+		const sourceLabel =
+			sources.length === 1
+				? sources[0].source
+				: scope === "user"
+					? t("user npm packages")
+					: t("project npm packages");
+		const message =
+			sources.length === 1
+				? t("Updating {source}...", { source: sources[0].source })
+				: scope === "user"
+					? t("Updating user npm packages...")
+					: t("Updating project npm packages...");
 		const specs = sources.map((entry) => (entry.parsed.version ? entry.parsed.spec : `${entry.parsed.name}@latest`));
 
 		await this.withProgress("update", sourceLabel, message, async () => {
@@ -1276,7 +1292,7 @@ export class DefaultPackageManager implements PackageManager {
 				}
 				const action = await onMissing(resolvedSource);
 				if (action === "skip") return false;
-				if (action === "error") throw new Error(`Missing source: ${resolvedSource}`);
+				if (action === "error") throw new Error(t("Missing source: {source}", { source: resolvedSource }));
 				await this.installParsedSource(parsed, resolvedScope);
 				return true;
 			};
@@ -1396,9 +1412,9 @@ export class DefaultPackageManager implements PackageManager {
 	private buildNoMatchingPackageMessage(source: string, configuredPackages: PackageSource[]): string {
 		const suggestion = this.findSuggestedConfiguredSource(source, configuredPackages);
 		if (!suggestion) {
-			return `No matching package found for ${source}`;
+			return t("No matching package found for {source}", { source });
 		}
-		return `No matching package found for ${source}. Did you mean ${suggestion}?`;
+		return t("No matching package found for {source}. Did you mean {suggestion}?", { source, suggestion });
 	}
 
 	private findSuggestedConfiguredSource(source: string, configuredPackages: PackageSource[]): string | undefined {
@@ -1516,7 +1532,7 @@ export class DefaultPackageManager implements PackageManager {
 			{ cwd: this.cwd, timeoutMs: NETWORK_TIMEOUT_MS },
 		);
 		const raw = stdout.trim();
-		if (!raw) throw new Error("Empty response from npm view");
+		if (!raw) throw new Error(t("Empty response from npm view"));
 		const parsed = JSON.parse(raw) as unknown;
 		if (typeof parsed === "string") {
 			return parsed;
@@ -1526,7 +1542,7 @@ export class DefaultPackageManager implements PackageManager {
 			const latest = range ? maxSatisfying(versions, range) : [...versions].sort(rcompare)[0];
 			if (latest) return latest;
 		}
-		throw new Error("Unexpected response from npm view");
+		throw new Error(t("Unexpected response from npm view"));
 	}
 
 	private async gitHasAvailableUpdate(installedPath: string): Promise<boolean> {
@@ -1559,7 +1575,7 @@ export class DefaultPackageManager implements PackageManager {
 		const remoteHead = await this.runGitRemoteCommand(installedPath, ["ls-remote", "origin", "HEAD"]);
 		const match = remoteHead.match(/^([0-9a-f]{40})\s+HEAD$/m);
 		if (!match?.[1]) {
-			throw new Error("Failed to determine remote HEAD");
+			throw new Error(t("Failed to determine remote HEAD"));
 		}
 		return match[1];
 	}
@@ -1574,11 +1590,11 @@ export class DefaultPackageManager implements PackageManager {
 			});
 			const trimmedUpstream = upstream.trim();
 			if (!trimmedUpstream.startsWith("origin/")) {
-				throw new Error(`Unsupported upstream remote: ${trimmedUpstream}`);
+				throw new Error(t("Unsupported upstream remote: {remote}", { remote: trimmedUpstream }));
 			}
 			const branch = trimmedUpstream.slice("origin/".length);
 			if (!branch) {
-				throw new Error("Missing upstream branch name");
+				throw new Error(t("Missing upstream branch name"));
 			}
 			const head = await this.runCommandCapture("git", ["rev-parse", "@{upstream}"], {
 				cwd: installedPath,
@@ -1740,7 +1756,7 @@ export class DefaultPackageManager implements PackageManager {
 
 	private assertProjectTrustedForScope(scope: SourceScope): void {
 		if (scope === "project" && !this.settingsManager.isProjectTrusted()) {
-			throw new Error("Project is not trusted; refusing to access project package storage");
+			throw new Error(t("Project is not trusted; refusing to access project package storage"));
 		}
 	}
 
@@ -1751,7 +1767,7 @@ export class DefaultPackageManager implements PackageManager {
 		}
 		const [command, ...args] = configuredCommand;
 		if (!command) {
-			throw new Error("Invalid npmCommand: first array entry must be a non-empty command");
+			throw new Error(t("Invalid npmCommand: first array entry must be a non-empty command"));
 		}
 		return { command, args };
 	}
@@ -1962,7 +1978,7 @@ export class DefaultPackageManager implements PackageManager {
 			return;
 		}
 		try {
-			await this.withProgress("pull", sourceStr, `Refreshing ${sourceStr}...`, async () => {
+			await this.withProgress("pull", sourceStr, t("Refreshing {source}...", { source: sourceStr }), async () => {
 				await this.updateGit(source, "temporary");
 			});
 		} catch {
@@ -2097,7 +2113,7 @@ export class DefaultPackageManager implements PackageManager {
 		}
 		const installRoot = this.getGitInstallRoot(scope);
 		if (!installRoot) {
-			throw new Error("Missing git install root");
+			throw new Error(t("Missing git install root"));
 		}
 		return this.resolveManagedPath(installRoot, source.host, source.path);
 	}
@@ -2126,7 +2142,7 @@ export class DefaultPackageManager implements PackageManager {
 		const resolvedRoot = resolve(root);
 		const resolvedPath = resolve(resolvedRoot, ...parts);
 		if (resolvedPath !== resolvedRoot && !resolvedPath.startsWith(`${resolvedRoot}${sep}`)) {
-			throw new Error(`Refusing to use path outside package install root: ${resolvedPath}`);
+			throw new Error(t("Refusing to use path outside package install root: {path}", { path: resolvedPath }));
 		}
 		return resolvedPath;
 	}
@@ -2655,15 +2671,31 @@ export class DefaultPackageManager implements PackageManager {
 			child.once("close", (code, signal) => {
 				if (timeout) clearTimeout(timeout);
 				if (timedOut) {
-					reject(new Error(`${command} ${args.join(" ")} timed out after ${options?.timeoutMs}ms`));
+					reject(
+						new Error(
+							t("{command} timed out after {timeoutMs}ms", {
+								command: `${command} ${args.join(" ")}`,
+								timeoutMs: String(options?.timeoutMs),
+							}),
+						),
+					);
 					return;
 				}
 				if (code === 0) {
 					resolvePromise(stdout.trim());
 					return;
 				}
-				const exitStatus = code === null ? `signal ${signal ?? "unknown"}` : `code ${code}`;
-				reject(new Error(`${command} ${args.join(" ")} failed with ${exitStatus}: ${stderr || stdout}`));
+				const exitStatus =
+					code === null ? t("signal {signal}", { signal: signal ?? "unknown" }) : t("code {code}", { code });
+				reject(
+					new Error(
+						t("{command} failed with {exitStatus}: {output}", {
+							command: `${command} ${args.join(" ")}`,
+							exitStatus,
+							output: stderr || stdout,
+						}),
+					),
+				);
 			});
 		});
 	}
@@ -2676,7 +2708,14 @@ export class DefaultPackageManager implements PackageManager {
 				if (code === 0) {
 					resolvePromise();
 				} else {
-					reject(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
+					reject(
+						new Error(
+							t("{command} failed with code {code}", {
+								command: `${command} ${args.join(" ")}`,
+								code: String(code),
+							}),
+						),
+					);
 				}
 			});
 		});
@@ -2691,7 +2730,10 @@ export class DefaultPackageManager implements PackageManager {
 		});
 		if (result.error || result.status !== 0) {
 			throw new Error(
-				`Failed to run ${command} ${args.join(" ")}: ${result.error?.message || result.stderr || result.stdout}`,
+				t("Failed to run {command}: {error}", {
+					command: `${command} ${args.join(" ")}`,
+					error: result.error?.message || result.stderr || result.stdout,
+				}),
 			);
 		}
 		return (result.stdout || result.stderr || "").trim();

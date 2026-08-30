@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { access as fsAccess } from "node:fs/promises";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { Container, Text, truncateToWidth } from "@earendil-works/pi-tui";
+import { Container, Text, t, truncateToWidth } from "@earendil-works/pi-tui";
 import { spawn } from "child_process";
 import { type Static, Type } from "typebox";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.ts";
@@ -238,7 +238,7 @@ function formatDuration(ms: number): string {
 function formatShellCall(args: { command?: string; timeout?: number } | undefined, prompt: string): string {
 	const command = str(args?.command);
 	const timeout = args?.timeout as number | undefined;
-	const timeoutSuffix = timeout ? theme.fg("muted", ` (timeout ${timeout}s)`) : "";
+	const timeoutSuffix = timeout ? theme.fg("muted", t(" (timeout {timeout}s)", { timeout })) : "";
 	const commandDisplay = command === null ? invalidArgText(theme) : command ? command : theme.fg("toolOutput", "...");
 	return theme.fg("toolTitle", theme.bold(`${prompt} ${commandDisplay}`)) + timeoutSuffix;
 }
@@ -286,8 +286,8 @@ function rebuildBashResultRenderComponent(
 					}
 					if (state.cachedSkipped && state.cachedSkipped > 0) {
 						const hint =
-							theme.fg("muted", `... (${state.cachedSkipped} earlier lines,`) +
-							` ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+							theme.fg("muted", t("... ({count} earlier lines,", { count: state.cachedSkipped })) +
+							` ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", t(")"))}`;
 						return ["", truncateToWidth(hint, width, "..."), ...(state.cachedLines ?? [])];
 					}
 					return ["", ...(state.cachedLines ?? [])];
@@ -304,14 +304,22 @@ function rebuildBashResultRenderComponent(
 	if (truncation?.truncated || fullOutputPath) {
 		const warnings: string[] = [];
 		if (fullOutputPath) {
-			warnings.push(`Full output: ${fullOutputPath}`);
+			warnings.push(t("Full output: {path}", { path: fullOutputPath }));
 		}
 		if (truncation?.truncated) {
 			if (truncation.truncatedBy === "lines") {
-				warnings.push(`Truncated: showing ${truncation.outputLines} of ${truncation.totalLines} lines`);
+				warnings.push(
+					t("Truncated: showing {shown} of {total} lines", {
+						shown: truncation.outputLines,
+						total: truncation.totalLines,
+					}),
+				);
 			} else {
 				warnings.push(
-					`Truncated: ${truncation.outputLines} lines shown (${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit)`,
+					t("Truncated: {count} lines shown ({size} limit)", {
+						count: truncation.outputLines,
+						size: formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES),
+					}),
 				);
 			}
 		}
@@ -319,7 +327,7 @@ function rebuildBashResultRenderComponent(
 	}
 
 	if (startedAt !== undefined) {
-		const label = options.isPartial ? "Elapsed" : "Took";
+		const label = options.isPartial ? t("Elapsed") : t("Took");
 		const endTime = endedAt ?? Date.now();
 		component.addChild(new Text(`\n${theme.fg("muted", `${label} ${formatDuration(endTime - startedAt)}`)}`, 0, 0));
 	}

@@ -1,6 +1,7 @@
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { Transport } from "@earendil-works/pi-ai";
 import type { TuiMode as RendererTuiMode, ScrollViewScrollbar, TerminalCapabilities } from "@earendil-works/pi-tui";
+import { t } from "@earendil-works/pi-tui";
 import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
@@ -101,6 +102,7 @@ export interface Settings {
 	steeringMode?: "all" | "one-at-a-time";
 	followUpMode?: "all" | "one-at-a-time";
 	theme?: string;
+	language?: string; // UI language: "auto" (follow system locale), "en", "zh-CN"
 	compaction?: CompactionSettings;
 	branchSummary?: BranchSummarySettings;
 	retry?: RetrySettings;
@@ -179,7 +181,7 @@ function parseTimeoutSetting(value: unknown, settingName: string): number | unde
 		return timeoutMs;
 	}
 	if (value !== undefined) {
-		throw new Error(`Invalid ${settingName} setting: ${String(value)}`);
+		throw new Error(t("Invalid {setting} setting: {value}", { setting: settingName, value: String(value) }));
 	}
 	return undefined;
 }
@@ -245,7 +247,7 @@ export class FileSettingsStorage implements SettingsStorage {
 			}
 		}
 
-		throw (lastError as Error) ?? new Error("Failed to acquire settings lock");
+		throw (lastError as Error) ?? new Error(t("Failed to acquire settings lock"));
 	}
 
 	withLock(scope: SettingsScope, fn: (current: string | undefined) => string | undefined): void {
@@ -576,7 +578,7 @@ export class SettingsManager {
 
 	private assertProjectTrustedForWrite(): void {
 		if (!this.projectTrusted) {
-			throw new Error("Project is not trusted; refusing to write project settings");
+			throw new Error(t("Project is not trusted; refusing to write project settings"));
 		}
 	}
 
@@ -779,6 +781,23 @@ export class SettingsManager {
 		this.save();
 	}
 
+	getLanguage(): string | undefined {
+		const value = this.settings.language;
+		return typeof value === "string" ? value : undefined;
+	}
+
+	setLanguage(language: string): void {
+		this.globalSettings.language = language;
+		this.markModified("language");
+		this.save();
+	}
+
+	clearLanguage(): void {
+		delete this.globalSettings.language;
+		this.markModified("language");
+		this.save();
+	}
+
 	getDefaultThinkingLevel(): ThinkingLevel | undefined {
 		return this.settings.defaultThinkingLevel;
 	}
@@ -893,7 +912,9 @@ export class SettingsManager {
 
 	setHttpIdleTimeoutMs(timeoutMs: number): void {
 		if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
-			throw new Error(`Invalid httpIdleTimeoutMs setting: ${String(timeoutMs)}`);
+			throw new Error(
+				t("Invalid {setting} setting: {value}", { setting: "httpIdleTimeoutMs", value: String(timeoutMs) }),
+			);
 		}
 		this.globalSettings.httpIdleTimeoutMs = Math.floor(timeoutMs);
 		this.markModified("httpIdleTimeoutMs");

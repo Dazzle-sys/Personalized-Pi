@@ -9,6 +9,7 @@ import type { AgentMessage, StreamFn } from "@earendil-works/pi-agent-core";
 import type { RetryCallbacks, RetryPolicy } from "@earendil-works/pi-ai";
 import { contentText } from "@earendil-works/pi-ai";
 import type { Model, SimpleStreamOptions, Usage } from "@earendil-works/pi-ai/compat";
+import { t } from "@earendil-works/pi-tui";
 import {
 	convertToLlm,
 	createBranchSummaryMessage,
@@ -354,7 +355,7 @@ export async function generateBranchSummary(
 	if (response.stopReason === "aborted") {
 		return { aborted: true };
 	}
-	const failure = getSummarizationFailure(response, "Branch summarization");
+	const failure = getSummarizationFailure(response, t("Branch summarization"));
 	if (failure) {
 		return { error: failure };
 	}

@@ -1,4 +1,4 @@
-import { type Component, Container, getKeybindings, Spacer, Text, truncateToWidth } from "@earendil-works/pi-tui";
+import { type Component, Container, getKeybindings, Spacer, Text, t, truncateToWidth } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 
@@ -34,7 +34,7 @@ class UserMessageList implements Component {
 		const lines: string[] = [];
 
 		if (this.messages.length === 0) {
-			lines.push(theme.fg("muted", "  No user messages found"));
+			lines.push(theme.fg("muted", t("  No user messages found")));
 			return lines;
 		}
 
@@ -63,7 +63,7 @@ class UserMessageList implements Component {
 
 			// Second line: metadata (position in history)
 			const position = i + 1;
-			const metadata = `  Message ${position} of ${this.messages.length}`;
+			const metadata = t("Message {current} of {total}", { current: position, total: this.messages.length });
 			const metadataLine = theme.fg("muted", metadata);
 			lines.push(metadataLine);
 			lines.push(""); // Blank line between messages
@@ -120,10 +120,10 @@ export class UserMessageSelectorComponent extends Container {
 
 		// Add header
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.bold("Fork from Message"), 1, 0));
+		this.addChild(new Text(theme.bold(t("Fork from Message")), 1, 0));
 		this.addChild(
 			new Text(
-				theme.fg("muted", "Select a user message to copy the active path up to that point into a new session"),
+				theme.fg("muted", t("Select a user message to copy the active path up to that point into a new session")),
 				1,
 				0,
 			),

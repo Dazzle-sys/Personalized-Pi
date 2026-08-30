@@ -10,6 +10,7 @@ import {
 	type Model,
 	modelsAreEqual,
 } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import chalk from "chalk";
 import { minimatch } from "minimatch";
 import { isValidThinkingLevel } from "../cli/args.ts";
@@ -248,7 +249,10 @@ export function parseModelPattern(
 			return {
 				model: result.model,
 				thinkingLevel: undefined,
-				warning: `Invalid thinking level "${suffix}" in pattern "${pattern}". Using default instead.`,
+				warning: t('Invalid thinking level "{level}" in pattern "{pattern}". Using default instead.', {
+					level: suffix,
+					pattern,
+				}),
 			};
 		}
 		return result;
@@ -321,7 +325,7 @@ export function resolveModelScopeFromModels(
 				diagnostics.push({
 					type: "warning",
 					code: "no-match",
-					message: `No models match pattern "${pattern}"`,
+					message: t('No models match pattern "{pattern}"', { pattern }),
 					pattern,
 				});
 				continue;
@@ -345,7 +349,7 @@ export function resolveModelScopeFromModels(
 			diagnostics.push({
 				type: "warning",
 				code: "no-match",
-				message: `No models match pattern "${pattern}"`,
+				message: t('No models match pattern "{pattern}"', { pattern }),
 				pattern,
 			});
 			continue;
@@ -375,7 +379,7 @@ export async function resolveModelScope(
 ): Promise<ScopedModel[]> {
 	const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(patterns, modelRuntime, options);
 	for (const diagnostic of diagnostics) {
-		console.warn(chalk.yellow(`Warning: ${diagnostic.message}`));
+		console.warn(chalk.yellow(t("Warning: {message}", { message: diagnostic.message })));
 	}
 	return scopedModels;
 }
@@ -421,7 +425,7 @@ export function resolveCliModel(options: {
 		return {
 			model: undefined,
 			warning: undefined,
-			error: "No models available. Check your installation or add models to models.json.",
+			error: t("No models available. Check your installation or add models to models.json."),
 		};
 	}
 
@@ -436,7 +440,9 @@ export function resolveCliModel(options: {
 		return {
 			model: undefined,
 			warning: undefined,
-			error: `Unknown provider "${cliProvider}". Use --list-models to see available providers/models.`,
+			error: t('Unknown provider "{provider}". Use --list-models to see available providers/models.', {
+				provider: cliProvider,
+			}),
 		};
 	}
 
@@ -491,13 +497,16 @@ export function resolveCliModel(options: {
 				.join(", ");
 			const authHint =
 				authenticatedExactMatches.length === 0
-					? "No matching provider is authenticated."
-					: "More than one matching provider is authenticated.";
+					? t("No matching provider is authenticated.")
+					: t("More than one matching provider is authenticated.");
 			return {
 				model: undefined,
 				warning: undefined,
 				thinkingLevel: undefined,
-				error: `Model "${cliModel}" is ambiguous across providers: ${matches}. ${authHint} Use --provider or provider/model.`,
+				error: t(
+					'Model "{model}" is ambiguous across providers: {matches}. {authHint} Use --provider or provider/model.',
+					{ model: cliModel, matches, authHint },
+				),
 			};
 		}
 	}
@@ -589,8 +598,14 @@ export function resolveCliModel(options: {
 			const model =
 				requestedThinking && requestedThinking !== "off" ? { ...fallbackModel, reasoning: true } : fallbackModel;
 			const fallbackWarning = warning
-				? `${warning} Model "${fallbackPattern}" not found for provider "${provider}". Using custom model id.`
-				: `Model "${fallbackPattern}" not found for provider "${provider}". Using custom model id.`;
+				? `${warning} ${t('Model "{model}" not found for provider "{provider}". Using custom model id.', {
+						model: fallbackPattern,
+						provider,
+					})}`
+				: t('Model "{model}" not found for provider "{provider}". Using custom model id.', {
+						model: fallbackPattern,
+						provider,
+					});
 			return { model, thinkingLevel: fallbackThinking, warning: fallbackWarning, error: undefined };
 		}
 	}
@@ -600,7 +615,7 @@ export function resolveCliModel(options: {
 		model: undefined,
 		thinkingLevel: undefined,
 		warning,
-		error: `Model "${display}" not found. Use --list-models to see available models.`,
+		error: t('Model "{model}" not found. Use --list-models to see available models.', { model: display }),
 	};
 }
 
@@ -724,26 +739,39 @@ export async function restoreModelFromSession(
 
 	if (restoredModel && hasConfiguredAuth) {
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Restored model: ${savedProvider}/${savedModelId}`));
+			console.log(chalk.dim(t("Restored model: {model}", { model: `${savedProvider}/${savedModelId}` })));
 		}
 		return { model: restoredModel, fallbackMessage: undefined };
 	}
 
 	// Model not found or no API key - fall back
-	const reason = !restoredModel ? "model no longer exists" : "no auth configured";
+	const reason = !restoredModel ? t("model no longer exists") : t("no auth configured");
 
 	if (shouldPrintMessages) {
-		console.error(chalk.yellow(`Warning: Could not restore model ${savedProvider}/${savedModelId} (${reason}).`));
+		console.error(
+			chalk.yellow(
+				t("Warning: Could not restore model {model} ({reason}).", {
+					model: `${savedProvider}/${savedModelId}`,
+					reason,
+				}),
+			),
+		);
 	}
 
 	// If we already have a model, use it as fallback
 	if (currentModel) {
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Falling back to: ${currentModel.provider}/${currentModel.id}`));
+			console.log(
+				chalk.dim(t("Falling back to: {model}", { model: `${currentModel.provider}/${currentModel.id}` })),
+			);
 		}
 		return {
 			model: currentModel,
-			fallbackMessage: `Could not restore model ${savedProvider}/${savedModelId} (${reason}). Using ${currentModel.provider}/${currentModel.id}.`,
+			fallbackMessage: t("Could not restore model {model} ({reason}). Using {fallback}.", {
+				model: `${savedProvider}/${savedModelId}`,
+				reason,
+				fallback: `${currentModel.provider}/${currentModel.id}`,
+			}),
 		};
 	}
 
@@ -768,12 +796,18 @@ export async function restoreModelFromSession(
 		}
 
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Falling back to: ${fallbackModel.provider}/${fallbackModel.id}`));
+			console.log(
+				chalk.dim(t("Falling back to: {model}", { model: `${fallbackModel.provider}/${fallbackModel.id}` })),
+			);
 		}
 
 		return {
 			model: fallbackModel,
-			fallbackMessage: `Could not restore model ${savedProvider}/${savedModelId} (${reason}). Using ${fallbackModel.provider}/${fallbackModel.id}.`,
+			fallbackMessage: t("Could not restore model {model} ({reason}). Using {fallback}.", {
+				model: `${savedProvider}/${savedModelId}`,
+				reason,
+				fallback: `${fallbackModel.provider}/${fallbackModel.id}`,
+			}),
 		};
 	}
 

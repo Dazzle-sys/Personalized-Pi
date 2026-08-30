@@ -37,6 +37,7 @@ import {
 	type StreamOptions,
 } from "@earendil-works/pi-ai";
 import * as builtinProviderCatalog from "@earendil-works/pi-ai/providers/all";
+import { t } from "@earendil-works/pi-tui";
 import { getAgentDir } from "../config.ts";
 import { operationSignal, raceWithAbortSignal } from "../utils/abort.ts";
 import { AuthStorage as DefaultAuthStorage } from "./auth-storage.ts";
@@ -428,9 +429,9 @@ export class ModelRuntime implements Models {
 		const configError = this.config.getError();
 		if (configError) errors.push(configError);
 		for (const [providerId, error] of this.compositionErrors) {
-			errors.push(`Provider "${providerId}": ${error}`);
+			errors.push(t('Provider "{provider}": {error}', { provider: providerId, error }));
 		}
-		if (this.availabilityError) errors.push(`Availability refresh: ${this.availabilityError}`);
+		if (this.availabilityError) errors.push(t("Availability refresh: {error}", { error: this.availabilityError }));
 		return errors.length > 0 ? errors.join("\n\n") : undefined;
 	}
 
@@ -579,13 +580,14 @@ export class ModelRuntime implements Models {
 		options: Omit<TOptions, "transformHeaders"> & ProviderRequestOptions;
 	}> {
 		const provider = this.models.getProvider(model.provider);
-		if (!provider) throw new ModelsError("provider", `Unknown provider: ${model.provider}`);
+		if (!provider) throw new ModelsError("provider", t("Unknown provider: {provider}", { provider: model.provider }));
 		const resolution = await this.getAuth(model, {
 			apiKey: options?.apiKey,
 			env: options?.env,
 			signal: options?.signal,
 		});
-		if (!resolution) throw new ModelsError("auth", `Provider is not configured: ${model.provider}`);
+		if (!resolution)
+			throw new ModelsError("auth", t("Provider is not configured: {provider}", { provider: model.provider }));
 
 		const { transformHeaders, ...rawProviderOptions } = options ?? {};
 		const providerOptions = rawProviderOptions as Omit<TOptions, "transformHeaders"> & ProviderRequestOptions;
@@ -652,7 +654,10 @@ export class ModelRuntime implements Models {
 		return lazyStream(model, async () => {
 			const prepared = await this.prepareRequest(model, options);
 			if (!prepared.provider.fetchDeferred) {
-				throw new ModelsError("provider", `Provider ${model.provider} does not support deferred responses`);
+				throw new ModelsError(
+					"provider",
+					t("Provider {provider} does not support deferred responses", { provider: model.provider }),
+				);
 			}
 			return prepared.provider.fetchDeferred(prepared.model, handle, prepared.options as DeferredFetchOptions);
 		}).result();
@@ -665,7 +670,10 @@ export class ModelRuntime implements Models {
 	): Promise<void> {
 		const prepared = await this.prepareRequest(model, options);
 		if (!prepared.provider.cancelDeferred) {
-			throw new ModelsError("provider", `Provider ${model.provider} does not support deferred responses`);
+			throw new ModelsError(
+				"provider",
+				t("Provider {provider} does not support deferred responses", { provider: model.provider }),
+			);
 		}
 		await prepared.provider.cancelDeferred(prepared.model, handle, prepared.options as DeferredCancelOptions);
 	}
@@ -731,7 +739,7 @@ export class ModelRuntime implements Models {
 	}
 
 	registerNativeProvider(provider: Provider): void {
-		if (!provider.id.trim()) throw new Error("Provider id must not be empty.");
+		if (!provider.id.trim()) throw new Error(t("Provider id must not be empty."));
 		this.extensionProviders.delete(provider.id);
 		this.nativeExtensionProviders.set(provider.id, provider);
 		this.recomposeProvider(provider.id);

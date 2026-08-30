@@ -1,3 +1,5 @@
+import { t } from "@earendil-works/pi-tui";
+
 export interface NamedCommandInvocation {
 	readonly command: string;
 }
@@ -77,7 +79,9 @@ export class Command<
 
 	option<TValue>(option: CommandOption<TValue>): this {
 		if (this.options.has(option.name)) {
-			throw new Error(`Option ${option.name} is already registered for ${this.name}`);
+			throw new Error(
+				t("Option {option} is already registered for {command}", { option: option.name, command: this.name }),
+			);
 		}
 		this.options.set(option.name, option);
 		return this;
@@ -100,7 +104,9 @@ export class Command<
 	>(
 		command: Command<TSubcommandOwnInvocation, TSubcommandContext, TSubcommandInvocation>,
 	): Command<TOwnInvocation, TContext & TSubcommandContext, TInvocation | TSubcommandInvocation> {
-		if (this.subcommands.has(command.name)) throw new Error(`Command ${command.name} is already registered`);
+		if (this.subcommands.has(command.name)) {
+			throw new Error(t("Command {command} is already registered", { command: command.name }));
+		}
 		this.subcommands.set(command.name, {
 			parse: (argv) => command.parse(argv),
 			execute: (argv, context) => command.execute(argv, context as TSubcommandContext),
@@ -126,7 +132,9 @@ export class Command<
 
 		const parsed = this.parseOwn(argv);
 		if (!parsed.ok) return parsed;
-		if (!this.commandAction) throw new Error(`Command ${this.name} does not define an action`);
+		if (!this.commandAction) {
+			throw new Error(t("Command {command} does not define an action", { command: this.name }));
+		}
 		await this.commandAction(parsed.command, context);
 		return { ok: true, command: parsed.command as unknown as TInvocation };
 	}
@@ -139,7 +147,9 @@ export class Command<
 	}
 
 	private parseOwn(argv: readonly string[]): CommandParseResult<TOwnInvocation> {
-		if (!this.builder) throw new Error(`Command ${this.name} does not define a builder`);
+		if (!this.builder) {
+			throw new Error(t("Command {command} does not define a builder", { command: this.name }));
+		}
 		const parsed = this.parseOptions(argv);
 		const input: ParsedCommandInput = {
 			remainingArgs: parsed.remainingArgs,
@@ -149,7 +159,7 @@ export class Command<
 		const built = this.builder(input);
 		const errors = [...parsed.errors, ...(built.ok ? [] : built.errors)];
 		if (errors.length > 0) return { ok: false, errors };
-		if (!built.ok) throw new Error(`Command ${this.name} failed without an error`);
+		if (!built.ok) throw new Error(t("Command {command} failed without an error", { command: this.name }));
 		return { ok: true, command: built.command };
 	}
 
@@ -183,13 +193,13 @@ export class Command<
 				}
 			}
 			if (value === undefined || value === "") {
-				parsed.errors.push(`${name} requires a value`);
+				parsed.errors.push(t("{option} requires a value", { option: name }));
 				continue;
 			}
 
 			const values = parsed.values.get(name) ?? [];
 			if (values.length > 0) {
-				parsed.errors.push(`${name} may only be specified once`);
+				parsed.errors.push(t("{option} may only be specified once", { option: name }));
 				continue;
 			}
 			const result = option.parse(value);

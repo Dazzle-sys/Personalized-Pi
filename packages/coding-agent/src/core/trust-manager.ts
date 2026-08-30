@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { t } from "@earendil-works/pi-tui";
 import lockfile from "proper-lockfile";
 import { CONFIG_DIR_NAME } from "../config.ts";
 import { canonicalizePath, resolvePath } from "../utils/paths.ts";
@@ -66,12 +67,12 @@ export function getProjectTrustParentPath(cwd: string): string | undefined {
 export function getProjectTrustOptions(cwd: string, options?: { includeSessionOnly?: boolean }): ProjectTrustOption[] {
 	const trustPath = normalizeCwd(cwd);
 	const trustOptions: ProjectTrustOption[] = [
-		{ label: "Trust", trusted: true, updates: [{ path: trustPath, decision: true }], savedPath: trustPath },
+		{ label: t("Trust"), trusted: true, updates: [{ path: trustPath, decision: true }], savedPath: trustPath },
 	];
 	const parentPath = getProjectTrustParentPath(cwd);
 	if (parentPath !== undefined) {
 		trustOptions.push({
-			label: `Trust parent folder (${parentPath})`,
+			label: t("Trust parent folder ({path})", { path: parentPath }),
 			trusted: true,
 			updates: [
 				{ path: parentPath, decision: true },
@@ -81,16 +82,16 @@ export function getProjectTrustOptions(cwd: string, options?: { includeSessionOn
 		});
 	}
 	if (options?.includeSessionOnly) {
-		trustOptions.push({ label: "Trust (this session only)", trusted: true, updates: [] });
+		trustOptions.push({ label: t("Trust (this session only)"), trusted: true, updates: [] });
 	}
 	trustOptions.push({
-		label: "Do not trust",
+		label: t("Do not trust"),
 		trusted: false,
 		updates: [{ path: trustPath, decision: false }],
 		savedPath: trustPath,
 	});
 	if (options?.includeSessionOnly) {
-		trustOptions.push({ label: "Do not trust (this session only)", trusted: false, updates: [] });
+		trustOptions.push({ label: t("Do not trust (this session only)"), trusted: false, updates: [] });
 	}
 	return trustOptions;
 }
@@ -105,17 +106,22 @@ function readTrustFile(path: string): TrustFile {
 		parsed = JSON.parse(stripBom(readFileSync(path, "utf-8")));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		throw new Error(`Failed to read trust store ${path}: ${message}`);
+		throw new Error(t("Failed to read trust store {path}: {message}", { path, message }));
 	}
 
 	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-		throw new Error(`Invalid trust store ${path}: expected an object`);
+		throw new Error(t("Invalid trust store {path}: expected an object", { path }));
 	}
 
 	const data: TrustFile = {};
 	for (const [key, value] of Object.entries(parsed)) {
 		if (value !== true && value !== false && value !== null) {
-			throw new Error(`Invalid trust store ${path}: value for ${JSON.stringify(key)} must be true, false, or null`);
+			throw new Error(
+				t("Invalid trust store {path}: value for {key} must be true, false, or null", {
+					path,
+					key: JSON.stringify(key),
+				}),
+			);
 		}
 		data[key] = value;
 	}
@@ -163,7 +169,7 @@ function acquireTrustLockSync(path: string): () => void {
 	if (lastError instanceof Error) {
 		throw lastError;
 	}
-	throw new Error("Failed to acquire trust store lock");
+	throw new Error(t("Failed to acquire trust store lock"));
 }
 
 function withTrustFileLock<T>(path: string, fn: () => T): T {

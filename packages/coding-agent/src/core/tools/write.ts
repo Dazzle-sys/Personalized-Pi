@@ -1,5 +1,5 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { Container, Text } from "@earendil-works/pi-tui";
+import { Container, Text, t } from "@earendil-works/pi-tui";
 import { mkdir as fsMkdir, writeFile as fsWriteFile } from "fs/promises";
 import { dirname } from "path";
 import { type Static, Type } from "typebox";
@@ -147,7 +147,7 @@ function formatWriteCall(
 	let text = `${theme.fg("toolTitle", theme.bold("write"))} ${pathDisplay}`;
 
 	if (fileContent === null) {
-		text += `\n\n${theme.fg("error", "[invalid content arg - expected string]")}`;
+		text += `\n\n${theme.fg("error", t("[invalid content arg - expected string]"))}`;
 	} else if (fileContent) {
 		const lang = rawPath ? getLanguageFromPath(rawPath) : undefined;
 		const renderedLines = lang
@@ -160,7 +160,10 @@ function formatWriteCall(
 		const remaining = lines.length - maxLines;
 		text += `\n\n${displayLines.map((line) => (lang ? line : theme.fg("toolOutput", replaceTabs(line)))).join("\n")}`;
 		if (remaining > 0) {
-			text += `${theme.fg("muted", `\n... (${remaining} more lines, ${totalLines} total,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+			text += `${theme.fg(
+				"muted",
+				t("\n... ({count} more lines, {total} total,", { count: remaining, total: totalLines }),
+			)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", t(")"))}`;
 		}
 	}
 

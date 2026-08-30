@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import chalk from "chalk";
 import type { ProjectTrustContext } from "../core/extensions/types.ts";
 import type { AppMode } from "../core/project-trust.ts";
@@ -37,8 +38,8 @@ export function createProjectTrustContext(options: {
 				}
 				return (
 					(await showStartupSelector(options.settingsManager, `${title}\n${message}`, [
-						{ label: "Yes", value: true },
-						{ label: "No", value: false },
+						{ label: t("Yes"), value: true },
+						{ label: t("No"), value: false },
 					])) ?? false
 				);
 			},

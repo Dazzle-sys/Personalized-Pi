@@ -46,6 +46,20 @@ export {
 export type { EditorComponent } from "./editor-component.ts";
 // Fuzzy matching
 export { type FuzzyMatch, fuzzyFilter, fuzzyMatch } from "./fuzzy.ts";
+// Internationalization
+export {
+	getAvailableLocales,
+	getLocale,
+	hasTranslations,
+	normalizeLocaleTag,
+	registerTranslations,
+	resolveLocaleFromEnv,
+	setLocale,
+	type TranslationParams,
+	type Translations,
+	t,
+} from "./i18n/i18n.ts";
+export { zhCN as zhCNTranslations } from "./i18n/locales/zh-CN.ts";
 // Keybindings
 export {
 	getKeybindings,

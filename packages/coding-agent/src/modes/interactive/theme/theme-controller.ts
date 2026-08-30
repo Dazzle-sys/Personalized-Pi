@@ -1,4 +1,4 @@
-import type { TUI } from "@earendil-works/pi-tui";
+import { type TUI, t } from "@earendil-works/pi-tui";
 import type { SettingsManager } from "../../../core/settings-manager.ts";
 import {
 	detectTerminalBackgroundFromEnv,
@@ -128,7 +128,12 @@ export class InteractiveThemeController {
 		this.activeThemeName = result.success ? themeName : "dark";
 		this.notifyChanged();
 		if (!result.success && showError) {
-			this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to dark theme.`);
+			this.showError(
+				t('Failed to load theme "{theme}": {error}\nFell back to dark theme.', {
+					theme: themeName,
+					error: result.error,
+				}),
+			);
 		}
 		return result;
 	}

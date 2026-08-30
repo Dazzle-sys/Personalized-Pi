@@ -1,5 +1,5 @@
 import type { AuthInfoLink, OAuthDeviceCodeInfo } from "@earendil-works/pi-ai";
-import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI } from "@earendil-works/pi-tui";
+import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
 import { openBrowser } from "../../../utils/open-browser.ts";
 import { theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
@@ -39,7 +39,7 @@ export class LoginDialogComponent extends Container implements Focusable {
 		this.onComplete = onComplete;
 
 		const providerName = providerNameOverride || providerId;
-		const title = titleOverride ?? `Login to ${providerName}`;
+		const title = titleOverride ?? t("Login to {provider}", { provider: providerName });
 
 		// Top border
 		this.addChild(new DynamicBorder());
@@ -99,7 +99,7 @@ export class LoginDialogComponent extends Container implements Focusable {
 		const linkedUrl = `\x1b]8;;${url}\x07${url}\x1b]8;;\x07`;
 		this.contentContainer.addChild(new Text(theme.fg("accent", linkedUrl), 1, 0));
 
-		const clickHint = process.platform === "darwin" ? "Cmd+click to open" : "Ctrl+click to open";
+		const clickHint = process.platform === "darwin" ? t("Cmd+click to open") : t("Ctrl+click to open");
 		const hyperlink = `\x1b]8;;${url}\x07${clickHint}\x1b]8;;\x07`;
 		this.contentContainer.addChild(new Text(theme.fg("dim", hyperlink), 1, 0));
 
@@ -121,11 +121,13 @@ export class LoginDialogComponent extends Container implements Focusable {
 		const linkedUrl = `\x1b]8;;${info.verificationUri}\x07${info.verificationUri}\x1b]8;;\x07`;
 		this.contentContainer.addChild(new Text(theme.fg("accent", linkedUrl), 1, 0));
 
-		const clickHint = process.platform === "darwin" ? "Cmd+click to open" : "Ctrl+click to open";
+		const clickHint = process.platform === "darwin" ? t("Cmd+click to open") : t("Ctrl+click to open");
 		const hyperlink = `\x1b]8;;${info.verificationUri}\x07${clickHint}\x1b]8;;\x07`;
 		this.contentContainer.addChild(new Text(theme.fg("dim", hyperlink), 1, 0));
 		this.contentContainer.addChild(new Spacer(1));
-		this.contentContainer.addChild(new Text(theme.fg("warning", `Enter code: ${info.userCode}`), 1, 0));
+		this.contentContainer.addChild(
+			new Text(theme.fg("warning", t("Enter code: {code}", { code: info.userCode })), 1, 0),
+		);
 
 		this.tui.requestRender();
 	}
@@ -155,7 +157,9 @@ export class LoginDialogComponent extends Container implements Focusable {
 		this.contentContainer.addChild(new Spacer(1));
 		this.contentContainer.addChild(new Text(theme.fg("text", message), 1, 0));
 		if (placeholder) {
-			this.contentContainer.addChild(new Text(theme.fg("dim", `e.g., ${placeholder}`), 1, 0));
+			this.contentContainer.addChild(
+				new Text(theme.fg("dim", t("e.g., {example}", { example: placeholder })), 1, 0),
+			);
 		}
 		this.contentContainer.addChild(this.input);
 		this.contentContainer.addChild(

@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import { accessSync, constants, existsSync, readFileSync, realpathSync } from "fs";
 import { homedir } from "os";
 import { basename, dirname, join, resolve, sep, win32 } from "path";
@@ -198,8 +199,9 @@ function readCommandOutput(
 	});
 	if (result.status === 0) return result.stdout.trim() || undefined;
 	if (options.requireSuccess) {
-		const reason = result.error?.message || result.stderr.trim() || `exit code ${result.status ?? "unknown"}`;
-		throw new Error(`Failed to run ${[command, ...args].join(" ")}: ${reason}`);
+		const reason =
+			result.error?.message || result.stderr.trim() || t("exit code {code}", { code: result.status ?? "unknown" });
+		throw new Error(t("Failed to run {command}: {reason}", { command: [command, ...args].join(" "), reason }));
 	}
 	return undefined;
 }
@@ -334,23 +336,33 @@ export function getSelfUpdateUnavailableInstruction(
 	const method = detectInstallMethod();
 	const target = normalizeSelfUpdatePackageTarget(updatePackageTarget);
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/earendil-works/pi-mono/releases/latest`;
+		return t("Download from: {url}", { url: "https://github.com/earendil-works/pi-mono/releases/latest" });
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, target, npmCommand);
 	if (command) {
 		if (isManagedByGlobalPackageManager(method, packageName, npmCommand) && !isSelfUpdatePathWritable()) {
-			return `This installation is managed by a global ${method} install, but the install path is not writable. Update it yourself with: ${command.display}`;
+			return t(
+				"This installation is managed by a global {method} install, " +
+					"but the install path is not writable. Update it yourself with: {command}",
+				{ method, command: command.display },
+			);
 		}
-		return `This installation is not managed by a global ${method} install. Update it with the package manager, wrapper, or source checkout that provides it.`;
+		return t(
+			"This installation is not managed by a global {method} install. " +
+				"Update it with the package manager, wrapper, or source checkout that provides it.",
+			{ method },
+		);
 	}
-	return `Update ${target.installSpec} using the package manager, wrapper, or source checkout that provides this installation.`;
+	return t("Update {spec} using the package manager, wrapper, or source checkout that provides this installation.", {
+		spec: target.installSpec,
+	});
 }
 
 export function getUpdateInstruction(packageName: string): string {
 	const method = detectInstallMethod();
 	const command = getSelfUpdateCommandForMethod(method, packageName);
 	if (command) {
-		return `Run: ${command.display}`;
+		return t("Run: {command}", { command: command.display });
 	}
 	return getSelfUpdateUnavailableInstruction(packageName);
 }

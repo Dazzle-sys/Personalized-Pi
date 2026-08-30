@@ -1,4 +1,14 @@
-import { Box, type Component, Container, getCapabilities, Image, Spacer, Text, type TUI } from "@earendil-works/pi-tui";
+import {
+	Box,
+	type Component,
+	Container,
+	getCapabilities,
+	Image,
+	Spacer,
+	Text,
+	type TUI,
+	t,
+} from "@earendil-works/pi-tui";
 import type { ToolDefinition, ToolRenderContext } from "../../../core/extensions/types.ts";
 import { createAllToolDefinitions, type ToolName } from "../../../core/tools/index.ts";
 import { getTextOutput as getRenderedTextOutput } from "../../../core/tools/render-utils.ts";
@@ -150,7 +160,8 @@ export class ToolExecutionComponent extends Container {
 		const remaining = lines.length - displayLines.length;
 		let text = displayLines.map((line) => theme.fg("toolOutput", line)).join("\n");
 		if (remaining > 0) {
-			text += `${theme.fg("muted", `\n... (${remaining} more lines,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+			const moreLines = t("\n... ({count} more lines,", { count: remaining });
+			text += `${theme.fg("muted", moreLines)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", t(")"))}`;
 		}
 		return new Text(text, 0, 0);
 	}

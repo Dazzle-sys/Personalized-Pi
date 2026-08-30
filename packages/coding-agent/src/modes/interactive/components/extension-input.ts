@@ -2,7 +2,7 @@
  * Simple text input component for extensions.
  */
 
-import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI } from "@earendil-works/pi-tui";
+import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 import { CountdownTimer } from "./countdown-timer.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
@@ -55,7 +55,7 @@ export class ExtensionInputComponent extends Container implements Focusable {
 			this.countdown = new CountdownTimer(
 				opts.timeout,
 				opts.tui,
-				(s) => this.titleText.setText(theme.fg("accent", `${this.baseTitle} (${s}s)`)),
+				(s) => this.titleText.setText(theme.fg("accent", `${this.baseTitle}${t(" ({count}s)", { count: s })}`)),
 				() => this.onCancelCallback(),
 			);
 		}

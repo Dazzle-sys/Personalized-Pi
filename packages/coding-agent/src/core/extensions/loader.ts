@@ -14,6 +14,7 @@ import * as _bundledPiAiOauth from "@earendil-works/pi-ai/oauth";
 import * as _bundledPiAiProviders from "@earendil-works/pi-ai/providers/all";
 import type { KeyId } from "@earendil-works/pi-tui";
 import * as _bundledPiTui from "@earendil-works/pi-tui";
+import { t } from "@earendil-works/pi-tui";
 import { createJiti } from "jiti/static";
 // Static imports of packages that extensions may use.
 // These MUST be static so Bun bundles them into the compiled binary.
@@ -178,7 +179,9 @@ function useExtensionCacheCwd(cwd: string): ExtensionCacheToken {
  */
 export function createExtensionRuntime(): ExtensionRuntime {
 	const notInitialized = () => {
-		throw new Error("Extension runtime not initialized. Action methods cannot be called during extension loading.");
+		throw new Error(
+			t("Extension runtime not initialized. Action methods cannot be called during extension loading."),
+		);
 	};
 	const state: { staleMessage?: string } = {};
 	const eventBusUnsubscribers = new Set<() => void>();
@@ -201,7 +204,7 @@ export function createExtensionRuntime(): ExtensionRuntime {
 		// registerTool() is valid during extension load; refresh is only needed post-bind.
 		refreshTools: () => {},
 		getCommands: notInitialized,
-		setModel: () => Promise.reject(new Error("Extension runtime not initialized")),
+		setModel: () => Promise.reject(new Error(t("Extension runtime not initialized"))),
 		getThinkingLevel: notInitialized,
 		setThinkingLevel: notInitialized,
 		flagValues: new Map(),
@@ -212,7 +215,9 @@ export function createExtensionRuntime(): ExtensionRuntime {
 			if (state.staleMessage) return;
 			state.staleMessage =
 				message ??
-				"This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().";
+				t(
+					"This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+				);
 			for (const unsubscribe of eventBusUnsubscribers) unsubscribe();
 			eventBusUnsubscribers.clear();
 		},
@@ -263,7 +268,9 @@ function createExtensionAPI(
 	let state: "loading" | "active" | "failed" = "loading";
 	const assertActive = () => {
 		if (state === "failed") {
-			throw new Error(`Extension "${extension.path}" failed to load and its API is no longer active.`);
+			throw new Error(
+				t('Extension "{path}" failed to load and its API is no longer active.', { path: extension.path }),
+			);
 		}
 		runtime.assertActive();
 	};
@@ -322,7 +329,11 @@ function createExtensionAPI(
 			assertActive();
 			if (options.default !== undefined && typeof options.default !== options.type) {
 				throw new Error(
-					`Invalid default for flag "${name}": expected ${options.type}, got ${typeof options.default}`,
+					t('Invalid default for flag "{name}": expected {expected}, got {actual}', {
+						name,
+						expected: options.type,
+						actual: typeof options.default,
+					}),
 				);
 			}
 			extension.flags.set(name, { name, extensionPath: extension.path, ...options });
@@ -432,7 +443,7 @@ function createExtensionAPI(
 		registerProvider(providerOrName: Provider | string, config?: ProviderConfig) {
 			assertActive();
 			if (typeof providerOrName === "string") {
-				if (!config) throw new Error("Provider config is required when registering by name");
+				if (!config) throw new Error(t("Provider config is required when registering by name"));
 				applyRuntimeChange(() => runtime.registerProvider(providerOrName, config, extension.path));
 				return;
 			}
@@ -576,7 +587,10 @@ async function loadExtension(
 		const factory = await loadExtensionModule(resolvedPath, cacheToken);
 		time(`${extensionPath} module import`, "extensions");
 		if (!factory) {
-			return { extension: null, error: `Extension does not export a valid factory function: ${extensionPath}` };
+			return {
+				extension: null,
+				error: t("Extension does not export a valid factory function: {path}", { path: extensionPath }),
+			};
 		}
 
 		const extension = await initializeExtension(factory, extensionPath, resolvedPath, cwd, eventBus, runtime);
@@ -584,7 +598,7 @@ async function loadExtension(
 		return { extension, error: null };
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		return { extension: null, error: `Failed to load extension: ${message}` };
+		return { extension: null, error: t("Failed to load extension: {message}", { message }) };
 	}
 }
 

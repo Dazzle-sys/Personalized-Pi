@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import { APP_NAME, CONFIG_DIR_NAME } from "../config.ts";
 import { emitProjectTrustEvent } from "./extensions/runner.ts";
 import type { LoadExtensionsResult, ProjectTrustContext } from "./extensions/types.ts";
@@ -22,7 +23,10 @@ export interface ResolveProjectTrustedOptions {
 }
 
 function formatProjectTrustPrompt(cwd: string): string {
-	return `Trust project folder?\n${cwd}\n\nThis allows ${APP_NAME} to load ${CONFIG_DIR_NAME} settings and resources, install missing project packages, and execute project extensions.`;
+	return t(
+		"Trust project folder?\n{cwd}\n\nThis allows {app} to load {configDir} settings and resources, install missing project packages, and execute project extensions.",
+		{ cwd, app: APP_NAME, configDir: CONFIG_DIR_NAME },
+	);
 }
 
 async function selectProjectTrustOption(
@@ -58,7 +62,9 @@ export async function resolveProjectTrusted(options: ResolveProjectTrustedOption
 			options.projectTrustContext,
 		);
 		for (const error of errors) {
-			options.onExtensionError?.(`Extension "${error.extensionPath}" project_trust error: ${error.error}`);
+			options.onExtensionError?.(
+				t('Extension "{path}" project_trust error: {error}', { path: error.extensionPath, error: error.error }),
+			);
 		}
 		if (result) {
 			const trusted = result.trusted === "yes";

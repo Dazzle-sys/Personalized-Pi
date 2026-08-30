@@ -9,6 +9,7 @@ import type { AgentMessage, StreamFn, ThinkingLevel } from "@earendil-works/pi-a
 import { contentText, type RetryCallbacks, type RetryPolicy, retryAssistantCall, uuidv7 } from "@earendil-works/pi-ai";
 import type { AssistantMessage, Context, Model, SimpleStreamOptions, Usage } from "@earendil-works/pi-ai/compat";
 import { completeSimple } from "@earendil-works/pi-ai/compat";
+import { t } from "@earendil-works/pi-tui";
 import { convertToLlm } from "../messages.ts";
 import {
 	buildSessionContext,
@@ -544,7 +545,7 @@ ${UPDATE_SUMMARIZATION_INSTRUCTIONS}`;
  */
 export function getSummarizationFailure(response: AssistantMessage, label: string): string | undefined {
 	if (response.stopReason === "error") {
-		return `${label} failed: ${response.errorMessage || "Unknown error"}`;
+		return `${label} failed: ${response.errorMessage || t("Unknown error")}`;
 	}
 	if (response.stopReason === "length") {
 		return `${label} failed: generation hit the token cap and the summary is incomplete`;
@@ -712,7 +713,7 @@ export async function generateSummaryWithUsage(
 		callbacks,
 	);
 
-	const failure = getSummarizationFailure(response, "Summarization");
+	const failure = getSummarizationFailure(response, t("Summarization"));
 	if (failure) {
 		throw new Error(failure);
 	}
@@ -997,7 +998,7 @@ async function generateTurnPrefixSummary(
 		callbacks,
 	);
 
-	const failure = getSummarizationFailure(response, "Turn prefix summarization");
+	const failure = getSummarizationFailure(response, t("Turn prefix summarization"));
 	if (failure) {
 		throw new Error(failure);
 	}

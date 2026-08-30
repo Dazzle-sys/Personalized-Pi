@@ -5,6 +5,7 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { ImageContent, Model, Provider, ProviderHeaders } from "@earendil-works/pi-ai";
 import type { KeyId } from "@earendil-works/pi-tui";
+import { t } from "@earendil-works/pi-tui";
 import { type Theme, theme } from "../../modes/interactive/theme/theme.ts";
 import type { ResourceDiagnostic } from "../diagnostics.ts";
 import type { KeybindingsConfig } from "../keybindings.ts";
@@ -560,7 +561,10 @@ export class ExtensionRunner {
 				const builtInKeybinding = builtinKeybindings[normalizedKey];
 				if (builtInKeybinding?.restrictOverride === true) {
 					addDiagnostic(
-						`Extension shortcut '${key}' from ${shortcut.extensionPath} conflicts with built-in shortcut. Skipping.`,
+						t("Extension shortcut '{key}' from {path} conflicts with built-in shortcut. Skipping.", {
+							key,
+							path: shortcut.extensionPath,
+						}),
 						shortcut.extensionPath,
 					);
 					continue;
@@ -568,7 +572,10 @@ export class ExtensionRunner {
 
 				if (builtInKeybinding?.restrictOverride === false) {
 					addDiagnostic(
-						`Extension shortcut conflict: '${key}' is built-in shortcut for ${builtInKeybinding.keybinding} and ${shortcut.extensionPath}. Using ${shortcut.extensionPath}.`,
+						t(
+							"Extension shortcut conflict: '{key}' is built-in shortcut for {builtin} and {path}. Using {path}.",
+							{ key, builtin: builtInKeybinding.keybinding, path: shortcut.extensionPath },
+						),
 						shortcut.extensionPath,
 					);
 				}
@@ -576,7 +583,11 @@ export class ExtensionRunner {
 				const existingExtensionShortcut = extensionShortcuts.get(normalizedKey);
 				if (existingExtensionShortcut) {
 					addDiagnostic(
-						`Extension shortcut conflict: '${key}' registered by both ${existingExtensionShortcut.extensionPath} and ${shortcut.extensionPath}. Using ${shortcut.extensionPath}.`,
+						t("Extension shortcut conflict: '{key}' registered by both {existing} and {path}. Using {path}.", {
+							key,
+							existing: existingExtensionShortcut.extensionPath,
+							path: shortcut.extensionPath,
+						}),
 						shortcut.extensionPath,
 					);
 				}
@@ -591,7 +602,9 @@ export class ExtensionRunner {
 	}
 
 	invalidate(
-		message = "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+		message = t(
+			"This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+		),
 	): void {
 		if (!this.staleMessage) {
 			this.staleMessage = message;
@@ -901,7 +914,7 @@ export class ExtensionRunner {
 						this.emitError({
 							extensionPath: ext.path,
 							event: "message_end",
-							error: "message_end handlers must return a message with the same role",
+							error: t("message_end handlers must return a message with the same role"),
 						});
 						continue;
 					}

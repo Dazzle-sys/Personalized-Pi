@@ -3,7 +3,7 @@
  * Displays a list of string options with keyboard navigation.
  */
 
-import { Container, getKeybindings, Spacer, Text, type TUI } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 import { CountdownTimer } from "./countdown-timer.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
@@ -52,7 +52,10 @@ export class ExtensionSelectorComponent extends Container {
 			this.countdown = new CountdownTimer(
 				opts.timeout,
 				opts.tui,
-				(s) => this.titleText.setText(theme.fg("accent", theme.bold(`${this.baseTitle} (${s}s)`))),
+				(s) =>
+					this.titleText.setText(
+						theme.fg("accent", theme.bold(`${this.baseTitle}${t(" ({count}s)", { count: s })}`)),
+					),
 				() => this.onCancelCallback(),
 			);
 		}

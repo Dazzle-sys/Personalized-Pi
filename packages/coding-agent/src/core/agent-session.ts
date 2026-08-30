@@ -47,6 +47,7 @@ import {
 	resetApiProviders,
 	streamSimple,
 } from "@earendil-works/pi-ai/compat";
+import { t } from "@earendil-works/pi-tui";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { sleep } from "../utils/sleep.ts";
@@ -443,9 +444,10 @@ export class AgentSession {
 		const isOAuth = this._modelRuntime.isUsingOAuth(model.provider);
 		if (isOAuth) {
 			throw new Error(
-				`Authentication failed for "${model.provider}". ` +
-					`Credentials may have expired or network is unavailable. ` +
-					`Run '/login ${model.provider}' to re-authenticate.`,
+				t(
+					"Authentication failed for \"{provider}\". Credentials may have expired or network is unavailable. Run '/login {provider}' to re-authenticate.",
+					{ provider: model.provider },
+				),
 			);
 		}
 		throw new Error(formatNoApiKeyFoundMessage(model.provider));
@@ -502,6 +504,7 @@ export class AgentSession {
 				if (err instanceof Error) {
 					throw err;
 				}
+				// 错误信息会作为 tool result 进入模型上下文，保持英文
 				throw new Error(`Extension failed, blocking execution: ${String(err)}`);
 			}
 		};
@@ -891,7 +894,9 @@ export class AgentSession {
 		}
 
 		this._extensionRunner.invalidate(
-			"This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+			t(
+				"This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+			),
 		);
 		this._disconnectFromAgent();
 		this._eventListeners = [];
@@ -1176,7 +1181,7 @@ export class AgentSession {
 
 			if (this._compactionAbortController !== undefined) {
 				throw new Error(
-					"Cannot submit a prompt while compaction is in progress. Wait for compaction to finish and retry.",
+					t("Cannot submit a prompt while compaction is in progress. Wait for compaction to finish and retry."),
 				);
 			}
 
@@ -1211,7 +1216,9 @@ export class AgentSession {
 			if (this.isStreaming) {
 				if (!options?.streamingBehavior) {
 					throw new Error(
-						"Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.",
+						t(
+							"Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.",
+						),
 					);
 				}
 				if (options.streamingBehavior === "followUp") {
@@ -1239,9 +1246,10 @@ export class AgentSession {
 				const isOAuth = this._modelRuntime.isUsingOAuth(this.model.provider);
 				if (isOAuth) {
 					throw new Error(
-						`Authentication failed for "${this.model.provider}". ` +
-							`Credentials may have expired or network is unavailable. ` +
-							`Run '/login ${this.model.provider}' to re-authenticate.`,
+						t(
+							"Authentication failed for \"{provider}\". Credentials may have expired or network is unavailable. Run '/login {provider}' to re-authenticate.",
+							{ provider: this.model.provider },
+						),
 					);
 				}
 				throw new Error(formatNoApiKeyFoundMessage(this.model.provider));
@@ -1462,7 +1470,10 @@ export class AgentSession {
 
 		if (command) {
 			throw new Error(
-				`Extension command "/${commandName}" cannot be queued. Use prompt() or execute the command when not streaming.`,
+				t(
+					'Extension command "/{command}" cannot be queued. Use prompt() or execute the command when not streaming.',
+					{ command: commandName },
+				),
 			);
 		}
 	}
@@ -1656,7 +1667,7 @@ export class AgentSession {
 	 */
 	async setModel(model: Model<any>, options: ModelMutationOptions = {}): Promise<void> {
 		if (!(await this._modelRuntime.checkAuth(model.provider))) {
-			throw new Error(`No API key for ${model.provider}/${model.id}`);
+			throw new Error(t("No API key for {model}", { model: `${model.provider}/${model.id}` }));
 		}
 
 		const previousModel = this.model;
@@ -1958,9 +1969,9 @@ export class AgentSession {
 				// Check why we can't compact
 				const lastEntry = pathEntries[pathEntries.length - 1];
 				if (lastEntry?.type === "compaction") {
-					throw new Error("Already compacted");
+					throw new Error(t("Already compacted"));
 				}
-				throw new Error("Nothing to compact (session too small)");
+				throw new Error(t("Nothing to compact (session too small)"));
 			}
 
 			let extensionCompaction: CompactionResult | undefined;
@@ -1977,6 +1988,7 @@ export class AgentSession {
 				})) as SessionBeforeCompactResult | undefined;
 
 				if (result?.cancel) {
+					// 哨兵值，用于 catch 中比较，不参与翻译
 					throw new Error("Compaction cancelled");
 				}
 
@@ -2019,6 +2031,7 @@ export class AgentSession {
 			}
 
 			if (this._compactionAbortController.signal.aborted) {
+				// 哨兵值，用于 catch 中比较，不参与翻译
 				throw new Error("Compaction cancelled");
 			}
 
@@ -2064,7 +2077,7 @@ export class AgentSession {
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			const aborted = message === "Compaction cancelled" || (error instanceof Error && error.name === "AbortError");
-			const errorMessage = aborted ? undefined : `Compaction failed: ${message}`;
+			const errorMessage = aborted ? undefined : t("Compaction failed: {message}", { message });
 			this._compactionAbortController = undefined;
 			this._emit({
 				type: "compaction_end",
@@ -2165,8 +2178,10 @@ export class AgentSession {
 
 			if (this._overflowRecoveryAttempted) {
 				const errorMessage = contextOverflow
-					? "Context overflow recovery failed after one compact-and-retry attempt. Try reducing context or switching to a larger-context model."
-					: "Truncated response recovery failed after one compact-and-retry attempt.";
+					? t(
+							"Context overflow recovery failed after one compact-and-retry attempt. Try reducing context or switching to a larger-context model.",
+						)
+					: t("Truncated response recovery failed after one compact-and-retry attempt.");
 				this._emit({
 					type: "compaction_end",
 					reason: "overflow",
@@ -2395,12 +2410,12 @@ export class AgentSession {
 			// Continue once so queued messages are delivered.
 			return this.agent.hasQueuedMessages();
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "compaction failed";
+			const errorMessage = error instanceof Error ? error.message : t("compaction failed");
 			if (started) {
 				const formattedErrorMessage =
 					reason === "overflow"
-						? `Context overflow recovery failed: ${errorMessage}`
-						: `Auto-compaction failed: ${errorMessage}`;
+						? t("Context overflow recovery failed: {message}", { message: errorMessage })
+						: t("Auto-compaction failed: {message}", { message: errorMessage });
 				this._emit({
 					type: "compaction_end",
 					reason,
@@ -2905,7 +2920,7 @@ export class AgentSession {
 			attempt: this._retryAttempt,
 			maxAttempts: settings.maxRetries,
 			delayMs,
-			errorMessage: message.errorMessage || "Unknown error",
+			errorMessage: message.errorMessage || t("Unknown error"),
 		});
 
 		// Remove error message from agent state (keep in session for history)
@@ -2926,7 +2941,7 @@ export class AgentSession {
 				type: "auto_retry_end",
 				success: false,
 				attempt,
-				finalError: "Retry cancelled",
+				finalError: t("Retry cancelled"),
 			});
 			return false;
 		} finally {
@@ -3108,7 +3123,7 @@ export class AgentSession {
 		options: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string } = {},
 	): Promise<{ editorText?: string; cancelled: boolean; aborted?: boolean; summaryEntry?: BranchSummaryEntry }> {
 		if (this.isStreaming) {
-			throw new Error("Wait for the current response to finish before navigating the session tree.");
+			throw new Error(t("Wait for the current response to finish before navigating the session tree."));
 		}
 
 		const oldLeafId = this.sessionManager.getLeafId();
@@ -3120,12 +3135,12 @@ export class AgentSession {
 
 		// Model required for summarization
 		if (options.summarize && !this.model) {
-			throw new Error("No model available for summarization");
+			throw new Error(t("No model available for summarization"));
 		}
 
 		const targetEntry = this.sessionManager.getEntry(targetId);
 		if (!targetEntry) {
-			throw new Error(`Entry ${targetId} not found`);
+			throw new Error(t("Entry {entryId} not found", { entryId: targetId }));
 		}
 
 		// Collect entries to summarize (from old leaf to common ancestor)

@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import { type Args, parseArgs } from "../args.ts";
 import { type AuthInput, parseAuthInput } from "./auth.ts";
 import { type CommandOption, type ParsedCommandInput, stringOption, valueOption } from "./command.ts";
@@ -11,7 +12,7 @@ export function transportOption(name: "--listen" | "--connect"): CommandOption<T
 		const result = parseTransportAddress(value, name);
 		return result.address
 			? { ok: true, value: result.address }
-			: { ok: false, error: result.error ?? `Invalid ${name} address "${value}"` };
+			: { ok: false, error: result.error ?? t('Invalid {option} address "{value}"', { option: name, value }) };
 	});
 }
 
@@ -34,5 +35,5 @@ export function parseLegacyOptions(input: ParsedCommandInput): { options: Args; 
 
 export function unsupportedLegacyOptions(command: string, input: ParsedCommandInput): string[] {
 	if (input.remainingArgs.length === 0) return [];
-	return [`The experimental ${command} command does not support existing CLI options yet`];
+	return [t("The experimental {command} command does not support existing CLI options yet", { command })];
 }

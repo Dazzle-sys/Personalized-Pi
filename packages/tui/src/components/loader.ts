@@ -1,3 +1,4 @@
+import { t } from "../i18n/i18n.ts";
 import type { TUI } from "../tui.ts";
 import { Text } from "./text.ts";
 
@@ -23,13 +24,13 @@ export class Loader extends Text {
 	private renderIndicatorVerbatim = false;
 	private spinnerColorFn: (str: string) => string;
 	private messageColorFn: (str: string) => string;
-	private message: string = "Loading...";
+	private message: string = t("Loading...");
 
 	constructor(
 		ui: TUI,
 		spinnerColorFn: (str: string) => string,
 		messageColorFn: (str: string) => string,
-		message: string = "Loading...",
+		message: string = t("Loading..."),
 		indicator?: LoaderIndicatorOptions,
 	) {
 		super("", 1, 0);

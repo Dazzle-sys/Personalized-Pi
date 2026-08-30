@@ -1,3 +1,4 @@
+import { t } from "@earendil-works/pi-tui";
 import { type SpawnSyncReturns, spawnSync } from "child_process";
 import { chmodSync, createWriteStream, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "fs";
 import { arch, platform } from "os";
@@ -114,7 +115,7 @@ async function getLatestVersion(repo: string): Promise<string> {
 	);
 
 	if (!response.ok) {
-		throw new Error(`GitHub API error: ${response.status}`);
+		throw new Error(t("GitHub API error: {status}", { status: response.status }));
 	}
 
 	const data = (await response.json()) as { tag_name: string };
@@ -126,11 +127,11 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 	const response = await fetchWithRetry(url, undefined, { timeoutMs: DOWNLOAD_TIMEOUT_MS });
 
 	if (!response.ok) {
-		throw new Error(`Failed to download: ${response.status}`);
+		throw new Error(t("Failed to download: {status}", { status: response.status }));
 	}
 
 	if (!response.body) {
-		throw new Error("No response body");
+		throw new Error(t("No response body"));
 	}
 
 	const fileStream = createWriteStream(dest);
@@ -171,7 +172,7 @@ function formatSpawnFailure(result: SpawnSyncReturns<Buffer>): string {
 	if (stdout) {
 		return stdout;
 	}
-	return `exit status ${result.status ?? "unknown"}`;
+	return t("exit status {status}", { status: result.status ?? "unknown" });
 }
 
 function runExtractionCommand(command: string, args: string[]): string | null {
@@ -185,7 +186,7 @@ function runExtractionCommand(command: string, args: string[]): string | null {
 function extractTarGzArchive(archivePath: string, extractDir: string, assetName: string): void {
 	const failure = runExtractionCommand("tar", ["xzf", archivePath, "-C", extractDir]);
 	if (failure) {
-		throw new Error(`Failed to extract ${assetName}: ${failure}`);
+		throw new Error(t("Failed to extract {asset}: {failure}", { asset: assetName, failure }));
 	}
 }
 
@@ -235,7 +236,7 @@ function extractZipArchive(archivePath: string, extractDir: string, assetName: s
 		failures.push(tarFailure);
 	}
 
-	throw new Error(`Failed to extract ${assetName}: ${failures.join("; ")}`);
+	throw new Error(t("Failed to extract {asset}: {failure}", { asset: assetName, failure: failures.join("; ") }));
 }
 
 // Download and install a tool
@@ -255,7 +256,7 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 	// Get asset name for this platform
 	const assetName = config.getAssetName(version, plat, architecture);
 	if (!assetName) {
-		throw new Error(`Unsupported platform: ${plat}/${architecture}`);
+		throw new Error(t("Unsupported platform: {platform}", { platform: `${plat}/${architecture}` }));
 	}
 
 	// Create tools directory
@@ -283,7 +284,7 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 		} else if (assetName.endsWith(".zip")) {
 			extractZipArchive(archivePath, extractDir, assetName);
 		} else {
-			throw new Error(`Unsupported archive format: ${assetName}`);
+			throw new Error(t("Unsupported archive format: {asset}", { asset: assetName }));
 		}
 
 		// Find the binary in extracted files. Some archives contain files directly
@@ -300,7 +301,12 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 		if (extractedBinary) {
 			renameSync(extractedBinary, binaryPath);
 		} else {
-			throw new Error(`Binary not found in archive: expected ${binaryFileName} under ${extractDir}`);
+			throw new Error(
+				t("Binary not found in archive: expected {binary} under {dir}", {
+					binary: binaryFileName,
+					dir: extractDir,
+				}),
+			);
 		}
 
 		// Make executable (Unix only)
@@ -345,7 +351,10 @@ export async function ensureTool(
 	if (!config) return undefined;
 
 	if (isOfflineModeEnabled()) {
-		onStatus?.({ type: "warning", message: `${config.name} not found. Offline mode enabled, skipping download.` });
+		onStatus?.({
+			type: "warning",
+			message: t("{name} not found. Offline mode enabled, skipping download.", { name: config.name }),
+		});
 		return undefined;
 	}
 
@@ -353,21 +362,27 @@ export async function ensureTool(
 	// Users must install via pkg.
 	if (platform() === "android") {
 		const pkgName = TERMUX_PACKAGES[tool] ?? tool;
-		onStatus?.({ type: "warning", message: `${config.name} not found. Install with: pkg install ${pkgName}` });
+		onStatus?.({
+			type: "warning",
+			message: t("{name} not found. Install with: pkg install {package}", { name: config.name, package: pkgName }),
+		});
 		return undefined;
 	}
 
 	// Tool not found - download it
-	onStatus?.({ type: "info", message: `${config.name} not found. Downloading...` });
+	onStatus?.({ type: "info", message: t("{name} not found. Downloading...", { name: config.name }) });
 
 	try {
 		const path = await downloadTool(tool);
-		onStatus?.({ type: "info", message: `${config.name} installed to ${path}` });
+		onStatus?.({ type: "info", message: t("{name} installed to {path}", { name: config.name, path }) });
 		return path;
 	} catch (e) {
 		onStatus?.({
 			type: "warning",
-			message: `Failed to download ${config.name}: ${e instanceof Error ? e.message : e}`,
+			message: t("Failed to download {name}: {error}", {
+				name: config.name,
+				error: e instanceof Error ? e.message : String(e),
+			}),
 		});
 		return undefined;
 	}

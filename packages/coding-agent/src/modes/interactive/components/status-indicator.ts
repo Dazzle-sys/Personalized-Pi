@@ -1,4 +1,4 @@
-import { type Component, Loader, type TUI } from "@earendil-works/pi-tui";
+import { type Component, Loader, type TUI, t } from "@earendil-works/pi-tui";
 import type { WorkingIndicatorOptions } from "../../../core/extensions/index.ts";
 import { theme } from "../theme/theme.ts";
 import { CountdownTimer } from "./countdown-timer.ts";
@@ -44,7 +44,12 @@ export class RetryStatusIndicator extends StatusIndicator {
 
 	constructor(ui: TUI, attempt: number, maxAttempts: number, delayMs: number) {
 		const retryMessage = (seconds: number) =>
-			`Retrying (${attempt}/${maxAttempts}) in ${seconds}s... (${keyText("app.interrupt")} to cancel)`;
+			t("Retrying ({attempt}/{maxAttempts}) in {seconds}s... ({keys} to cancel)", {
+				attempt,
+				maxAttempts,
+				seconds,
+				keys: keyText("app.interrupt"),
+			});
 		super(
 			"retry",
 			ui,
@@ -75,11 +80,11 @@ export type CompactionStatusReason = "manual" | "threshold" | "overflow";
 
 export class CompactionStatusIndicator extends StatusIndicator {
 	constructor(ui: TUI, reason: CompactionStatusReason) {
-		const cancelHint = `(${keyText("app.interrupt")} to cancel)`;
+		const keys = keyText("app.interrupt");
 		const label =
 			reason === "manual"
-				? `Compacting context... ${cancelHint}`
-				: `${reason === "overflow" ? "Context overflow detected, " : ""}Auto-compacting... ${cancelHint}`;
+				? t("Compacting context... ({keys} to cancel)", { keys })
+				: `${reason === "overflow" ? t("Context overflow detected, ") : ""}${t("Auto-compacting... ({keys} to cancel)", { keys })}`;
 		super(
 			"compaction",
 			ui,
@@ -97,11 +102,10 @@ export class BranchSummaryStatusIndicator extends StatusIndicator {
 			ui,
 			(spinner) => theme.fg("accent", spinner),
 			(text) => theme.fg("muted", text),
-			`Summarizing branch... (${keyText("app.interrupt")} to cancel)`,
+			t("Summarizing branch... ({keys} to cancel)", { keys: keyText("app.interrupt") }),
 		);
 	}
 }
-
 export class IdleStatus implements Component {
 	invalidate(): void {
 		// No cached state to invalidate.

@@ -1,4 +1,5 @@
 import type { Api, CredentialInfo, Model } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import { resolveCliModel } from "../core/model-resolver.ts";
 import type { ModelRuntime } from "../core/model-runtime.ts";
 import type { Args } from "./args.ts";
@@ -29,12 +30,16 @@ export async function resolveCredentialForPrint(
 	if (cliProvider) {
 		const provider = modelRuntime.getProvider(cliProvider);
 		if (!provider) {
-			throw new AuthCommandError(`Unknown provider "${cliProvider}". Use --list-models to see available providers.`);
+			throw new AuthCommandError(
+				t('Unknown provider "{provider}". Use --list-models to see available providers.', {
+					provider: cliProvider,
+				}),
+			);
 		}
 		if (cliModel) {
 			const resolved = resolveCliModel({ cliProvider: provider.id, cliModel, modelRuntime });
 			if (resolved.error || !resolved.model) {
-				throw new AuthCommandError(resolved.error ?? "Unable to resolve the requested provider/model");
+				throw new AuthCommandError(resolved.error ?? t("Unable to resolve the requested provider/model"));
 			}
 			providers.push({ id: provider.id, model: resolved.model });
 		} else {
@@ -49,7 +54,9 @@ export async function resolveCredentialForPrint(
 			}
 		}
 		if (providers.length === 0) {
-			throw new AuthCommandError(`Model "${cliModel}" not found. Use --list-models to see available models.`);
+			throw new AuthCommandError(
+				t('Model "{model}" not found. Use --list-models to see available models.', { model: cliModel }),
+			);
 		}
 	}
 
@@ -74,14 +81,21 @@ export async function resolveCredentialForPrint(
 		const providerId = providers[0]?.id;
 		const type = providerId ? credentialTypes.get(providerId) : undefined;
 		if (cliProvider && kind === "api_key" && type === "oauth") {
-			throw new AuthCommandError(`Provider "${providerId}" is configured with OAuth, not an API key`);
+			throw new AuthCommandError(
+				t('Provider "{provider}" is configured with OAuth, not an API key', { provider: providerId }),
+			);
 		}
 		if (cliProvider && kind === "bearer_token" && type !== "oauth") {
-			throw new AuthCommandError(`Provider "${providerId}" is not configured with an OAuth bearer token`);
+			throw new AuthCommandError(
+				t('Provider "{provider}" is not configured with an OAuth bearer token', { provider: providerId }),
+			);
 		}
-		throw new AuthCommandError(`No usable ${kind === "api_key" ? "API key" : "OAuth bearer token"} is configured`);
+		const credentialType = kind === "api_key" ? t("API key") : t("OAuth bearer token");
+		throw new AuthCommandError(t("No usable {credential} is configured", { credential: credentialType }));
 	}
 	throw new AuthCommandError(
-		`Multiple configured providers matched (${credentials.map(({ providerId }) => providerId).join(", ")}). Specify --provider.`,
+		t("Multiple configured providers matched ({providers}). Specify --provider.", {
+			providers: credentials.map(({ providerId }) => providerId).join(", "),
+		}),
 	);
 }

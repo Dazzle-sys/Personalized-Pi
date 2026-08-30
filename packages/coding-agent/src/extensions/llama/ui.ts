@@ -9,6 +9,7 @@ import {
 	Spacer,
 	Text,
 	type TUI,
+	t,
 	truncateToWidth,
 	visibleWidth,
 } from "@earendil-works/pi-tui";
@@ -44,10 +45,10 @@ function contextLabel(model: LlamaModelInfo): string | undefined {
 function modelDescription(model: LlamaModelInfo): string {
 	const details: string[] = [];
 	const loaded = model.status.value === "loaded" || model.status.value === "sleeping";
-	if (loaded) details.push("loaded");
+	if (loaded) details.push(t("loaded"));
 	else if (model.status.value !== "unloaded") details.push(model.status.value);
 	const context = loaded ? contextLabel(model) : undefined;
-	if (context) details.push(`${context} context`);
+	if (context) details.push(t("{context} context", { context }));
 	return details.join(" · ");
 }
 
@@ -127,7 +128,7 @@ class HuggingFaceSearch extends Container implements Focusable {
 		this.search = search;
 		this.cache = cache;
 		this.onSelectModel = onSelectModel;
-		this.addChild(new Text(theme.fg("dim", "Model name or owner/repository[:quant]"), 1, 0));
+		this.addChild(new Text(theme.fg("dim", t("Model name or owner/repository[:quant]")), 1, 0));
 		this.addChild(this.input);
 		this.addChild(new Spacer(1));
 		this.addChild(this.resultsContainer);
@@ -155,7 +156,7 @@ class HuggingFaceSearch extends Container implements Focusable {
 			const model = this.filteredResults[index];
 			if (!model) continue;
 			const prefix = index === this.selectedIndex ? "→ " : "  ";
-			const details = `${compactCount(model.downloads)} downloads`;
+			const details = `${compactCount(model.downloads)} ${t("downloads")}`;
 			this.resultsContainer.addChild(
 				new Text(
 					index === this.selectedIndex
@@ -172,9 +173,9 @@ class HuggingFaceSearch extends Container implements Focusable {
 			);
 		}
 		if (this.filteredResults.length === 0) {
-			this.resultsContainer.addChild(new Text(this.theme.fg("dim", `  ${this.status}`), 0, 0));
+			this.resultsContainer.addChild(new Text(this.theme.fg("dim", `  ${t(this.status)}`), 0, 0));
 		} else if (this.status === "Searching Hugging Face…") {
-			this.resultsContainer.addChild(new Text(this.theme.fg("dim", `  ${this.status}`), 0, 0));
+			this.resultsContainer.addChild(new Text(this.theme.fg("dim", `  ${t(this.status)}`), 0, 0));
 		}
 		this.tui.requestRender();
 	}
@@ -290,7 +291,7 @@ class LlamaView implements LlamaUi, Focusable {
 		this.tui = tui;
 		this.theme = theme;
 		this.keybindings = keybindings;
-		this.content = frame(theme, "llama.cpp models", [new Text(theme.fg("muted", "Loading…"), 1, 1)]);
+		this.content = frame(theme, t("llama.cpp models"), [new Text(theme.fg("muted", t("Loading…")), 1, 1)]);
 	}
 
 	get focused(): boolean {
@@ -330,7 +331,12 @@ class LlamaView implements LlamaUi, Focusable {
 				label: model.id,
 				description: modelDescription(model),
 			})),
-			{ value: DOWNLOAD_VALUE, label: "Download model…", description: "Hugging Face owner/repository[:quant]" },
+			{
+				value: DOWNLOAD_VALUE,
+				label: t("Download model…"),
+				// 格式说明，属语法模板，不翻译
+				description: "Hugging Face owner/repository[:quant]",
+			},
 		];
 		return new Promise((resolve) => {
 			const list = new SelectList(items, Math.min(items.length, 12), selectTheme(this.theme), {
@@ -348,7 +354,7 @@ class LlamaView implements LlamaUi, Focusable {
 			this.setContent(
 				frame(
 					this.theme,
-					"llama.cpp models",
+					t("llama.cpp models"),
 					[new Text(this.theme.fg("dim", serverUrl), 1, 0), new Spacer(1), list],
 					`${keyHint("tui.select.confirm", "load/unload/download")} • ${keyHint("tui.select.cancel", "close")}`,
 				),
@@ -360,7 +366,7 @@ class LlamaView implements LlamaUi, Focusable {
 	select(title: string, options: string[]): Promise<string | undefined> {
 		return new Promise((resolve) => {
 			const list = new SelectList(
-				options.map((option) => ({ value: option, label: option })),
+				options.map((option) => ({ value: option, label: t(option) })),
 				Math.min(options.length, 12),
 				selectTheme(this.theme),
 			);
@@ -383,7 +389,7 @@ class LlamaView implements LlamaUi, Focusable {
 	}
 
 	async connectionError(serverUrl: string, message: string): Promise<"retry" | "close"> {
-		const choice = await this.select(`llama.cpp unavailable\n${serverUrl}\n\n${message}`, ["Retry", "Close"]);
+		const choice = await this.select(`${t("llama.cpp unavailable")}\n${serverUrl}\n\n${message}`, ["Retry", "Close"]);
 		return choice === "Retry" ? "retry" : "close";
 	}
 
@@ -402,7 +408,7 @@ class LlamaView implements LlamaUi, Focusable {
 			this.setContent(
 				frame(
 					this.theme,
-					"Download model",
+					t("Download model"),
 					[new Spacer(1), component],
 					`${keyHint("tui.select.confirm", "select")} • ${keyHint("tui.select.cancel", "back")}`,
 				),
@@ -530,7 +536,7 @@ export async function runWithProgress<T>(
 		try {
 			await options.cancel();
 		} finally {
-			controller.abort(new Error("Cancelled"));
+			controller.abort(new Error(t("Cancelled")));
 		}
 		await settled;
 		return { cancelled: true };

@@ -1,4 +1,5 @@
 import type { AutocompleteProvider, AutocompleteSuggestions } from "../autocomplete.ts";
+import { getLocale, t } from "../i18n/i18n.ts";
 import { getKeybindings } from "../keybindings.ts";
 import { decodePrintableKey, matchesKey } from "../keys.ts";
 import { KillRing } from "../kill-ring.ts";
@@ -18,15 +19,48 @@ import { SelectList, type SelectListLayoutOptions, type SelectListTheme } from "
 const graphemeSegmenter = getGraphemeSegmenter();
 const wordSegmenter = getWordSegmenter();
 
-/** Regex matching paste markers like `[paste #1 +123 lines]` or `[paste #2 1234 chars]`. */
-const PASTE_MARKER_REGEX = /\[paste #(\d+)( (\+\d+ lines|\d+ chars))?\]/g;
+/**
+ * Paste markers are rendered with translated words, so the regexes are derived
+ * from the active locale and rebuilt when the locale changes.
+ */
+interface PasteMarkerPatterns {
+	/** Global regex matching any paste marker; capture 1 = id, capture 2 = suffix. */
+	any: RegExp;
+	/** Anchored regex matching a complete single marker. */
+	single: RegExp;
+	/** Literal probe for fast "text contains a marker" checks. */
+	probe: string;
+}
 
-/** Non-global version for single-segment testing. */
-const PASTE_MARKER_SINGLE = /^\[paste #(\d+)( (\+\d+ lines|\d+ chars))?\]$/;
+let pasteMarkerPatterns: { locale: string; patterns: PasteMarkerPatterns } | undefined;
+
+function escapeRegExp(text: string): string {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getPasteMarkerPatterns(): PasteMarkerPatterns {
+	const locale = getLocale();
+	if (!pasteMarkerPatterns || pasteMarkerPatterns.locale !== locale) {
+		const source = `\\[${escapeRegExp(t("paste"))} #(\\d+)( (\\+\\d+ ${escapeRegExp(t("lines"))}|\\d+ ${escapeRegExp(t("chars"))}))?\\]`;
+		pasteMarkerPatterns = {
+			locale,
+			patterns: {
+				any: new RegExp(source, "g"),
+				single: new RegExp(`^${source}$`),
+				probe: `[${t("paste")} #`,
+			},
+		};
+	}
+	return pasteMarkerPatterns.patterns;
+}
+
+function formatPasteMarker(id: number, suffix: string): string {
+	return `[${t("paste")} #${id}${suffix}]`;
+}
 
 /** Check if a segment is a paste marker (i.e. was merged by segmentWithMarkers). */
 function isPasteMarker(segment: string): boolean {
-	return segment.length >= 10 && PASTE_MARKER_SINGLE.test(segment);
+	return segment.length >= 6 && getPasteMarkerPatterns().single.test(segment);
 }
 
 /**
@@ -42,13 +76,14 @@ function segmentWithMarkers(
 	validIds: Set<number>,
 ): Iterable<Intl.SegmentData> {
 	// Fast path: no paste markers in the text or no valid IDs.
-	if (validIds.size === 0 || !text.includes("[paste #")) {
+	const { any, probe } = getPasteMarkerPatterns();
+	if (validIds.size === 0 || !text.includes(probe)) {
 		return baseSegmenter.segment(text);
 	}
 
 	// Find all marker spans with valid IDs.
 	const markers: Array<{ start: number; end: number }> = [];
-	for (const m of text.matchAll(PASTE_MARKER_REGEX)) {
+	for (const m of text.matchAll(any)) {
 		const id = Number.parseInt(m[1]!, 10);
 		if (!validIds.has(id)) continue;
 		markers.push({ start: m.index, end: m.index + m[0].length });
@@ -258,7 +293,7 @@ function buildDebouncePattern(triggerCharacters: string[]): RegExp {
 
 function createScrollBorder(direction: "↑" | "↓", hiddenLineCount: number, width: number): string {
 	const availableWidth = Math.max(0, width);
-	const indicator = `─── ${direction} ${hiddenLineCount} more `;
+	const indicator = t("─── {direction} {count} more ", { direction, count: hiddenLineCount });
 	const remaining = availableWidth - visibleWidth(indicator);
 	if (remaining >= 0) return indicator + "─".repeat(remaining);
 
@@ -995,12 +1030,11 @@ export class Editor implements Component, Focusable {
 	}
 
 	private expandPasteMarkers(text: string): string {
-		let result = text;
-		for (const [pasteId, pasteContent] of this.pastes) {
-			const markerRegex = new RegExp(`\\[paste #${pasteId}( (\\+\\d+ lines|\\d+ chars))?\\]`, "g");
-			result = result.replace(markerRegex, () => pasteContent);
-		}
-		return result;
+		const { any } = getPasteMarkerPatterns();
+		return text.replace(any, (match, idGroup: string) => {
+			const content = this.pastes.get(Number(idGroup));
+			return content === undefined ? match : content;
+		});
 	}
 
 	/**
@@ -1217,8 +1251,8 @@ export class Editor implements Component, Focusable {
 			// Insert marker like "[paste #1 +123 lines]" or "[paste #1 1234 chars]"
 			const marker =
 				pastedLines.length > 10
-					? `[paste #${pasteId} +${pastedLines.length} lines]`
-					: `[paste #${pasteId} ${totalChars} chars]`;
+					? formatPasteMarker(pasteId, ` +${pastedLines.length} ${t("lines")}`)
+					: formatPasteMarker(pasteId, ` ${totalChars} ${t("chars")}`);
 			this.insertTextAtCursorInternal(marker);
 			return;
 		}
@@ -1300,7 +1334,7 @@ export class Editor implements Component, Focusable {
 			const graphemes = [...this.segment(beforeCursor, "grapheme")];
 			const lastGrapheme = graphemes[graphemes.length - 1];
 			const graphemeLength = lastGrapheme ? lastGrapheme.segment.length : 1;
-			const isPastedSegmented = PASTE_MARKER_SINGLE.exec(lastGrapheme.segment);
+			const isPastedSegmented = getPasteMarkerPatterns().single.exec(lastGrapheme.segment);
 
 			if (isPastedSegmented) {
 				// This contains the id part e.g 4 from [paste #4 +123 lines]
@@ -1319,10 +1353,10 @@ export class Editor implements Component, Focusable {
 
 				// Renumber markers with ids greater than the removed one.
 				this.state.lines = this.state.lines.map((line) =>
-					line.replace(PASTE_MARKER_REGEX, (fullMatch, idGroup, suffixGroup) => {
+					line.replace(getPasteMarkerPatterns().any, (fullMatch, idGroup, suffixGroup) => {
 						const x = Number(idGroup);
 						if (x <= targetId) return fullMatch;
-						return `[paste #${x - 1}${suffixGroup}]`;
+						return formatPasteMarker(x - 1, suffixGroup ?? "");
 					}),
 				);
 			}

@@ -1,4 +1,4 @@
-import { Container, getKeybindings, Spacer, Text } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Spacer, Text, t } from "@earendil-works/pi-tui";
 import { APP_NAME } from "../../../config.ts";
 import { type TerminalTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
@@ -53,25 +53,37 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(
-			new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}, the minimal coding agent.`)), 1, 0),
+			new Text(
+				theme.fg("accent", theme.bold(t("Welcome to {name}, the minimal coding agent.", { name: APP_NAME }))),
+				1,
+				0,
+			),
 		);
 		this.addChild(new Spacer(1));
 
 		if (this.step === "theme") {
-			this.addChild(new Text(theme.fg("text", "Pick a theme."), 1, 0));
-			this.addChild(new Text(theme.fg("muted", `Detected system appearance: ${this.options.detectedTheme}`), 1, 0));
+			this.addChild(new Text(theme.fg("text", t("Pick a theme.")), 1, 0));
+			this.addChild(
+				new Text(
+					theme.fg("muted", t("Detected system appearance: {theme}", { theme: this.options.detectedTheme })),
+					1,
+					0,
+				),
+			);
 			this.addChild(new Spacer(1));
 			this.addOptionList(
-				THEME_OPTIONS.map((option) => option.label),
+				THEME_OPTIONS.map((option) => t(option.label)),
 				this.themeIndex,
 			);
 		} else {
-			this.addChild(new Text(theme.fg("text", "Opt-in to anonymous usage data sharing?"), 1, 0));
+			this.addChild(new Text(theme.fg("text", t("Opt-in to anonymous usage data sharing?")), 1, 0));
 			this.addChild(
 				new Text(
 					theme.fg(
 						"muted",
-						"Opting in stores a tracking identifier in settings.json and enables anonymous\nusage analytics. This helps us to better debug, reproduce, and resolve issues\nand bugs within Pi. You can observe what is shared using /privacy and make\nchanges anytime in settings.json.",
+						t(
+							"Opting in stores a tracking identifier in settings.json and enables anonymous\nusage analytics. This helps us to better debug, reproduce, and resolve issues\nand bugs within Pi. You can observe what is shared using /privacy and make\nchanges anytime in settings.json.",
+						),
 					),
 					1,
 					0,
@@ -79,7 +91,7 @@ export class FirstTimeSetupComponent extends Container {
 			);
 			this.addChild(new Spacer(1));
 			this.addOptionList(
-				ANALYTICS_OPTIONS.map((option) => option.label),
+				ANALYTICS_OPTIONS.map((option) => t(option.label)),
 				this.analyticsIndex,
 			);
 		}

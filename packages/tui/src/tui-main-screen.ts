@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { t } from "./i18n/i18n.ts";
 import { deleteKittyImage, isImageLine } from "./terminal-image.ts";
 import { type TUI, TuiBase, type TuiStopOptions } from "./tui.ts";
 import { visibleWidth } from "./utils.ts";
@@ -532,12 +533,16 @@ export class TuiMainScreen extends TuiBase implements TUI {
 				this.stop();
 
 				const errorMsg = [
-					`Rendered line ${i} exceeds terminal width (${visibleWidth(line)} > ${width}).`,
+					t("Rendered line {index} exceeds terminal width ({lineWidth} > {width}).", {
+						index: i,
+						lineWidth: visibleWidth(line),
+						width,
+					}),
 					"",
-					"This is likely caused by a custom TUI component not truncating its output.",
-					"Use visibleWidth() to measure and truncateToWidth() to truncate lines.",
+					t("This is likely caused by a custom TUI component not truncating its output."),
+					t("Use visibleWidth() to measure and truncateToWidth() to truncate lines."),
 					"",
-					`Debug log written to: ${crashLogPath}`,
+					t("Debug log written to: {path}", { path: crashLogPath }),
 				].join("\n");
 				throw new Error(errorMsg);
 			}

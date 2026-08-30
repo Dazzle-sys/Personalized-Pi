@@ -1,4 +1,5 @@
 import type { AuthResult } from "@earendil-works/pi-ai";
+import { t } from "@earendil-works/pi-tui";
 import { APP_NAME } from "../config.ts";
 import type { Args } from "./args.ts";
 
@@ -37,12 +38,17 @@ export function isAuthCommandHelp(args: string[]): boolean {
 }
 
 export function printAuthCommandHelp(): void {
-	console.log(`Usage:
+	const authHelpDescription = t(
+		"Auth commands require at least one of --provider or --model. " +
+			"Checks refresh expired OAuth credentials by default; --no-refresh prevents this. " +
+			"--credentials emits the credential, or includes it in JSON output.",
+	);
+	console.log(`${t("Usage:")}
   pi auth print-api-key [--provider <provider>] [--model <model>]
   pi auth print-bearer-token [--provider <provider>] [--model <model>] [--min-expiry <duration>]
   pi auth check [--provider <provider>] [--model <model>] [--json] [--credentials] [--no-refresh]
 
-Auth commands require at least one of --provider or --model. Checks refresh expired OAuth credentials by default; --no-refresh prevents this. --credentials emits the credential, or includes it in JSON output.`);
+${authHelpDescription}`);
 }
 
 export function parseAuthCommand(args: string[]): AuthCommand | undefined {
@@ -58,7 +64,10 @@ export function parseAuthCommand(args: string[]): AuthCommand | undefined {
 					: undefined;
 	if (!kind) {
 		throw new AuthCommandError(
-			`Unknown auth command "${args[1] ?? ""}". Use "${APP_NAME} auth print-api-key", "${APP_NAME} auth print-bearer-token", or "${APP_NAME} auth check".`,
+			t(
+				'Unknown auth command "{command}". Use "{app} auth print-api-key", "{app} auth print-bearer-token", or "{app} auth check".',
+				{ command: args[1] ?? "", app: APP_NAME },
+			),
 		);
 	}
 
@@ -71,17 +80,18 @@ export function parseAuthCommand(args: string[]): AuthCommand | undefined {
 		const arg = args[index];
 		if (arg === "--min-expiry") {
 			if (kind !== "bearer_token")
-				throw new AuthCommandError("--min-expiry is only supported by print-bearer-token");
+				throw new AuthCommandError(t("--min-expiry is only supported by print-bearer-token"));
 			const value = args[++index];
 			const match = value ? /^(\d+)(ms|s|m|h)$/iu.exec(value) : undefined;
-			if (!match) throw new AuthCommandError("--min-expiry must use a duration such as 30m or 1h");
+			if (!match) throw new AuthCommandError(t("--min-expiry must use a duration such as 30m or 1h"));
 			const amount = Number(match[1]);
 			const unit = match[2];
 			minExpiryMs = amount * (unit === "ms" ? 1 : unit === "s" ? 1_000 : unit === "m" ? 60_000 : 3_600_000);
 			continue;
 		}
 		if (arg === "--json" || arg === "--credentials" || arg === "--no-refresh") {
-			if (kind !== "check") throw new AuthCommandError(`${arg} is only supported by auth check`);
+			if (kind !== "check")
+				throw new AuthCommandError(t("{option} is only supported by auth check", { option: arg }));
 			if (arg === "--json") json = true;
 			else if (arg === "--credentials") credentials = true;
 			else noRefresh = true;
@@ -100,19 +110,21 @@ export function validateAuthCommandArgs(args: Args, kind: AuthCommandKind): { pr
 	const model = args.model?.trim() || undefined;
 	if (args.unknownFlags.size > 0) {
 		const option = args.unknownFlags.keys().next().value;
-		throw new AuthCommandError(`Unknown option --${option} for "${getAuthCommandName(kind)}".`);
+		throw new AuthCommandError(
+			t('Unknown option --{option} for "{command}".', { option, command: getAuthCommandName(kind) }),
+		);
 	}
 	if (args.apiKey !== undefined || args.messages.length > 0 || args.fileArgs.length > 0) {
-		throw new AuthCommandError("Auth commands only accept --provider and --model");
+		throw new AuthCommandError(t("Auth commands only accept --provider and --model"));
 	}
 	if (kind === "check") {
 		if (!provider && !model) {
-			throw new AuthCommandError("Auth checks require --provider <provider> or --model <model>");
+			throw new AuthCommandError(t("Auth checks require --provider <provider> or --model <model>"));
 		}
 		return { provider, model };
 	}
 	if (!provider && !model) {
-		throw new AuthCommandError("Credential printing requires --provider <provider> or --model <model>");
+		throw new AuthCommandError(t("Credential printing requires --provider <provider> or --model <model>"));
 	}
 	return { provider, model };
 }

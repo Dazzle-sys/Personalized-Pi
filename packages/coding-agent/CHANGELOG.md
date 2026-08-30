@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### New Features
+
+- **Interface language (i18n)** — The terminal UI and CLI output are fully localized. Simplified Chinese (`zh-CN`) ships built in; pick it in `/settings` (`Language`), via the `language` setting, or `PI_LOCALE`. See [Language](docs/settings.md#language).
+
+### Added
+
+- Added full Simplified Chinese localization for interactive UI (menus, selectors, settings, status/warning/error messages, startup help, `/hotkeys`), CLI help and diagnostics, package-manager output, and the built-in llama.cpp extension. Language resolution: `language` setting, then `PI_LOCALE`/`LC_ALL`/`LC_MESSAGES`/`LANG`, then English. Strings sent to the model (system prompt, tool descriptions, tool results, compaction prompts) intentionally remain in English.
+
+### Fixed
+
+- Model-facing error strings (shell configuration, extension blocking) are no longer localized; tool results sent to the model stay in English.
+- Print and JSON mode output is no longer localized and stays in English for scriptable consumption.
+- Switching the language in `/settings` now rebuilds the chat view so already rendered messages update instead of leaving mixed-language remnants.
+- Localized missed UI strings (llama extension status messages, tool render labels, retry abort messages).
+
 ## [0.84.4] - 2026-08-28
 
 ### New Features

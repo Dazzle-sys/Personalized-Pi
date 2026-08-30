@@ -2,7 +2,7 @@
  * Utilities for formatting keybinding hints in the UI.
  */
 
-import { getKeybindings, type Keybinding, type KeyId } from "@earendil-works/pi-tui";
+import { getKeybindings, type Keybinding, type KeyId, t } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 
 export interface KeyTextFormatOptions {
@@ -10,6 +10,7 @@ export interface KeyTextFormatOptions {
 }
 
 function formatKeyPart(part: string, options: KeyTextFormatOptions): string {
+	// macOS 键名不翻译
 	const displayPart = process.platform === "darwin" && part.toLowerCase() === "alt" ? "option" : part;
 	return options.capitalize ? displayPart.charAt(0).toUpperCase() + displayPart.slice(1) : displayPart;
 }
@@ -40,9 +41,9 @@ export function keyDisplayText(keybinding: Keybinding): string {
 }
 
 export function keyHint(keybinding: Keybinding, description: string): string {
-	return theme.fg("dim", keyText(keybinding)) + theme.fg("muted", ` ${description}`);
+	return theme.fg("dim", keyText(keybinding)) + theme.fg("muted", ` ${t(description)}`);
 }
 
 export function rawKeyHint(key: string, description: string): string {
-	return theme.fg("dim", formatKeyText(key)) + theme.fg("muted", ` ${description}`);
+	return theme.fg("dim", formatKeyText(key)) + theme.fg("muted", ` ${t(description)}`);
 }

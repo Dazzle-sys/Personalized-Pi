@@ -70,6 +70,7 @@ export function getShellConfig(customShellPath?: string): ShellConfig {
 		if (existsSync(customShellPath)) {
 			return getBashShellConfig(customShellPath);
 		}
+		// 错误信息会作为 tool result 进入模型上下文，保持英文
 		throw new Error(`Custom shell path not found: ${customShellPath}`);
 	}
 
@@ -98,6 +99,7 @@ export function getShellConfig(customShellPath?: string): ShellConfig {
 		}
 
 		throw new Error(
+			// 错误信息会作为 tool result 进入模型上下文，保持英文
 			`No bash shell found. Options:\n` +
 				`  1. Install Git for Windows: https://git-scm.com/download/win\n` +
 				`  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n` +

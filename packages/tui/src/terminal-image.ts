@@ -3,6 +3,8 @@ import { homedir } from "node:os";
 import { isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { t } from "./i18n/i18n.ts";
+
 export type ImageProtocol = "kitty" | "iterm2" | null;
 
 export interface TerminalCapabilities {
@@ -696,5 +698,5 @@ export function imageFallback(mimeType: string, dimensions?: ImageDimensions, fi
 	}
 	parts.push(`[${mimeType}]`);
 	if (dimensions) parts.push(`${dimensions.widthPx}x${dimensions.heightPx}`);
-	return `[Image: ${parts.join(" ")}]`;
+	return t("[Image: {content}]", { content: parts.join(" ") });
 }

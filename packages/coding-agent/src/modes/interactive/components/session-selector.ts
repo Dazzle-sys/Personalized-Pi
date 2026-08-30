@@ -10,6 +10,7 @@ import {
 	Input,
 	Spacer,
 	Text,
+	t,
 	truncateToWidth,
 	visibleWidth,
 } from "@earendil-works/pi-tui";
@@ -39,13 +40,13 @@ function formatSessionDate(date: Date): string {
 	const diffHours = Math.floor(diffMs / 3600000);
 	const diffDays = Math.floor(diffMs / 86400000);
 
-	if (diffMins < 1) return "now";
-	if (diffMins < 60) return `${diffMins}m`;
-	if (diffHours < 24) return `${diffHours}h`;
-	if (diffDays < 7) return `${diffDays}d`;
-	if (diffDays < 30) return `${Math.floor(diffDays / 7)}w`;
-	if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo`;
-	return `${Math.floor(diffDays / 365)}y`;
+	if (diffMins < 1) return t("now");
+	if (diffMins < 60) return `${diffMins}${t("m")}`;
+	if (diffHours < 24) return `${diffHours}${t("h")}`;
+	if (diffDays < 7) return `${diffDays}${t("d")}`;
+	if (diffDays < 30) return `${Math.floor(diffDays / 7)}${t("w")}`;
+	if (diffDays < 365) return `${Math.floor(diffDays / 30)}${t("mo")}`;
+	return `${Math.floor(diffDays / 365)}${t("y")}`;
 }
 
 function canonicalizePath(path: string | undefined): string | undefined {
@@ -128,23 +129,27 @@ class SessionSelectorHeader implements Component {
 	invalidate(): void {}
 
 	render(width: number): string[] {
-		const title = this.scope === "current" ? "Resume Session (Current Folder)" : "Resume Session (All)";
+		const title = this.scope === "current" ? t("Resume Session (Current Folder)") : t("Resume Session (All)");
 		const leftText = theme.bold(title);
 
-		const sortLabel = this.sortMode === "threaded" ? "Threaded" : this.sortMode === "recent" ? "Recent" : "Fuzzy";
-		const sortText = theme.fg("muted", "Sort: ") + theme.fg("accent", sortLabel);
+		const sortLabel =
+			this.sortMode === "threaded" ? t("Threaded") : this.sortMode === "recent" ? t("Recent") : t("Fuzzy");
+		const sortText = theme.fg("muted", t("Sort: ")) + theme.fg("accent", sortLabel);
 
-		const nameLabel = this.nameFilter === "all" ? "All" : "Named";
-		const nameText = theme.fg("muted", "Name: ") + theme.fg("accent", nameLabel);
+		const nameLabel = this.nameFilter === "all" ? t("All") : t("Named");
+		const nameText = theme.fg("muted", t("Name: ")) + theme.fg("accent", nameLabel);
 
 		let scopeText: string;
 		if (this.loading) {
 			const progressText = this.loadProgress ? `${this.loadProgress.loaded}/${this.loadProgress.total}` : "...";
-			scopeText = `${theme.fg("muted", "○ Current Folder | ")}${theme.fg("accent", `Loading ${progressText}`)}`;
+			scopeText = `${theme.fg("muted", t("○ Current Folder | "))}${theme.fg(
+				"accent",
+				t("Loading {progress}", { progress: progressText }),
+			)}`;
 		} else if (this.scope === "current") {
-			scopeText = `${theme.fg("accent", "◉ Current Folder")}${theme.fg("muted", " | ○ All")}`;
+			scopeText = `${theme.fg("accent", t("◉ Current Folder"))}${theme.fg("muted", t(" | ○ All"))}`;
 		} else {
-			scopeText = `${theme.fg("muted", "○ Current Folder | ")}${theme.fg("accent", "◉ All")}`;
+			scopeText = `${theme.fg("muted", t("○ Current Folder | "))}${theme.fg("accent", t("◉ All"))}`;
 		}
 
 		const rightText = truncateToWidth(`${scopeText}  ${nameText}  ${sortText}`, width, "");
@@ -156,7 +161,10 @@ class SessionSelectorHeader implements Component {
 		let hintLine1: string;
 		let hintLine2: string;
 		if (this.confirmingDeletePath !== null) {
-			const confirmHint = `Delete session? ${keyHint("tui.select.confirm", "confirm")} · ${keyHint("tui.select.cancel", "cancel")}`;
+			const confirmHint = t("Delete session? {confirm} · {cancel}", {
+				confirm: keyHint("tui.select.confirm", "confirm"),
+				cancel: keyHint("tui.select.cancel", "cancel"),
+			});
 			hintLine1 = theme.fg("error", truncateToWidth(confirmHint, width, "…"));
 			hintLine2 = "";
 		} else if (this.statusMessage) {
@@ -167,7 +175,7 @@ class SessionSelectorHeader implements Component {
 			const pathState = this.showPath ? "(on)" : "(off)";
 			const sep = theme.fg("muted", " · ");
 			const hint1 =
-				keyHint("tui.input.tab", "scope") + sep + theme.fg("muted", 're:<pattern> regex · "phrase" exact');
+				keyHint("tui.input.tab", "scope") + sep + theme.fg("muted", t('re:<pattern> regex · "phrase" exact'));
 			const hint2Parts = [
 				keyHint("app.session.toggleSort", "sort"),
 				keyHint("app.session.toggleNamedFilter", "named"),
@@ -397,7 +405,7 @@ class SessionList implements Component, Focusable {
 
 		// Prevent deleting current session
 		if (this.isCurrentSessionPath(selected.session.path)) {
-			this.onError?.("Cannot delete the currently active session");
+			this.onError?.(t("Cannot delete the currently active session"));
 			return;
 		}
 
@@ -423,16 +431,19 @@ class SessionList implements Component, Focusable {
 			if (this.nameFilter === "named") {
 				const toggleKey = keyText("app.session.toggleNamedFilter");
 				if (this.showCwd) {
-					emptyMessage = `  No named sessions found. Press ${toggleKey} to show all.`;
+					emptyMessage = t("  No named sessions found. Press {keys} to show all.", { keys: toggleKey });
 				} else {
-					emptyMessage = `  No named sessions in current folder. Press ${toggleKey} to show all, or Tab to view all.`;
+					emptyMessage = t(
+						"  No named sessions in current folder. Press {keys} to show all, or Tab to view all.",
+						{ keys: toggleKey },
+					);
 				}
 			} else if (this.showCwd) {
 				// "All" scope - no sessions anywhere that match filter
-				emptyMessage = "  No sessions found";
+				emptyMessage = t("  No sessions found");
 			} else {
 				// "Current folder" scope - hint to try "all"
-				emptyMessage = "  No sessions in current folder. Press Tab to view all.";
+				emptyMessage = t("  No sessions in current folder. Press Tab to view all.");
 			}
 			lines.push(theme.fg("muted", truncateToWidth(emptyMessage, width, "…")));
 			return lines;
@@ -844,12 +855,15 @@ export class SessionSelectorComponent extends Container implements Focusable {
 				const showCwd = this.scope === "all";
 				this.sessionList.setSessions(sessions, showCwd);
 
-				const msg = result.method === "trash" ? "Session moved to trash" : "Session deleted";
+				const msg = result.method === "trash" ? t("Session moved to trash") : t("Session deleted");
 				this.header.setStatusMessage({ type: "info", message: msg }, 2000);
 				await this.refreshSessionsAfterMutation();
 			} else {
-				const errorMessage = result.error ?? "Unknown error";
-				this.header.setStatusMessage({ type: "error", message: `Failed to delete: ${errorMessage}` }, 3000);
+				const errorMessage = result.error ?? t("Unknown error");
+				this.header.setStatusMessage(
+					{ type: "error", message: t("Failed to delete: {error}", { error: errorMessage }) },
+					3000,
+				);
 			}
 
 			this.requestRender();
@@ -870,13 +884,19 @@ export class SessionSelectorComponent extends Container implements Focusable {
 		this.renameInput.focused = true;
 
 		const panel = new Container();
-		panel.addChild(new Text(theme.bold("Rename Session"), 1, 0));
+		panel.addChild(new Text(theme.bold(t("Rename Session")), 1, 0));
 		panel.addChild(new Spacer(1));
 		panel.addChild(this.renameInput);
 		panel.addChild(new Spacer(1));
 		panel.addChild(
 			new Text(
-				theme.fg("muted", `${keyText("tui.select.confirm")} to save · ${keyText("tui.select.cancel")} to cancel`),
+				theme.fg(
+					"muted",
+					t("{confirm} to save · {cancel} to cancel", {
+						confirm: keyText("tui.select.confirm"),
+						cancel: keyText("tui.select.cancel"),
+					}),
+				),
 				1,
 				0,
 			),
@@ -972,7 +992,10 @@ export class SessionSelectorComponent extends Container implements Focusable {
 
 			const message = err instanceof Error ? err.message : String(err);
 			this.header.setLoading(false);
-			this.header.setStatusMessage({ type: "error", message: `Failed to load sessions: ${message}` }, 4000);
+			this.header.setStatusMessage(
+				{ type: "error", message: t("Failed to load sessions: {error}", { error: message }) },
+				4000,
+			);
 
 			if (reason === "initial") {
 				this.sessionList.setSessions([], showCwd);

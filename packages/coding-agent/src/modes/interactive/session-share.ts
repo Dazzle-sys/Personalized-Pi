@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { DEFAULT_RADIUS_GATEWAY } from "@earendil-works/pi-ai/providers/radius-config";
-import { type Container, type EditorComponent, hyperlink, type TUI } from "@earendil-works/pi-tui";
+import { type Container, type EditorComponent, hyperlink, type TUI, t } from "@earendil-works/pi-tui";
 import { getAuthCredential } from "../../cli/auth-command.ts";
 import { getShareViewerUrl } from "../../config.ts";
 import type { AgentSession } from "../../core/agent-session.ts";
@@ -51,7 +51,9 @@ export async function shareSession(context: SessionShareContext): Promise<void> 
 		try {
 			exportSessionForShare(jsonlFile, context.session);
 		} catch (error: unknown) {
-			context.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
+			context.showError(
+				t("Failed to export session: {error}", { error: error instanceof Error ? error.message : "Unknown error" }),
+			);
 			return;
 		}
 		if (await tryShareViaRadius(jsonlFile, context)) return;
@@ -59,11 +61,11 @@ export async function shareSession(context: SessionShareContext): Promise<void> 
 		try {
 			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8" });
 			if (authResult.status !== 0) {
-				context.showError("GitHub CLI is not logged in. Run 'gh auth login' first.");
+				context.showError(t("GitHub CLI is not logged in. Run 'gh auth login' first."));
 				return;
 			}
 		} catch {
-			context.showError("GitHub CLI (gh) is not installed. Install it from https://cli.github.com/");
+			context.showError(t("GitHub CLI (gh) is not installed. Install it from https://cli.github.com/"));
 			return;
 		}
 
@@ -71,7 +73,9 @@ export async function shareSession(context: SessionShareContext): Promise<void> 
 			htmlFile = path.join(os.tmpdir(), "session.html");
 			await context.session.exportToHtml(htmlFile, { themeName: theme.name });
 		} catch (error: unknown) {
-			context.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
+			context.showError(
+				t("Failed to export session: {error}", { error: error instanceof Error ? error.message : "Unknown error" }),
+			);
 			return;
 		}
 		await shareViaGist(htmlFile, context);
@@ -97,14 +101,14 @@ async function tryShareViaRadius(tmpFile: string, context: SessionShareContext):
 	);
 	if (!token) return false;
 
-	const loader = new BorderedLoader(context.ui, theme, "Uploading to Radius...");
+	const loader = new BorderedLoader(context.ui, theme, t("Uploading to Radius..."));
 	context.editorContainer.clear();
 	context.editorContainer.addChild(loader);
 	context.ui.setFocus(loader);
 	context.ui.requestRender();
 	loader.onAbort = () => {
 		restoreEditor(loader, context);
-		context.showStatus("Share cancelled");
+		context.showStatus(t("Share cancelled"));
 	};
 
 	try {
@@ -131,18 +135,22 @@ async function tryShareViaRadius(tmpFile: string, context: SessionShareContext):
 		restoreEditor(loader, context);
 		if (!response.ok || !json?.artifact) {
 			context.showError(
-				`Failed to upload Radius artifact: ${json?.error || response.statusText || response.status}`,
+				t("Failed to upload Radius artifact: {error}", {
+					error: json?.error || response.statusText || response.status,
+				}),
 			);
 			return true;
 		}
 		const shareUrl = json.artifact.canonical_url;
-		context.showStatus(`Share URL: ${hyperlink(shareUrl, shareUrl)}`);
+		context.showStatus(t("Share URL: {url}", { url: hyperlink(shareUrl, shareUrl) }));
 		return true;
 	} catch (error: unknown) {
 		if (!loader.signal.aborted) {
 			restoreEditor(loader, context);
 			context.showError(
-				`Failed to upload Radius artifact: ${error instanceof Error ? error.message : "Unknown error"}`,
+				t("Failed to upload Radius artifact: {error}", {
+					error: error instanceof Error ? error.message : "Unknown error",
+				}),
 			);
 		}
 		return true;
@@ -150,7 +158,7 @@ async function tryShareViaRadius(tmpFile: string, context: SessionShareContext):
 }
 
 async function shareViaGist(tmpFile: string, context: SessionShareContext): Promise<void> {
-	const loader = new BorderedLoader(context.ui, theme, "Creating gist...");
+	const loader = new BorderedLoader(context.ui, theme, t("Creating gist..."));
 	context.editorContainer.clear();
 	context.editorContainer.addChild(loader);
 	context.ui.setFocus(loader);
@@ -160,7 +168,7 @@ async function shareViaGist(tmpFile: string, context: SessionShareContext): Prom
 	loader.onAbort = () => {
 		proc?.kill();
 		restoreEditor(loader, context);
-		context.showStatus("Share cancelled");
+		context.showStatus(t("Share cancelled"));
 	};
 
 	try {
@@ -181,23 +189,26 @@ async function shareViaGist(tmpFile: string, context: SessionShareContext): Prom
 		restoreEditor(loader, context);
 
 		if (result.code !== 0) {
-			context.showError(`Failed to create gist: ${result.stderr?.trim() || "Unknown error"}`);
+			context.showError(t("Failed to create gist: {error}", { error: result.stderr?.trim() || "Unknown error" }));
 			return;
 		}
 
 		const gistUrl = result.stdout?.trim();
 		const gistId = gistUrl?.split("/").pop();
 		if (!gistId) {
-			context.showError("Failed to parse gist ID from gh output");
+			context.showError(t("Failed to parse gist ID from gh output"));
 			return;
 		}
 
 		const previewUrl = getShareViewerUrl(gistId);
-		context.showStatus(`Share URL: ${hyperlink(previewUrl, previewUrl)}\nGist: ${hyperlink(gistUrl, gistUrl)}`);
+		const shareText = `${hyperlink(previewUrl, previewUrl)}\nGist: ${hyperlink(gistUrl, gistUrl)}`;
+		context.showStatus(t("Share URL: {url}", { url: shareText }));
 	} catch (error: unknown) {
 		if (!loader.signal.aborted) {
 			restoreEditor(loader, context);
-			context.showError(`Failed to create gist: ${error instanceof Error ? error.message : "Unknown error"}`);
+			context.showError(
+				t("Failed to create gist: {error}", { error: error instanceof Error ? error.message : "Unknown error" }),
+			);
 		}
 	}
 }

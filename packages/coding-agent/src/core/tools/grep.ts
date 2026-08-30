@@ -1,7 +1,7 @@
 import { readFile as fsReadFile, stat as fsStat } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { Text } from "@earendil-works/pi-tui";
+import { Text, t } from "@earendil-works/pi-tui";
 import { spawn } from "child_process";
 import path from "path";
 import { type Static, Type } from "typebox";
@@ -84,9 +84,9 @@ function formatGrepCall(
 		theme.fg("toolTitle", theme.bold("grep")) +
 		" " +
 		(pattern === null ? invalidArg : theme.fg("accent", `/${pattern || ""}/`)) +
-		theme.fg("toolOutput", ` in ${path === null ? invalidArg : path}`);
+		theme.fg("toolOutput", ` ${t("in")} ${path === null ? invalidArg : path}`);
 	if (glob) text += theme.fg("toolOutput", ` (${glob})`);
-	if (limit !== undefined) text += theme.fg("toolOutput", ` limit ${limit}`);
+	if (limit !== undefined) text += theme.fg("toolOutput", t(" limit {limit}", { limit }));
 	return text;
 }
 
@@ -108,7 +108,7 @@ function formatGrepResult(
 		const remaining = lines.length - maxLines;
 		text += `\n${displayLines.map((line) => theme.fg("toolOutput", line)).join("\n")}`;
 		if (remaining > 0) {
-			text += `${theme.fg("muted", `\n... (${remaining} more lines,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+			text += `${theme.fg("muted", t("\n... ({count} more lines,", { count: remaining }))} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", t(")"))}`;
 		}
 	}
 
@@ -117,10 +117,12 @@ function formatGrepResult(
 	const linesTruncated = result.details?.linesTruncated;
 	if (matchLimit || truncation?.truncated || linesTruncated) {
 		const warnings: string[] = [];
-		if (matchLimit) warnings.push(`${matchLimit} matches limit`);
-		if (truncation?.truncated) warnings.push(`${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit`);
-		if (linesTruncated) warnings.push("some lines truncated");
-		text += `\n${theme.fg("warning", `[Truncated: ${warnings.join(", ")}]`)}`;
+		if (matchLimit) warnings.push(t("{limit} matches limit", { limit: matchLimit }));
+		if (truncation?.truncated) {
+			warnings.push(t("{size} limit", { size: formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES) }));
+		}
+		if (linesTruncated) warnings.push(t("some lines truncated"));
+		text += `\n${theme.fg("warning", t("[Truncated: {warnings}]", { warnings: warnings.join(", ") }))}`;
 	}
 	return text;
 }

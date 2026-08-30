@@ -1,3 +1,5 @@
+import { t } from "@earendil-works/pi-tui";
+
 export type LlamaModelStatus = "unloaded" | "loading" | "loaded" | "downloading" | "sleeping";
 
 export interface LlamaModelInfo {
@@ -104,7 +106,7 @@ function parseLoadProgress(data: unknown): LlamaProgress | undefined {
 		if (index >= 0) ratio = (index + (stageRatio ?? 0)) / stages.length;
 	}
 	return {
-		message: stage ? `Loading ${stage.replaceAll("_", " ")}` : "Loading model",
+		message: stage ? t("Loading {stage}", { stage: stage.replaceAll("_", " ") }) : t("Loading model"),
 		ratio,
 	};
 }
@@ -124,7 +126,7 @@ function parseDownloadProgress(data: unknown): LlamaProgress | undefined {
 	}
 	if (total <= 0) return undefined;
 	return {
-		message: "Downloading model",
+		message: t("Downloading model"),
 		ratio: done / total,
 		detail: `${formatBytes(done)} / ${formatBytes(total)}`,
 	};
@@ -269,13 +271,13 @@ export class LlamaClient {
 			if (event.event !== "model_status" && event.event !== "status_change") return;
 			const data = event.data as { status?: unknown } | undefined;
 			if (data?.status === "loaded") eventLoaded = true;
-			if (data?.status === "unloaded") eventError = "Model failed to load";
+			if (data?.status === "unloaded") eventError = t("Model failed to load");
 			const progress = parseLoadProgress(event.data);
 			if (progress) onProgress(progress);
 		}, watcher.signal).catch(() => {});
 		try {
 			await this.load(model, signal);
-			onProgress({ message: "Loading model" });
+			onProgress({ message: t("Loading model") });
 			while (true) {
 				if (signal?.aborted) throw signal.reason ?? new Error("Cancelled");
 				const entry = (await this.list({ signal })).find((candidate) => candidate.id === model);
@@ -284,8 +286,8 @@ export class LlamaClient {
 				if (entry?.status.failed || eventError) {
 					throw new Error(
 						entry?.status.exit_code === undefined
-							? (eventError ?? "Model failed to load")
-							: `Model exited with code ${entry.status.exit_code}`,
+							? (eventError ?? t("Model failed to load"))
+							: t("Model exited with code {exit_code}", { exit_code: entry.status.exit_code }),
 					);
 				}
 				await sleep(250, signal);
@@ -319,7 +321,7 @@ export class LlamaClient {
 		}, watcher.signal).catch(() => {});
 		try {
 			await this.download(model, signal);
-			onProgress({ message: "Downloading model" });
+			onProgress({ message: t("Downloading model") });
 			while (true) {
 				if (signal?.aborted) throw signal.reason ?? new Error("Cancelled");
 				if (failure) throw new Error(failure);
