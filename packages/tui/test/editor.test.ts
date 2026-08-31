@@ -444,6 +444,48 @@ describe("Editor component", () => {
 			assert.strictEqual(text, "😀");
 		});
 
+		describe("Double-delete clears the editor", () => {
+			it("clears the entire editor on two quick Delete presses", () => {
+				const editor = new Editor(createTestTUI(), defaultEditorTheme);
+
+				editor.setText("hello world");
+				editor.handleInput("\x1b[3~"); // Delete (first press)
+				editor.handleInput("\x1b[3~"); // Delete (second press, within window)
+
+				assert.strictEqual(editor.getText(), "");
+			});
+
+			it("leaves the editor intact after a single Delete press", () => {
+				const editor = new Editor(createTestTUI(), defaultEditorTheme);
+
+				editor.setText("hello");
+				editor.handleInput("\x1b[3~"); // Delete (single press; cursor at end, no char to delete)
+
+				assert.strictEqual(editor.getText(), "hello");
+			});
+
+			it("resets the double-delete gesture when a non-delete key is pressed in between", () => {
+				const editor = new Editor(createTestTUI(), defaultEditorTheme);
+
+				editor.setText("hello");
+				editor.handleInput("\x1b[3~"); // Delete - arms the gesture
+				editor.handleInput("x"); // Typing breaks the double-press gesture
+				editor.handleInput("\x1b[3~"); // Delete - arms again, does not clear
+
+				assert.strictEqual(editor.getText(), "hellox");
+			});
+
+			it("does not clear when the second press is an auto-repeat (held key)", () => {
+				const editor = new Editor(createTestTUI(), defaultEditorTheme);
+
+				editor.setText("abc");
+				editor.handleInput("\x1b[3~"); // Delete (press)
+				editor.handleInput("\x1b[57426;1:2u"); // Kitty auto-repeat of Delete
+
+				assert.strictEqual(editor.getText(), "abc");
+			});
+		});
+
 		it("inserts characters at the correct position after cursor movement over umlauts", () => {
 			const editor = new Editor(createTestTUI(), defaultEditorTheme);
 

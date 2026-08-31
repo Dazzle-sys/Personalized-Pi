@@ -1,7 +1,7 @@
 import type { AutocompleteProvider, AutocompleteSuggestions } from "../autocomplete.ts";
 import { getLocale, t } from "../i18n/i18n.ts";
 import { getKeybindings } from "../keybindings.ts";
-import { decodePrintableKey, matchesKey } from "../keys.ts";
+import { decodePrintableKey, isKeyRepeat, matchesKey } from "../keys.ts";
 import { KillRing } from "../kill-ring.ts";
 import { type Component, CURSOR_MARKER, type Focusable, type TUI } from "../tui.ts";
 import { UndoStack } from "../undo-stack.ts";
@@ -278,6 +278,8 @@ const SLASH_COMMAND_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 };
 
 const ATTACHMENT_AUTOCOMPLETE_DEBOUNCE_MS = 20;
+// Window in which two Delete presses count as a "double-tap" that clears the editor.
+const DOUBLE_DELETE_CLEAR_WINDOW_MS = 300;
 const DEFAULT_AUTOCOMPLETE_TRIGGER_CHARACTERS = ["@", "#"];
 
 function escapeCharacterClass(value: string): string {
@@ -361,6 +363,9 @@ export class Editor implements Component, Focusable {
 
 	// Character jump mode
 	private jumpMode: "forward" | "backward" | null = null;
+
+	// Timestamp of the last Delete press, for double-tap clear detection.
+	private lastDeleteTime: number | null = null;
 
 	// Preferred visual column for vertical cursor movement (sticky column)
 	private preferredVisualCol: number | null = null;
@@ -650,6 +655,12 @@ export class Editor implements Component, Focusable {
 	handleInput(data: string): void {
 		const kb = getKeybindings();
 
+		// Any non-Delete key input breaks an in-progress double-Delete gesture.
+		const isDeleteKey = matchesKey(data, "delete") || matchesKey(data, "shift+delete");
+		if (!isDeleteKey) {
+			this.lastDeleteTime = null;
+		}
+
 		// Handle character jump mode (awaiting next character to jump to)
 		if (this.jumpMode !== null) {
 			// Cancel if the hotkey is pressed again
@@ -796,7 +807,10 @@ export class Editor implements Component, Focusable {
 			this.handleBackspace();
 			return;
 		}
-		if (kb.matches(data, "tui.editor.deleteCharForward") || matchesKey(data, "shift+delete")) {
+		if (kb.matches(data, "tui.editor.deleteCharForward") || isDeleteKey) {
+			if (isDeleteKey && this.handleDoubleDeleteClear(data)) {
+				return;
+			}
 			this.handleForwardDelete();
 			return;
 		}
@@ -1329,6 +1343,36 @@ export class Editor implements Component, Focusable {
 
 		if (this.onChange) this.onChange("");
 		if (this.onSubmit) this.onSubmit(result);
+	}
+
+	/**
+	 * Detect a double-Delete gesture (two Delete presses within a short
+	 * window) and clear the entire editor. Returns true when the gesture fired.
+	 *
+	 * A single press only deletes one character and arms the timer; a second
+	 * press within the window clears the editor. Any other input resets the
+	 * timer (see handleInput). Auto-repeat events from a held key are treated
+	 * as ordinary deletes, so holding Delete never triggers a clear.
+	 *
+	 * ponytail: legacy (non-kitty) terminals report a held Delete as repeated
+	 * DEL bytes with no repeat marker, so a held key can clear there instead of
+	 * deleting. The isKeyRepeat guard covers kitty mode only; lower the window
+	 * if it ever bites.
+	 */
+	private handleDoubleDeleteClear(data: string): boolean {
+		const now = Date.now();
+
+		if (this.lastDeleteTime !== null && now - this.lastDeleteTime <= DOUBLE_DELETE_CLEAR_WINDOW_MS) {
+			this.lastDeleteTime = null;
+			if (isKeyRepeat(data)) {
+				return false;
+			}
+			this.setText("");
+			return true;
+		}
+
+		this.lastDeleteTime = now;
+		return false;
 	}
 
 	private handleBackspace(): void {

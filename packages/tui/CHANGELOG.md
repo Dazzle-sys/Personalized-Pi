@@ -5,6 +5,7 @@
 ### Added
 
 - Added a minimal runtime i18n module: `t()` resolves English source strings (optionally containing `{name}` placeholders) against the active locale, plus `setLocale()`, `registerTranslations()`, `getLocale()`, `hasTranslations()`, `normalizeLocaleTag()`, `getAvailableLocales()`, `resolveLocaleFromEnv()` (reads `PI_LOCALE`, `LC_ALL`, `LC_MESSAGES`, `LANG`), and built-in Simplified Chinese translations exported as `zhCNTranslations`.
+- Added double-press Delete (two presses within 300ms) to clear the entire editor input.
 
 ### Changed
 
