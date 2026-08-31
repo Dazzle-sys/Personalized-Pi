@@ -307,4 +307,17 @@ export const zhCN: Translations = {
 	"read docs": "读取文档",
 	"read resource": "读取资源",
 	"read skill": "读取技能",
+
+	// core/session-revert.ts & slash-commands.ts (revert)
+	"Revert workspace to session start (aliases: /rollback, /回退)":
+		"回退工作区到会话开始时的状态（别名：/rollback、/回退）",
+	"Revert workspace to session start": "回退工作区到会话开始时的状态",
+	"Confirm revert": "确认回退",
+	"This will discard all changes since {time} and restore the workspace to that state. Untracked files will be removed. Continue?":
+		"这将丢弃自 {time} 以来的所有改动并恢复工作区到该状态，未跟踪文件也会被删除。是否继续？",
+	"No revert snapshot for this session. Try starting a new session in a git repository.":
+		"当前会话没有回退快照。请在 git 仓库中新建会话后重试。",
+	"Revert cancelled.": "已取消回退。",
+	"Workspace reverted to session start ({desc}).": "工作区已回退到会话开始时的状态（{desc}）。",
+	"Revert failed: {error}": "回退失败：{error}",
 };

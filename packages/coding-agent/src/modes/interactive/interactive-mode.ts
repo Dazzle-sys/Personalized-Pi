@@ -1212,6 +1212,7 @@ export class InteractiveMode {
 		}
 
 		// Main interactive loop
+		// pi-lens-ignore: infinite-loop
 		while (true) {
 			const userInput = await this.getUserInput();
 			try {
@@ -3149,6 +3150,11 @@ export class InteractiveMode {
 			if (text === "/resume") {
 				this.showSessionSelector();
 				this.editor.setText("");
+				return;
+			}
+			if (text === "/revert" || text === "/rollback" || text === "/回退") {
+				this.editor.setText("");
+				await this.handleRevertCommand();
 				return;
 			}
 			if (text === "/quit") {
@@ -6651,6 +6657,38 @@ export class InteractiveMode {
 		this.chatContainer.addChild(new Markdown(hotkeys.trim(), 1, 1, this.getMarkdownThemeWithSettings()));
 		this.chatContainer.addChild(new DynamicBorder());
 		this.ui.requestRender();
+	}
+
+	private async handleRevertCommand(): Promise<void> {
+		const cwd = this.sessionManager.getCwd();
+		const snap = this.sessionManager.getRevertSnapshot?.() as
+			| import("../../core/session-revert.ts").RevertSnapshot
+			| null
+			| undefined;
+		if (!snap) {
+			this.showWarning(t("No revert snapshot for this session. Try starting a new session in a git repository."));
+			return;
+		}
+		const confirmed = await this.showExtensionConfirm(
+			t("Confirm revert"),
+			t(
+				"This will discard all changes since {time} and restore the workspace to that state. Untracked files will be removed. Continue?",
+				{
+					time: new Date(snap.createdAt).toLocaleString(),
+				},
+			),
+		);
+		if (!confirmed) {
+			this.showStatus(t("Revert cancelled."));
+			return;
+		}
+		const { executeRevert, describeSnapshot } = await import("../../core/session-revert.ts");
+		const result = executeRevert(cwd, snap);
+		if (result.ok) {
+			this.showStatus(t("Workspace reverted to session start ({desc}).", { desc: describeSnapshot(snap) }));
+		} else {
+			this.showError(t("Revert failed: {error}", { error: (result as { ok: false; error: string }).error }));
+		}
 	}
 
 	private async handleClearCommand(): Promise<void> {

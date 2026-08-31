@@ -27,6 +27,7 @@ import {
 	createCompactionSummaryMessage,
 	createCustomMessage,
 } from "./messages.ts";
+import { createRevertSnapshot, type RevertSnapshot } from "./session-revert.ts";
 
 export const CURRENT_SESSION_VERSION = 3;
 
@@ -37,6 +38,7 @@ export interface SessionHeader {
 	timestamp: string;
 	cwd: string;
 	parentSession?: string;
+	revertSnapshot?: RevertSnapshot | null;
 }
 
 export interface NewSessionOptions {
@@ -944,6 +946,12 @@ export class SessionManager {
 		}
 		this.sessionId = options?.id ?? createSessionId();
 		const timestamp = new Date().toISOString();
+		let revertSnapshot: RevertSnapshot | null = null;
+		try {
+			revertSnapshot = createRevertSnapshot(this.cwd);
+		} catch (_e) {
+			// 快照失败不阻断会话创建（非 git 仓库或 git 不可用）
+		}
 		const header: SessionHeader = {
 			type: "session",
 			version: CURRENT_SESSION_VERSION,
@@ -951,6 +959,7 @@ export class SessionManager {
 			timestamp,
 			cwd: this.cwd,
 			parentSession: options?.parentSession,
+			revertSnapshot,
 		};
 		this.fileEntries = [header];
 		this.byId.clear();
@@ -1021,6 +1030,11 @@ export class SessionManager {
 
 	getSessionFile(): string | undefined {
 		return this.sessionFile;
+	}
+
+	getRevertSnapshot(): RevertSnapshot | null | undefined {
+		const h = this.getHeader() as SessionHeader | null;
+		return h?.revertSnapshot;
 	}
 
 	_persist(entry: SessionEntry): void {

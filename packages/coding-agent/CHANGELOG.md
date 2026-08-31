@@ -8,6 +8,7 @@
 
 ### Added
 
+- Added `/revert` (aliases `/rollback`, `/回退`) to restore the git workspace to the state at session start, with confirmation and i18n support.
 - Added full Simplified Chinese localization for interactive UI (menus, selectors, settings, status/warning/error messages, startup help, `/hotkeys`), CLI help and diagnostics, package-manager output, and the built-in llama.cpp extension. Language resolution: `language` setting, then `PI_LOCALE`/`LC_ALL`/`LC_MESSAGES`/`LANG`, then English. Strings sent to the model (system prompt, tool descriptions, tool results, compaction prompts) intentionally remain in English.
 - Added persistent prompt editing history, stored in `~/.pi/agent/prompt-history.json` and restored on startup so up/down prompt history survives restarts.
 

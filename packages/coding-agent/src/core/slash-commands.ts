@@ -162,6 +162,12 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 		},
 	},
 	{
+		name: "revert",
+		get description() {
+			return t("Revert workspace to session start (aliases: /rollback, /回退)");
+		},
+	},
+	{
 		name: "quit",
 		get description() {
 			return t("Quit {app}", { app: APP_NAME });
