@@ -30,8 +30,8 @@ export interface ProviderRetrySettings {
 
 export interface RetrySettings {
 	enabled?: boolean; // default: true
-	maxRetries?: number; // default: 3
-	baseDelayMs?: number; // default: 2000 (exponential backoff: 2s, 4s, 8s)
+	maxRetries?: number; // default: 12
+	baseDelayMs?: number; // default: 4000 (exponential backoff: 4s, 8s, 16s)
 	provider?: ProviderRetrySettings;
 }
 
@@ -901,8 +901,8 @@ export class SettingsManager {
 	getRetrySettings(): { enabled: boolean; maxRetries: number; baseDelayMs: number } {
 		return {
 			enabled: this.getRetryEnabled(),
-			maxRetries: this.settings.retry?.maxRetries ?? 3,
-			baseDelayMs: this.settings.retry?.baseDelayMs ?? 2000,
+			maxRetries: this.settings.retry?.maxRetries ?? 12,
+			baseDelayMs: this.settings.retry?.baseDelayMs ?? 4000,
 		};
 	}
 

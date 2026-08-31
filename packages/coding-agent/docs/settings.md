@@ -26,7 +26,7 @@ Use `/trust` in interactive mode to save a project trust decision for future ses
 ### Model & Thinking
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `defaultProvider` | string | - | Startup provider (e.g., `"anthropic"`, `"openai"`; saved with Ctrl+S in `/model`, or edited manually) |
 | `defaultModel` | string | - | Startup model ID (saved with Ctrl+S in `/model`, or edited manually) |
 | `defaultThinkingLevel` | string | - | Startup thinking level (saved with Ctrl+S in `/thinking`, or edited manually): `"off"`, `"minimal"`, `"low"`, `"medium"`, `"high"`, `"xhigh"`, `"max"` |
@@ -51,7 +51,7 @@ Use `/trust` in interactive mode to save a project trust decision for future ses
 ### UI & Display
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `theme` | string | `"dark"` | Theme name (`"dark"`, `"light"`, or custom) |
 | `externalEditor` | string | `$VISUAL`, then `$EDITOR`, then Notepad on Windows or `nano` elsewhere | Command for Ctrl+G external editor; takes precedence over environment variables |
 | `quietStartup` | boolean | `false` | Hide startup header |
@@ -121,7 +121,7 @@ Set `PI_SKIP_VERSION_CHECK=1` to disable the Pi version update check. Use `--off
 ### Compaction
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `compaction.enabled` | boolean | `true` | Enable auto-compaction |
 | `compaction.reserveTokens` | number | `16384` | Tokens reserved for LLM response |
 | `compaction.keepRecentTokens` | number | `20000` | Recent tokens to keep (not summarized) |
@@ -146,10 +146,10 @@ Set `PI_SKIP_VERSION_CHECK=1` to disable the Pi version update check. Use `--off
 ### Retry
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `retry.enabled` | boolean | `true` | Enable automatic agent-level retry on transient errors |
-| `retry.maxRetries` | number | `3` | Maximum agent-level retry attempts |
-| `retry.baseDelayMs` | number | `2000` | Base delay for agent-level exponential backoff (2s, 4s, 8s) |
+| `retry.maxRetries` | number | `12` | Maximum agent-level retry attempts |
+| `retry.baseDelayMs` | number | `4000` | Base delay for agent-level exponential backoff (4s, 8s, 16s) |
 | `retry.provider.timeoutMs` | number | SDK default | Provider/SDK request timeout in milliseconds |
 | `retry.provider.maxRetries` | number | `0` | Provider/SDK retry attempts |
 | `retry.provider.maxRetryDelayMs` | number | `60000` | Max server-requested delay before failing (60s) |
@@ -162,8 +162,8 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 {
   "retry": {
     "enabled": true,
-    "maxRetries": 3,
-    "baseDelayMs": 2000,
+    "maxRetries": 12,
+    "baseDelayMs": 4000,
     "provider": {
       "timeoutMs": 3600000,
       "maxRetries": 0,
@@ -176,7 +176,7 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 ### Message Delivery
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `steeringMode` | string | `"one-at-a-time"` | How steering messages are sent: `"all"` or `"one-at-a-time"` |
 | `followUpMode` | string | `"one-at-a-time"` | How follow-up messages are sent: `"all"` or `"one-at-a-time"` |
 | `transport` | string | `"auto"` | Preferred transport for providers that support multiple transports: `"sse"`, `"websocket"`, `"websocket-cached"`, or `"auto"` |
@@ -186,7 +186,7 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 ### Terminal & Images
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `terminal.showImages` | boolean | `true` | Show images in terminal (if supported) |
 | `terminal.imageWidthCells` | number | `60` | Preferred inline image width in terminal cells |
 | `terminal.clearOnShrink` | boolean | `false` | Clear empty rows when content shrinks (can cause flicker) |
@@ -199,7 +199,7 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 ### Shell
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `shellPath` | string | - | Custom shell path (e.g., for Cygwin on Windows); supports a leading `~` for the home directory |
 | `shellCommandPrefix` | string | - | Prefix for every bash command (e.g., `"shopt -s expand_aliases"`) |
 | `npmCommand` | string[] | - | Command argv used for npm package lookup/install operations (e.g., `["mise", "exec", "node@20", "--", "npm"]`) |
@@ -288,7 +288,7 @@ These settings define where to load extensions, skills, prompts, and themes from
 Paths in `~/.pi/agent/settings.json` resolve relative to `~/.pi/agent`. Paths in `.pi/settings.json` resolve relative to `.pi`. Absolute paths and `~` are supported.
 
 | Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| --------- | ------ | --------- | ------------- |
 | `packages` | array | `[]` | npm/git packages to load resources from |
 | `extensions` | string[] | `[]` | Local extension file paths or directories |
 | `skills` | string[] | `[]` | Local skill file paths or directories |
@@ -342,7 +342,7 @@ See [packages.md](packages.md) for package management details.
   },
   "retry": {
     "enabled": true,
-    "maxRetries": 3
+    "maxRetries": 12
   },
   "enabledModels": ["claude-*", "gpt-4o"],
   "warnings": {

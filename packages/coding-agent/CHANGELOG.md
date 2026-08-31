@@ -14,6 +14,7 @@
 ### Changed
 
 - The default TUI renderer is now the alt-screen `fullscreen` mode, which owns the viewport and preserves the user's manually scrolled position during streaming and markdown reflow; the legacy main-screen renderer is used only when `regular` is selected explicitly (via `/settings` or `--tui-mode regular`) ([#7304](https://github.com/earendil-works/pi/issues/7304)).
+- The default agent-level retry now uses a 4s base delay with up to 12 attempts (4s, 8s, 16s, ...) instead of the previous 2s base / 3 attempts (2s, 4s, 8s). Override via `retry.maxRetries` and `retry.baseDelayMs`.
 
 ### Removed
 
