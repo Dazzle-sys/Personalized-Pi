@@ -98,6 +98,7 @@ import { DefaultPackageManager } from "../../core/package-manager.ts";
 import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionEntry, SessionManager, sessionEntryToContextMessages } from "../../core/session-manager.ts";
+import { describeSnapshot, executeRevert, type RevertSnapshot } from "../../core/session-revert.ts";
 import type { FullscreenExitOutput, TuiMode } from "../../core/settings-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
@@ -6661,10 +6662,7 @@ export class InteractiveMode {
 
 	private async handleRevertCommand(): Promise<void> {
 		const cwd = this.sessionManager.getCwd();
-		const snap = this.sessionManager.getRevertSnapshot?.() as
-			| import("../../core/session-revert.ts").RevertSnapshot
-			| null
-			| undefined;
+		const snap = this.sessionManager.getRevertSnapshot?.() as RevertSnapshot | null | undefined;
 		if (!snap) {
 			this.showWarning(t("No revert snapshot for this session. Try starting a new session in a git repository."));
 			return;
@@ -6682,7 +6680,6 @@ export class InteractiveMode {
 			this.showStatus(t("Revert cancelled."));
 			return;
 		}
-		const { executeRevert, describeSnapshot } = await import("../../core/session-revert.ts");
 		const result = executeRevert(cwd, snap);
 		if (result.ok) {
 			this.showStatus(t("Workspace reverted to session start ({desc}).", { desc: describeSnapshot(snap) }));
