@@ -1,6 +1,6 @@
-- The replica project should promptly write the implemented features to the root 'README.md'.
-- Fully integrate I18N without affecting LLM.
-- Fork customizations (see docs/upstream-merge-discipline.md): i18n zh-CN, B.A.I + command-code providers, provider wizard / models-config-writer, Bedrock type-hardening casts, .gitleaks.toml allowlist.
+- 上游项目 'https://github.com/earendil-works/pi'
+- 所有改动写入根目录的“README.md”文件中。
+- 不影响 LLM 执行的情况下完全集成国际化 (I18N)。
 
 # Development Rules
 

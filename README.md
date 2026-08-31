@@ -68,13 +68,13 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 ### Bash
 
 ```bash
-git clone https://github.com/Dazzle-sys/pi
-cd pi
+git clone https://github.com/Dazzle-sys/Personalized-Pi.git
+cd Personalized-Pi
 npm install --ignore-scripts
 mkdir -p ~/.local/bin
 cat > ~/.local/bin/pi <<'EOF'
 #!/usr/bin/env bash
-cd "$HOME/pi" && exec ./pi-test.sh "$@"
+cd "$HOME/Personalized-Pi" && exec ./pi-test.sh "$@"
 EOF
 chmod +x ~/.local/bin/pi
 export PATH="$HOME/.local/bin:$PATH"
@@ -86,16 +86,16 @@ pi
 ### PowerShell
 
 ```powershell
-git clone https://github.com/Dazzle-sys/pi
-cd pi
+git clone https://github.com/Dazzle-sys/Personalized-Pi.git
+cd Personalized-Pi
 npm install --ignore-scripts
 if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
-Add-Content -Path $PROFILE -Value 'function pi { & "$HOME\pi\pi-test.ps1" @args }'
+Add-Content -Path $PROFILE -Value 'function pi { & "$HOME\Personalized-Pi\pi-test.ps1" @args }'
 . $PROFILE
 pi
 ```
 
-> 克隆到默认的 `$HOME/pi` 时上面的路径可直接使用；改成其它目录请同步替换 wrapper 里的 `$HOME/pi`。
+> 克隆到默认的 `$HOME/Personalized-Pi` 时上面的路径可直接使用；改成其它目录请同步替换 wrapper 里的 `$HOME/Personalized-Pi`。
 
 ## 维护与同步上游
 
