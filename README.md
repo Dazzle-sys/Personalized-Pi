@@ -4,9 +4,9 @@
   </a>
 </p>
 
-# Pi Agent Harness（本地复刻）
+# Pi Agent Harness
 
-> 本仓库是 [Pi Agent Harness](https://github.com/earendil-works/pi) 的**本地复刻**，在 i18n 中文化之外还扩展到 B.AI / command-code 提供商与 provider 配置向导（详见[与上游的差异](#与上游的差异)）。核心目的让「跟上游同步」保持低成本、可回滚。
+> 本仓库是 [Pi Agent Harness](https://github.com/earendil-works/pi) 的**本地复刻**
 >
 > **注意**：这是一份本地复刻源码，**并未**以 `@earendil-works/*` 发布到 npm。请从源码运行（见 [快速开始](#快速开始)），不要 `npm install -g`（那会装上官方包）。
 
@@ -40,74 +40,62 @@ OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider`，认证用 
 
 仅在 `/settings` 或 `--tui-mode regular` 显式选择时才回退到旧的 main-screen。
 
+### 提示词历史持久化
+
+交互模式的聊天输入历史（上下键浏览）跨会话持久化，共 100 条，写入 `~/.pi/agent/prompt-history.json`，重启 `pi` 后仍可浏览（见 `packages/coding-agent/src/modes/interactive/components/custom-editor.ts` 与 `config.ts` 的 `getPromptHistoryPath()`）。
+
+### 默认重试策略
+
+agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000` 提高为 `maxRetries: 12` / `baseDelayMs: 4000`（指数退避 4s/8s/16s）。可在 `~/.pi/agent/settings.json` 的 `retry` 覆盖（见 `packages/coding-agent/src/core/settings-manager.ts`）。
+
+### 编辑器微调
+
+双击 Delete（300ms 内连续两次）清空当前编辑器输入；非 Delete 键输入会中断该双击手势。其他按键行为与上游一致（见 `packages/tui/src/components/editor.ts`）。
+
+### 会话回退（/revert）
+
+新增 `/revert`（别名 `/rollback`、`/回退`）将 git 工作区恢复到当前会话开始时的状态。会话创建时通过 `git stash create` 无侵入快照 `HEAD + index + working tree`（`stashHash | null`），连同 `headCommit/createdAt/cwd` 写入 `SessionHeader.revertSnapshot`（见 `packages/coding-agent/src/core/session-revert.ts` 与 `session-manager.ts#getRevertSnapshot()`）；执行时二次确认后依次 `git reset --hard <headCommit>`、`git clean -fd`、`git stash apply --index <stashHash>`，非 git 仓库或无快照时仅提示。确认与结果文案经 `t()` 中文化（`packages/coding-agent/src/i18n/locales/zh-CN/core.ts`），未跟踪文件的完整恢复为已知上限（`ponytail: stash create` 仅覆盖已跟踪文件）。
+
+### 其余内部加固
+
+- **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。
+- **gitleaks 白名单**：`.gitleaks.toml` 排除 `packages/ai/src/providers/data/`（生成模型目录，仅模型元数据与校验和，无凭据），避免 `structureHash` 误报。
+
 ## 快速开始
 
-先从源码安装依赖并运行：
+克隆源码、安装依赖并注册全局 `pi` 命令，按你的 shell 复制整段即可启动：
+
+### Bash
 
 ```bash
 git clone https://github.com/Dazzle-sys/pi
 cd pi
 npm install --ignore-scripts
-```
-
-从仓库根直接运行（任意目录可执行）：
-
-```bash
-./pi-test.sh            # 自带 --no-env 等参数支持
-npx tsx packages/coding-agent/src/cli.ts
-```
-
-### 注册 `pi` 启动命令
-
-把 `pi` 注册为一个全局命令，方便在任意目录直接使用。下面两种方式选其一：
-
-#### 方式一：PATH wrapper（推荐，跨 shell、可加参数）
-
-```bash
 mkdir -p ~/.local/bin
 cat > ~/.local/bin/pi <<'EOF'
 #!/usr/bin/env bash
 cd "$HOME/pi" && exec ./pi-test.sh "$@"
 EOF
 chmod +x ~/.local/bin/pi
-```
-
-然后在 shell 配置文件（`~/.bashrc` / `~/.zshrc`）中加入：
-
-```bash
 export PATH="$HOME/.local/bin:$PATH"
-source ~/.bashrc   # 或 source ~/.zshrc
-```
-
-之后任意目录直接 `pi` 即可启动。
-
-#### 方式二：shell alias
-
-```bash
-echo 'alias pi="$HOME/pi/pi-test.sh"' >> ~/.bashrc   # 或 ~/.zshrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc   # 或 ~/.zshrc
 source ~/.bashrc
-```
-
-### 配置提供商
-
-```bash
-# B.AI
-export BAI_API_KEY=sk-xxxxxxxx
-# Command Code
-export COMMANDCODE_API_KEY=sk-xxxxxxxx
 pi
 ```
 
-也可在交互模式输入 `/provider` 用向导写入 `~/.pi/agent/models.json`（provider 级配置，与环境变量二选一）。
+### PowerShell
 
-### 启用简体中文
-
-```bash
-export PI_LOCALE=zh-CN
+```powershell
+git clone https://github.com/Dazzle-sys/pi
+cd pi
+npm install --ignore-scripts
+if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
+Add-Content -Path $PROFILE -Value 'function pi { & "$HOME\pi\pi-test.ps1" @args }'
+. $PROFILE
 pi
 ```
 
-也可以运行后在 `/settings` 中切换界面语言。
+> 克隆到默认的 `$HOME/pi` 时上面的路径可直接使用；改成其它目录请同步替换 wrapper 里的 `$HOME/pi`。
 
 ## 维护与同步上游
 
