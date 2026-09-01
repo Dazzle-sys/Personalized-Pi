@@ -9,3 +9,16 @@
 
 - **教训**：`interactive-mode.ts:6662` 为图省事在方法内 `await import("../../core/session-revert.ts")`，违反 `AGENTS.md` “No inline imports — Top-level imports only” 与 erasable TS 约束，`npm run check` 虽过但 `tsgo` 静态性受损。
 - **修复**：改为顶层 `import { describeSnapshot, executeRevert, type RevertSnapshot } from "../../core/session-revert.ts"`，并 `npm run check` 复验。
+
+### 3. 克制的美化优于强改：别把视觉改动塞进刻意编码且已被测试的行为
+
+- **教训**：2026-09-01 TUI/UX 现代化，原计划把 H1 标题去除下划线、给 keybinding 提示加 `[ ]` chip。但 `markdown.test.ts` 有两处用例明确断言 H1 带下划线（`\x1b[4m`）并在行内 code 后恢复（这是刻意行为），`keyHint/rawKeyHint` 被 40+ 处调用且样式已一致。改成 "现代" 反而要改一堆既有测试/波及面，违背「全面但克制」。
+- **修复**：回退 H1 改动（markdown.ts 不动，`git checkout`），keybinding-hints 保持现状；可读性改由**配色 token**（Task 1/2 把 `mdHeading` 提亮为 `#c0caf5`）达成，而非改渲染结构。原则：能靠数据（主题 JSON）解决的视觉，不碰组件渲染；确要改渲染，先 `grep` 全部调用点与既有用例，冲突则征询后再动。
+
+### 4. `npm run check` 在 base main 即失败：先确认预存错误归属再谈提交门槛
+
+- **教训**：UI 改动完成后跑 `npm run check` 报 804 个 `TS2345 ... not assignable to type 'never'`（722 在 `test/*`，82 在 `packages/ai/src/providers/*.models.ts`），无一在我的改动文件。
+- **误诊**：最初归因于「`models.generated.ts` 生成漂移」——错。
+- **真根因**：`packages/ai/src/providers/data/*.json`（`data/*.json` 是 **gitignore 的生成产物**）在新建的 git worktree 里**缺失**。`.models.ts` 用 `import values from "./data/*.json" with { type: "json" }` 读取它：文件不存在时 `tsgo` 把它推断为 `unknown`，传给 `flattenModelCatalog<..., TGroups extends ModelGroups>` 满足不了约束→泛型塌缩成 `never`→模型 ID 联合变 `never`→800+ 处 `not assignable to never`。主工作树因之前已 `npm run generate:models` 生成过 `data/`，所以正常；worktree 不带 gitignore 文件、又没有 `prepare`/`postinstall` 钩子自动生成，才失败。
+- **修复**：`npm run generate:models`（root，内含 `node scripts/generate-models.ts --strict`）重新生成 `data/*.json`（gitignore，不提交；`models.generated.ts`/`.models.ts` 未变，`image-models.generated.ts` 也回干净），`npm run check` 即绿。
+- **教训沉淀**：① 新建 worktree/克隆后若 `check` 报大量模型类型 `never` 错，先确认 `data/*.json` 是否存在，跑 `npm run generate:models` 即可，别误判为生成漂移；② 遇到 base 就挂的检查，先 `git status`/落盘日志区分「本任务引入」vs「环境缺生成产物」，再如实上报，绝不含糊宣称全绿；③ 本机 `tmux` 不可用，交互目检改用测试断言替代。
