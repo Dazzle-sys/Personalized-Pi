@@ -337,7 +337,7 @@ export class Editor implements Component, Focusable {
 	private autocompleteList?: SelectList;
 	private autocompleteState: "regular" | "force" | null = null;
 	private autocompletePrefix: string = "";
-	private autocompleteMaxVisible: number = 5;
+	private autocompleteMaxVisible: number = 10;
 	private autocompleteAbort?: AbortController;
 	private autocompleteDebounceTimer?: ReturnType<typeof setTimeout>;
 	private autocompleteRequestTask: Promise<void> = Promise.resolve();
@@ -390,7 +390,7 @@ export class Editor implements Component, Focusable {
 		this.borderColor = theme.borderColor;
 		const paddingX = options.paddingX ?? 0;
 		this.paddingX = Number.isFinite(paddingX) ? Math.max(0, Math.floor(paddingX)) : 0;
-		const maxVisible = options.autocompleteMaxVisible ?? 5;
+		const maxVisible = options.autocompleteMaxVisible ?? 10;
 		this.autocompleteMaxVisible = Number.isFinite(maxVisible) ? Math.max(3, Math.min(20, Math.floor(maxVisible))) : 5;
 		if (options.initialHistory?.length) {
 			this.history = options.initialHistory.slice(0, 100);

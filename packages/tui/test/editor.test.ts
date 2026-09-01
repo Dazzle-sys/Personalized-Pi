@@ -4191,4 +4191,11 @@ describe("Editor component", () => {
 			assert.strictEqual(submitted, pastedText);
 		});
 	});
+
+	describe("Autocomplete configuration", () => {
+		it("defaults autocomplete max visible to 10", () => {
+			const editor = new Editor(createTestTUI(), defaultEditorTheme);
+			assert.equal(editor.getAutocompleteMaxVisible(), 10);
+		});
+	});
 });
