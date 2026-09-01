@@ -1,7 +1,0 @@
-# Generated model catalogs (packages/ai/src/providers/data/*.json) contain only
-# model metadata and SHA-256 checksums — never credentials. Exclude them from
-# gitleaks scanning to avoid false positives on the structureHash values.
-[allowlist]
-paths = [
-  "packages/ai/src/providers/data/"
-]
