@@ -22,3 +22,9 @@
 - **真根因**：`packages/ai/src/providers/data/*.json`（`data/*.json` 是 **gitignore 的生成产物**）在新建的 git worktree 里**缺失**。`.models.ts` 用 `import values from "./data/*.json" with { type: "json" }` 读取它：文件不存在时 `tsgo` 把它推断为 `unknown`，传给 `flattenModelCatalog<..., TGroups extends ModelGroups>` 满足不了约束→泛型塌缩成 `never`→模型 ID 联合变 `never`→800+ 处 `not assignable to never`。主工作树因之前已 `npm run generate:models` 生成过 `data/`，所以正常；worktree 不带 gitignore 文件、又没有 `prepare`/`postinstall` 钩子自动生成，才失败。
 - **修复**：`npm run generate:models`（root，内含 `node scripts/generate-models.ts --strict`）重新生成 `data/*.json`（gitignore，不提交；`models.generated.ts`/`.models.ts` 未变，`image-models.generated.ts` 也回干净），`npm run check` 即绿。
 - **教训沉淀**：① 新建 worktree/克隆后若 `check` 报大量模型类型 `never` 错，先确认 `data/*.json` 是否存在，跑 `npm run generate:models` 即可，别误判为生成漂移；② 遇到 base 就挂的检查，先 `git status`/落盘日志区分「本任务引入」vs「环境缺生成产物」，再如实上报，绝不含糊宣称全绿；③ 本机 `tmux` 不可用，交互目检改用测试断言替代。
+
+### 5. git worktree 别放进仓库根内：会让主库 `npm run check` 报 biome 嵌套配置错
+
+- **教训**：按 `using-git-worktrees` 默认把 worktree 建在 `pi/.worktrees/<branch>`（仓库内部）。完成后在主库跑 `npm run check`，biome 报「Found a nested root configuration, but there's already a root configuration」——它在遍历时把 worktree 里的 `biome.json` 当成了嵌套根配置，主库 check 直接失败。这是我在主库引入的回归（worktree 存在期间）。
+- **修复**：合并完移除 worktree（`git worktree remove .worktrees/<b>` + `git worktree prune` + `git branch -d <b>`）后，主库 `npm run check` 即恢复。worktree 移除会连带清掉 **gitignore 的生成产物**（如 `data/*.json`），但主库自身的这些产物不受影响。
+- **教训沉淀**：① 在仓库根内建 worktree 会影响主库的 biome/其它按目录发现配置的工具——要么放仓库外、要么完成后及时移除；② 移 worktree 前先确认分支已并入目标分支（`git branch --contains`）且 worktree 无未提交改动再删。
