@@ -770,14 +770,18 @@ export class InteractiveMode {
 		const logoutCommand = slashCommands.find((command) => command.name === "logout");
 		if (logoutCommand) {
 			logoutCommand.getArgumentCompletions = async (prefix: string): Promise<AutocompleteItem[] | null> => {
-				const providers = await this.getLogoutProviderOptions();
-				if (providers.length === 0) return null;
-				return createFuzzyAutocompleteItems(
-					providers,
-					prefix,
-					(provider) => provider.id,
-					(provider) => ({ value: provider.id, label: provider.id, description: provider.name }),
-				);
+				try {
+					const providers = await this.getLogoutProviderOptions();
+					if (providers.length === 0) return null;
+					return createFuzzyAutocompleteItems(
+						providers,
+						prefix,
+						(provider) => provider.id,
+						(provider) => ({ value: provider.id, label: provider.id, description: provider.name }),
+					);
+				} catch {
+					return null;
+				}
 			};
 		}
 
