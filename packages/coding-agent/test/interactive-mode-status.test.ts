@@ -142,24 +142,25 @@ describe("InteractiveMode.showManagedToolStatus", () => {
 	});
 });
 
-describe("InteractiveMode.setToolsExpanded", () => {
-	test("applies expansion state to the active header and chat entries", () => {
+describe("InteractiveMode.setToolDisplayMode", () => {
+	test("applies display mode to the active header and chat entries", () => {
 		const header = { setExpanded: vi.fn() };
 		const loadedResourcesChild = { setExpanded: vi.fn() };
 		const chatChild = { setExpanded: vi.fn() };
 		const fakeThis: any = {
-			toolOutputExpanded: false,
+			toolDisplayMode: "title",
 			customHeader: undefined,
 			builtInHeader: header,
 			loadedResourcesContainer: { children: [loadedResourcesChild] },
 			chatContainer: { children: [chatChild] },
 			ui: { requestRender: vi.fn() },
 			showStatus: vi.fn(),
+			applyDisplayMode: (InteractiveMode as any).prototype.applyDisplayMode,
 		};
 
-		(InteractiveMode as any).prototype.setToolsExpanded.call(fakeThis, true);
+		(InteractiveMode as any).prototype.setToolDisplayMode.call(fakeThis, "expanded");
 
-		expect(fakeThis.toolOutputExpanded).toBe(true);
+		expect(fakeThis.toolDisplayMode).toBe("expanded");
 		expect(header.setExpanded).toHaveBeenCalledWith(true);
 		expect(loadedResourcesChild.setExpanded).toHaveBeenCalledWith(true);
 		expect(chatChild.setExpanded).toHaveBeenCalledWith(true);
@@ -515,7 +516,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 	function createShowLoadedResourcesThis(options: {
 		quietStartup: boolean;
 		verbose?: boolean;
-		toolOutputExpanded?: boolean;
+		toolDisplayMode?: "title" | "preview" | "expanded";
 		cwd?: string;
 		contextFiles?: Array<{ path: string; content?: string }>;
 		systemPromptSource?: { path: string };
@@ -527,7 +528,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 	}) {
 		const fakeThis: any = {
 			options: { verbose: options.verbose ?? false },
-			toolOutputExpanded: options.toolOutputExpanded ?? false,
+			toolDisplayMode: options.toolDisplayMode ?? "title",
 			loadedResourcesContainer: new Container(),
 			chatContainer: new Container(),
 			settingsManager: {
@@ -718,7 +719,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 	test("shows full resource listing when expanded", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
-			toolOutputExpanded: true,
+			toolDisplayMode: "expanded",
 			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
 		});
 
@@ -736,7 +737,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: true,
 			verbose: true,
-			toolOutputExpanded: false,
+			toolDisplayMode: "title",
 			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
 		});
 
@@ -1131,7 +1132,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 	test("captures mixed extension layouts in expanded output", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
-			toolOutputExpanded: true,
+			toolDisplayMode: "expanded",
 			extensions: createExtensionFixtures(),
 			useRealScopeGroups: true,
 		});
@@ -1201,7 +1202,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		const cwd = path.join(home, "Development", "pi-mono");
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
-			toolOutputExpanded: true,
+			toolDisplayMode: "expanded",
 			cwd,
 			contextFiles: [{ path: path.join(home, ".pi", "agent", "AGENTS.md") }, { path: path.join(cwd, "AGENTS.md") }],
 		});

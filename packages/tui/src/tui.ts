@@ -44,6 +44,13 @@ export interface Component {
 	 * Called when theme changes or when component needs to re-render from scratch.
 	 */
 	invalidate(): void;
+
+	/**
+	 * Optional: called when a content row rendered by this component is clicked with the primary
+	 * mouse button. `row`/`col` are relative to this component's rendered output. Return `true` to
+	 * consume the click (suppress text selection/copy). Only honored inside a ScrollView.
+	 */
+	onContentClick?(row: number, col: number): boolean;
 }
 
 export type TuiInputListenerResult = { consume?: boolean; data?: string } | undefined;

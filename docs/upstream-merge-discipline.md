@@ -53,11 +53,11 @@ i18n 的 `t()` 把 30+ 个源文件改成包装，这些行上游高频触碰 �
 - [ ] `npm run check` 全绿
 - [ ] `npm run generate:models` 无 dirty diff（`data/*.json` 是生成物，不入库）
 - [ ] i18n 覆盖审计测试过：`node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run packages/coding-agent/test/i18n-coverage.test.ts`
-- [ ] B.A.I 目录 reconcile 不阻塞构建（`BAI_API_KEY` 缺失/401 时回退本地 44 个模型）
+- [ ] B.A.I 目录 reconcile 不阻塞构建（auth.json 无 bai 凭证/401 时回退本地 44 个模型）
 - [ ] command-code E2E 不阻塞构建（`COMMANDCODE_API_KEY` 缺失时 `stream.test.ts` 的 `skipIf` 跳过）
 
 ## 六、已知环境注意点
 
-- **本机固定出口 IP**（当前 47.128.210.21）下，`BAI_API_KEY` 对 B.A.I 请求返回 **401**（key 绑定其它出口/IP）。因此 B.A.I 的 E2E 测试（`stream.test.ts` 的 `skipIf(!BAI_API_KEY)`）在此机器**必然失败**——这是环境/凭据问题，**不是代码 bug**。凡依赖真实 B.A.I 调用的 E2E，请在**能连通 B.A.I 的环境**运行，或在无 `BAI_API_KEY` 的 CI 里让其 `skip`。
+- **本机固定出口 IP**（当前 47.128.210.21）下，B.A.I 请求返回 **401**（key 绑定其它出口/IP）。因此 B.A.I 的 E2E 测试（`stream.test.ts` 的 `skipIf(!baiApiKey)`，认证仅凭 auth.json）在此机器**必然失败**——这是环境/凭据问题，**不是代码 bug**。凡依赖真实 B.A.I 调用的 E2E，请在**能连通 B.A.I 的环境**运行，或在无 bai 凭证的 CI 里让其 `skip`。
 
 - **command-code 依赖**：`stream.test.ts` 的 command-code E2E 需 `COMMANDCODE_API_KEY`；缺失时 `skipIf` 跳过，不影响构建与本地测试。

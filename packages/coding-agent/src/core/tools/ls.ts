@@ -57,7 +57,7 @@ export interface LsToolOptions {
 function formatLsCall(args: { path?: string; limit?: number } | undefined, theme: Theme, cwd: string): string {
 	const limit = args?.limit;
 	const pathDisplay = renderToolPath(str(args?.path), theme, cwd, { emptyFallback: "." });
-	let text = `${theme.fg("toolTitle", theme.bold("ls"))} ${pathDisplay}`;
+	let text = `${theme.fg("toolTitle", theme.bold(t("ls")))} ${pathDisplay}`;
 	if (limit !== undefined) {
 		text += theme.fg("toolOutput", t(" (limit {limit})", { limit }));
 	}
@@ -73,6 +73,9 @@ function formatLsResult(
 	theme: Theme,
 	showImages: boolean,
 ): string {
+	if (options.displayMode === "title") {
+		return "";
+	}
 	const output = getTextOutput(result, showImages).trim();
 	let text = "";
 	if (output) {

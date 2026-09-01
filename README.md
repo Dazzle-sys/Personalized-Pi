@@ -24,7 +24,7 @@
 
 ### B.AI 提供商
 
-OpenAI 兼容端点 `https://api.b.ai/v1`，认证用 `BAI_API_KEY`。模型目录、目录校准与回退逻辑见 [Provider 配置](packages/coding-agent/docs/providers.md#bai-fork-custom)。
+OpenAI 兼容端点 `https://api.b.ai/v1`，认证仅凭 auth.json 凭证（/login 存储，不使用环境变量）。模型目录、目录校准与回退逻辑见 [Provider 配置](packages/coding-agent/docs/providers.md#bai-fork-custom)。
 
 ### Command-code 提供商
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "fs";
+import { homedir } from "os";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import { getEffortThinkingLevelMap, type ModelsDevReasoningOption } from "./models-dev-reasoning-options.ts";
@@ -1202,18 +1203,31 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
  * authoritative source of full metadata (cost, context window, compat). This
  * function never invents metadata for models it does not know: remote ids
  * missing from the local catalog are reported and skipped, so the directory
- * stays accurate. When BAI_API_KEY is absent or the request fails (e.g. CI
- * has no key, or an egress-IP mismatch returns 401), the local catalog is
- * returned unchanged.
+ * stays accurate. When no bai credential exists in auth.json or the request
+ * fails (e.g. CI has no key, or an egress-IP mismatch returns 401), the local
+ * catalog is returned unchanged.
  * ponytail: egress-IP-bound B.A.I key, so CI fetch is expected to fail —
  * best-effort reconciliation only, never a build block.
  */
+function getBaiApiKeyFromAuthJson(): string | undefined {
+	// 与运行时一致：B.AI 认证仅凭 auth.json 凭证（/login 存储），不使用环境变量
+	const authPath = join(homedir(), ".pi", "agent", "auth.json");
+	if (!existsSync(authPath)) return undefined;
+	try {
+		const storage = JSON.parse(readFileSync(authPath, "utf-8")) as Record<string, unknown>;
+		const entry = storage.bai as { type?: string; key?: string } | undefined;
+		return entry?.type === "api_key" ? entry.key : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 async function reconcileBaiCatalog(
 	catalog: Model<"openai-completions">[],
 ): Promise<Model<"openai-completions">[]> {
-	const apiKey = process.env.BAI_API_KEY;
+	const apiKey = getBaiApiKeyFromAuthJson();
 	if (!apiKey) {
-		console.info("B.A.I: BAI_API_KEY not set, keeping local catalog.");
+		console.info("B.A.I: no bai credential in auth.json, keeping local catalog.");
 		return catalog;
 	}
 	try {

@@ -409,12 +409,17 @@ export interface ReplacedSessionContext extends ExtensionCommandContext {
 // Tool Types
 // ============================================================================
 
+/** Tool call display granularity: title line only (default), preview, or fully expanded. */
+export type ToolDisplayMode = "title" | "preview" | "expanded";
+
 /** Rendering options for tool results */
 export interface ToolRenderResultOptions {
 	/** Whether the result view is expanded */
 	expanded: boolean;
 	/** Whether this is a partial/streaming result */
 	isPartial: boolean;
+	/** Tool call display granularity. */
+	displayMode: ToolDisplayMode;
 }
 
 /** Context passed to tool renderers. */
@@ -439,6 +444,8 @@ export interface ToolRenderContext<TState = any, TArgs = any> {
 	isPartial: boolean;
 	/** Whether the result view is expanded. */
 	expanded: boolean;
+	/** Tool call display granularity. */
+	displayMode: ToolDisplayMode;
 	/** Whether inline images are currently shown in the TUI. */
 	showImages: boolean;
 	/** Whether the current result is an error. */
@@ -1120,7 +1127,8 @@ export interface ContextEventResult {
 	messages?: AgentMessage[];
 }
 
-export type BeforeProviderRequestEventResult = unknown;
+// SAFETY: extension event handlers return arbitrary provider data, so the result type is `unknown`
+// rather than a fictitious shape; consumers narrow it at the boundary.
 
 export interface ToolCallEventResult {
 	/** Block tool execution. To modify arguments, mutate `event.input` in place instead. */
@@ -1273,10 +1281,7 @@ export interface ExtensionAPI {
 	on(event: "session_before_tree", handler: ExtensionHandler<SessionBeforeTreeEvent, SessionBeforeTreeResult>): void;
 	on(event: "session_tree", handler: ExtensionHandler<SessionTreeEvent>): void;
 	on(event: "context", handler: ExtensionHandler<ContextEvent, ContextEventResult>): void;
-	on(
-		event: "before_provider_request",
-		handler: ExtensionHandler<BeforeProviderRequestEvent, BeforeProviderRequestEventResult>,
-	): void;
+	on(event: "before_provider_request", handler: ExtensionHandler<BeforeProviderRequestEvent, unknown>): void;
 	on(event: "before_provider_headers", handler: ExtensionHandler<BeforeProviderHeadersEvent>): void;
 	on(event: "after_provider_response", handler: ExtensionHandler<AfterProviderResponseEvent>): void;
 	on(event: "before_agent_start", handler: ExtensionHandler<BeforeAgentStartEvent, BeforeAgentStartEventResult>): void;
@@ -1442,7 +1447,7 @@ export interface ExtensionAPI {
 	 * // Register a new provider with custom models
 	 * pi.registerProvider("my-proxy", {
 	 *   baseUrl: "https://proxy.example.com",
-	 *   apiKey: "$PROXY_API_KEY",
+	 *   apiKey: process.env.MY_PROXY_KEY,
 	 *   api: "anthropic-messages",
 	 *   models: [
 	 *     {

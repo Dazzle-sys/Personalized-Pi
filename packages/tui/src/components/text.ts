@@ -29,6 +29,10 @@ export class Text implements Component {
 		this.cachedLines = undefined;
 	}
 
+	getText(): string {
+		return this.text;
+	}
+
 	setCustomBgFn(customBgFn?: (text: string) => string): void {
 		this.customBgFn = customBgFn;
 		this.cachedText = undefined;

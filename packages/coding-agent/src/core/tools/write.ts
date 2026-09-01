@@ -144,7 +144,10 @@ function formatWriteCall(
 	const rawPath = str(args?.file_path ?? args?.path);
 	const fileContent = str(args?.content);
 	const pathDisplay = renderToolPath(rawPath, theme, cwd);
-	let text = `${theme.fg("toolTitle", theme.bold("write"))} ${pathDisplay}`;
+	let text = `${theme.fg("toolTitle", theme.bold(t("write")))} ${pathDisplay}`;
+	if (options.displayMode === "title") {
+		return text;
+	}
 
 	if (fileContent === null) {
 		text += `\n\n${theme.fg("error", t("[invalid content arg - expected string]"))}`;
@@ -155,7 +158,7 @@ function formatWriteCall(
 			: normalizeDisplayText(fileContent).split("\n");
 		const lines = trimTrailingEmptyLines(renderedLines);
 		const totalLines = lines.length;
-		const maxLines = options.expanded ? lines.length : 10;
+		const maxLines = options.displayMode === "expanded" ? lines.length : 10;
 		const displayLines = lines.slice(0, maxLines);
 		const remaining = lines.length - maxLines;
 		text += `\n\n${displayLines.map((line) => (lang ? line : theme.fg("toolOutput", replaceTabs(line)))).join("\n")}`;
@@ -250,7 +253,7 @@ export function createWriteToolDefinition(
 			component.setText(
 				formatWriteCall(
 					renderArgs,
-					{ expanded: context.expanded, isPartial: context.isPartial },
+					{ expanded: context.expanded, isPartial: context.isPartial, displayMode: context.displayMode },
 					theme,
 					component.cache,
 					context.cwd,

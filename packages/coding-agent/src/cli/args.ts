@@ -401,7 +401,6 @@ ${chalk.bold(t("Environment Variables:"))}
   AZURE_OPENAI_RESOURCE_NAME       - ${t("Azure OpenAI resource name (alternative to base URL)")}
   AZURE_OPENAI_API_VERSION         - ${t("Azure OpenAI API version (default: v1)")}
   AZURE_OPENAI_DEPLOYMENT_NAME_MAP - ${t("Azure OpenAI model=deployment map (comma-separated)")}
-  BAI_API_KEY                      - ${t("B.AI API key")}
   DEEPSEEK_API_KEY                 - ${t("DeepSeek API key")}
   NVIDIA_API_KEY                   - ${t("NVIDIA NIM API key")}
   GEMINI_API_KEY                   - ${t("Google Gemini API key")}

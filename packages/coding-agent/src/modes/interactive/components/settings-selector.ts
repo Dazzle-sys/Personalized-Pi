@@ -83,6 +83,7 @@ export interface SettingsConfig {
 	clearOnShrink: boolean;
 	showTerminalProgress: boolean;
 	tuiMode: TuiMode;
+	toolDisplayMode: "title" | "preview" | "expanded";
 	fullscreenExitOutput: FullscreenExitOutput;
 	fullscreenScrollbar: ScrollViewScrollbar;
 	fullscreenCopyOnSelect: boolean;
@@ -121,6 +122,7 @@ export interface SettingsCallbacks {
 	onClearOnShrinkChange: (enabled: boolean) => void;
 	onShowTerminalProgressChange: (enabled: boolean) => void;
 	onTuiModeChange: (mode: TuiMode) => void;
+	onToolDisplayModeChange: (mode: "title" | "preview" | "expanded") => void;
 	onFullscreenExitOutputChange: (output: FullscreenExitOutput) => void;
 	onFullscreenScrollbarChange: (mode: ScrollViewScrollbar) => void;
 	onFullscreenCopyOnSelectChange: (enabled: boolean) => void;
@@ -691,6 +693,13 @@ export class SettingsSelectorComponent extends Container {
 				values: ["regular", "fullscreen"],
 			},
 			{
+				id: "tool-display-mode",
+				label: t("Tool display mode"),
+				description: t("Default tool call display; Ctrl+O cycles title/preview/expanded"),
+				currentValue: config.toolDisplayMode,
+				values: ["title", "preview", "expanded"],
+			},
+			{
 				id: "fullscreen-exit-output",
 				label: t("Fullscreen exit output"),
 				description: t("Print the transcript or only a session resume hint when exiting fullscreen mode"),
@@ -934,6 +943,9 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "tui-mode":
 						callbacks.onTuiModeChange(newValue as TuiMode);
+						break;
+					case "tool-display-mode":
+						callbacks.onToolDisplayModeChange(newValue as "title" | "preview" | "expanded");
 						break;
 					case "fullscreen-exit-output":
 						callbacks.onFullscreenExitOutputChange(newValue as FullscreenExitOutput);

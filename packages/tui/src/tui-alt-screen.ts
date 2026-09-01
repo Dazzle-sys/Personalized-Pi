@@ -1005,6 +1005,16 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 			this.stopSelectionAutoScroll();
 			if (!this.selectionAnchor) return;
 			this.updateSelectionFocus(point);
+			const clickHandler =
+				!this.selectionDragged && point.scrollView
+					? this.currentLayout?.clickTargets.get(point.scrollView)?.get(point.row)
+					: undefined;
+			if (clickHandler?.(point.col)) {
+				this.selectionAnchor = undefined;
+				this.selectionFocus = undefined;
+				this.requestRender();
+				return;
+			}
 			const clickedUrl =
 				!this.selectionDragged &&
 				this.selectionAnchor.scrollView === point.scrollView &&

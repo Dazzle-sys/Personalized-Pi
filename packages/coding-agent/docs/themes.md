@@ -65,7 +65,7 @@ mkdir -p ~/.pi/agent/themes
 vim ~/.pi/agent/themes/my-theme.json
 ```
 
-2. Define the theme with all required colors (see [Color Tokens](#color-tokens)):
+1. Define the theme with all required colors (see [Color Tokens](#color-tokens)):
 
 ```json
 {
@@ -96,9 +96,9 @@ vim ~/.pi/agent/themes/my-theme.json
     "customMessageBg": "#2d2d30",
     "customMessageText": "",
     "customMessageLabel": "primary",
-    "toolPendingBg": "#1e1e2e",
-    "toolSuccessBg": "#1e2e1e",
-    "toolErrorBg": "#2e1e1e",
+    "toolPendingBg": "",
+    "toolSuccessBg": "",
+    "toolErrorBg": "",
     "toolTitle": "primary",
     "toolOutput": "",
     "mdHeading": "#ffaa00",
@@ -135,7 +135,7 @@ vim ~/.pi/agent/themes/my-theme.json
 }
 ```
 
-3. Select the theme via `/settings`.
+1. Select the theme via `/settings`.
 
 **Hot reload:** When you edit the currently active custom theme file, pi reloads it automatically for immediate visual feedback.
 
@@ -171,7 +171,7 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 ### Core UI (11 colors)
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `accent` | Primary accent (logo, selected items, cursor) |
 | `border` | Normal borders |
 | `borderAccent` | Highlighted borders |
@@ -187,7 +187,7 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 ### Backgrounds & Content (11 required, 3 optional)
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `selectedBg` | Selected line background |
 | `scrollbarThumb` | Fullscreen scrollbar thumb background; optional, falls back to `selectedBg` |
 | `searchMatchBg` | Transcript search match background and current-match text; optional, falls back to `selectedBg` |
@@ -203,10 +203,12 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 | `toolTitle` | Tool title |
 | `toolOutput` | Tool output text |
 
+> In the built-in `dark` and `light` themes, `toolPendingBg`, `toolSuccessBg`, and `toolErrorBg` all use the terminal default background (`""`), so the tool box blends into the terminal. Set a color to keep a tinted box per state.
+
 ### Markdown (10 colors)
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `mdHeading` | Headings |
 | `mdLink` | Link text |
 | `mdLinkUrl` | Link URL |
@@ -221,7 +223,7 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 ### Tool Diffs (3 colors)
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `toolDiffAdded` | Added lines |
 | `toolDiffRemoved` | Removed lines |
 | `toolDiffContext` | Context lines |
@@ -229,7 +231,7 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 ### Syntax Highlighting (9 colors)
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `syntaxComment` | Comments |
 | `syntaxKeyword` | Keywords |
 | `syntaxFunction` | Function names |
@@ -245,7 +247,7 @@ Every theme must define all 51 required color tokens. The optional tokens preser
 Editor border colors indicating thinking level (visual hierarchy from subtle to prominent):
 
 | Token | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `thinkingOff` | Thinking off |
 | `thinkingMinimal` | Minimal thinking |
 | `thinkingLow` | Low thinking |
@@ -279,7 +281,7 @@ The `export` section controls colors for `/export` HTML output. If omitted, colo
 Four formats are supported:
 
 | Format | Example | Description |
-|--------|---------|-------------|
+| -------- | --------- | ------------- |
 | Hex | `"#ff0000"` | 6-digit hex RGB |
 | 256-color | `39` | xterm 256-color palette index (0-255) |
 | Variable | `"primary"` | Reference to a `vars` entry |
@@ -316,5 +318,6 @@ echo $COLORTERM  # Should output "truecolor" or "24bit"
 ## Examples
 
 See the built-in themes:
+
 - [dark.json](../src/modes/interactive/theme/dark.json)
 - [light.json](../src/modes/interactive/theme/light.json)

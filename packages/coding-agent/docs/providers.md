@@ -71,7 +71,6 @@ pi
 | Anthropic | `ANTHROPIC_API_KEY` | `anthropic` |
 | Ant Ling | `ANT_LING_API_KEY` | `ant-ling` |
 | Azure OpenAI Responses | `AZURE_OPENAI_API_KEY` | `azure-openai-responses` |
-| B.AI | `BAI_API_KEY` | `bai` |
 | OpenAI | `OPENAI_API_KEY` | `openai` |
 | DeepSeek | `DEEPSEEK_API_KEY` | `deepseek` |
 | Command Code | `COMMANDCODE_API_KEY` | `commandcode` |
@@ -110,12 +109,12 @@ Reference for environment variables and `auth.json` keys: [`const envMap`](https
 
 ### B.AI (fork custom)
 
-B.AI 是 OpenAI 兼容聚合端点 `https://api.b.ai/v1`，认证用 `BAI_API_KEY`。本复刻对其做了定制：
+B.AI 是 OpenAI 兼容聚合端点 `https://api.b.ai/v1`。本复刻对其做了定制：
 
 - 模型目录由 `packages/ai/scripts/generate-models.ts` 中的 B.AI 元数据表生成，共 **44 个模型**，覆盖 GPT、Claude、Gemini、DeepSeek、GLM、MiniMax、Kimi、Qwen 等家族。
-- `BAI_API_KEY` 存在且可连通时，经 `GET /v1/models` 做 best-effort 目录校准并输出远程差异报告；失败或无 key 时回退本地目录，不阻塞构建。
+- auth.json 中存在 bai 凭证且可连通时，经 `GET /v1/models` 做 best-effort 目录校准并输出远程差异报告；失败或无凭证时回退本地目录，不阻塞构建。
 
-在交互界面的 `/login` 里选择 B.AI，或在环境中 `export BAI_API_KEY=sk-xxxxxxxx` 后启动 pi。
+在交互界面的 `/login` 里选择 B.AI 存储凭证（认证仅凭 auth.json，不使用环境变量）。
 
 #### Auth File
 

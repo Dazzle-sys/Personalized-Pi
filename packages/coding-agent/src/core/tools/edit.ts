@@ -1,5 +1,5 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { Box, Container, Spacer, Text } from "@earendil-works/pi-tui";
+import { Box, Container, Spacer, Text, t } from "@earendil-works/pi-tui";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises";
 import { type Static, Type } from "typebox";
@@ -130,7 +130,9 @@ function prepareEditArguments(input: unknown): EditToolInput {
 			} else if (isSingleEditInput(parsed)) {
 				args.edits = [parsed];
 			}
-		} catch {}
+		} catch {
+			// Best-effort: if the argument isn't valid JSON, leave it as a string and let downstream validation report it.
+		}
 	} else if (isSingleEditInput(args.edits)) {
 		args.edits = [args.edits];
 	}
@@ -223,7 +225,7 @@ function getRenderablePreviewInput(args: RenderableEditArgs | undefined): { path
 
 function formatEditCall(args: RenderableEditArgs | undefined, theme: Theme, cwd: string): string {
 	const pathDisplay = renderToolPath(str(args?.file_path ?? args?.path), theme, cwd);
-	return `${theme.fg("toolTitle", theme.bold("edit"))} ${pathDisplay}`;
+	return `${theme.fg("toolTitle", theme.bold(t("edit")))} ${pathDisplay}`;
 }
 
 function formatEditResult(
@@ -232,7 +234,11 @@ function formatEditResult(
 	result: EditToolResultLike,
 	theme: Theme,
 	isError: boolean,
+	displayMode?: string,
 ): string | undefined {
+	if (displayMode === "title" && !isError) {
+		return undefined;
+	}
 	const rawPath = str(args?.file_path ?? args?.path);
 	const previewDiff = preview && !("error" in preview) ? preview.diff : undefined;
 	const previewError = preview && "error" in preview ? preview.error : undefined;
@@ -277,12 +283,18 @@ function buildEditCallComponent(
 	args: RenderableEditArgs | undefined,
 	theme: Theme,
 	cwd: string,
+	stateMarker: string,
+	displayMode?: string,
 ): EditCallRenderComponent {
 	component.setBgFn(getEditHeaderBg(component.preview, component.settledError, theme));
 	component.clear();
-	component.addChild(new Text(formatEditCall(args, theme, cwd), 0, 0));
+	component.addChild(new Text(`${stateMarker}${formatEditCall(args, theme, cwd)}`, 0, 0));
 
 	if (!component.preview) {
+		return component;
+	}
+	// ponytail: title mode hides diff, show on click-to-expand only
+	if (displayMode === "title" && !("error" in component.preview)) {
 		return component;
 	}
 
@@ -409,7 +421,18 @@ export function createEditToolDefinition(
 				});
 			}
 
-			return buildEditCallComponent(component, args, theme, context.cwd);
+			return buildEditCallComponent(
+				component,
+				args,
+				theme,
+				context.cwd,
+				context.isPartial
+					? theme.fg("accent", "●") + " "
+					: context.isError
+						? theme.fg("error", "✗") + " "
+						: theme.fg("success", "✓") + " ",
+				context.displayMode,
+			);
 		},
 		renderResult(result, _options, theme, context) {
 			const callComponent = context.state.callComponent;
@@ -439,11 +462,24 @@ export function createEditToolDefinition(
 						context.args as RenderableEditArgs | undefined,
 						theme,
 						context.cwd,
+						context.isPartial
+							? theme.fg("accent", "●") + " "
+							: context.isError
+								? theme.fg("error", "✗") + " "
+								: theme.fg("success", "✓") + " ",
+						context.displayMode,
 					);
 				}
 			}
 
-			const output = formatEditResult(context.args, callComponent?.preview, typedResult, theme, context.isError);
+			const output = formatEditResult(
+				context.args,
+				callComponent?.preview,
+				typedResult,
+				theme,
+				context.isError,
+				context.displayMode,
+			);
 			const component = (context.lastComponent as Container | undefined) ?? new Container();
 			component.clear();
 			if (!output) {

@@ -9,7 +9,7 @@ import {
 	type TUI,
 	t,
 } from "@earendil-works/pi-tui";
-import type { ToolDefinition, ToolRenderContext } from "../../../core/extensions/types.ts";
+import type { ToolDefinition, ToolDisplayMode, ToolRenderContext } from "../../../core/extensions/types.ts";
 import { createAllToolDefinitions, type ToolName } from "../../../core/tools/index.ts";
 import { getTextOutput as getRenderedTextOutput } from "../../../core/tools/render-utils.ts";
 import { convertToPng } from "../../../utils/image-convert.ts";
@@ -35,7 +35,8 @@ export class ToolExecutionComponent extends Container {
 	private toolName: string;
 	private toolCallId: string;
 	private args: any;
-	private expanded = false;
+	private displayMode: ToolDisplayMode = "title";
+	private baseDisplayMode: ToolDisplayMode = "title";
 	private showImages: boolean;
 	private imageWidthCells: number;
 	private isPartial = true;
@@ -139,14 +140,23 @@ export class ToolExecutionComponent extends Container {
 			executionStarted: this.executionStarted,
 			argsComplete: this.argsComplete,
 			isPartial: this.isPartial,
-			expanded: this.expanded,
+			expanded: this.displayMode === "expanded",
+			displayMode: this.displayMode,
 			showImages: this.showImages,
 			isError: this.result?.isError ?? false,
 		};
 	}
 
+	private getStateMarker(): string {
+		return this.isPartial
+			? `${theme.fg("accent", "●")} `
+			: this.result?.isError
+				? `${theme.fg("error", "✗")} `
+				: `${theme.fg("success", "✓")} `;
+	}
+
 	private createCallFallback(): Component {
-		return new Text(theme.fg("toolTitle", theme.bold(this.toolName)), 0, 0);
+		return new Text(`${this.getStateMarker()}${theme.fg("toolTitle", theme.bold(this.toolName))}`, 0, 0);
 	}
 
 	private createResultFallback(): Component | undefined {
@@ -155,8 +165,12 @@ export class ToolExecutionComponent extends Container {
 			return undefined;
 		}
 
+		if (this.displayMode === "title") {
+			return undefined;
+		}
+
 		const lines = output.split("\n");
-		const displayLines = this.expanded ? lines : lines.slice(0, FALLBACK_PREVIEW_LINES);
+		const displayLines = this.displayMode === "expanded" ? lines : lines.slice(0, FALLBACK_PREVIEW_LINES);
 		const remaining = lines.length - displayLines.length;
 		let text = displayLines.map((line) => theme.fg("toolOutput", line)).join("\n");
 		if (remaining > 0) {
@@ -220,9 +234,20 @@ export class ToolExecutionComponent extends Container {
 		}
 	}
 
-	setExpanded(expanded: boolean): void {
-		this.expanded = expanded;
+	setDisplayMode(mode: ToolDisplayMode): void {
+		this.baseDisplayMode = mode;
+		this.displayMode = mode;
 		this.updateDisplay();
+	}
+
+	/** Click on the tool call title toggles this call between its base mode and expanded (local override). */
+	private toggleLocalExpand(): void {
+		this.displayMode = this.displayMode === "expanded" ? this.baseDisplayMode : "expanded";
+		this.updateDisplay();
+	}
+
+	setExpanded(expanded: boolean): void {
+		this.setDisplayMode(expanded ? "expanded" : "title");
 	}
 
 	setShowImages(show: boolean): void {
@@ -296,6 +321,13 @@ export class ToolExecutionComponent extends Container {
 				try {
 					const component = callRenderer(this.args, theme, this.getRenderContext(this.callRendererComponent));
 					this.callRendererComponent = component;
+					if (component instanceof Text && component.getText()) {
+						component.setText(`${this.getStateMarker()}${component.getText()}`);
+					}
+					(component as Component).onContentClick = () => {
+						this.toggleLocalExpand();
+						return true;
+					};
 					renderContainer.addChild(component);
 					hasContent = true;
 				} catch {
@@ -305,7 +337,7 @@ export class ToolExecutionComponent extends Container {
 				}
 			}
 
-			if (this.result) {
+			if (this.result && this.displayMode !== "title") {
 				const resultRenderer = this.getResultRenderer();
 				if (!resultRenderer) {
 					const component = this.createResultFallback();
@@ -317,7 +349,11 @@ export class ToolExecutionComponent extends Container {
 					try {
 						const component = resultRenderer(
 							{ content: this.result.content as any, details: this.result.details },
-							{ expanded: this.expanded, isPartial: this.isPartial },
+							{
+								expanded: this.displayMode === "expanded",
+								isPartial: this.isPartial,
+								displayMode: this.displayMode,
+							},
 							theme,
 							this.getRenderContext(this.resultRendererComponent),
 						);
@@ -349,7 +385,7 @@ export class ToolExecutionComponent extends Container {
 		}
 		this.imageSpacers = [];
 
-		if (this.result) {
+		if (this.result && this.displayMode !== "title") {
 			const imageBlocks = this.result.content.filter((c) => c.type === "image");
 			const caps = getCapabilities();
 			for (let i = 0; i < imageBlocks.length; i++) {
@@ -385,7 +421,7 @@ export class ToolExecutionComponent extends Container {
 	}
 
 	private formatToolExecution(): string {
-		let text = theme.fg("toolTitle", theme.bold(this.toolName));
+		let text = `${this.getStateMarker()}${theme.fg("toolTitle", theme.bold(this.toolName))}`;
 		const content = JSON.stringify(this.args, null, 2);
 		if (content) {
 			text += `\n\n${content}`;

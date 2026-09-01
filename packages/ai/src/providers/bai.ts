@@ -8,7 +8,8 @@ export function baiProvider(): Provider<"openai-completions"> {
 		id: "bai",
 		name: "B.AI",
 		baseUrl: "https://api.b.ai/v1",
-		auth: { apiKey: envApiKeyAuth("B.AI API key", ["BAI_API_KEY"]) },
+		// 认证仅凭 auth.json 凭证（/login 存储），不使用环境变量
+		auth: { apiKey: envApiKeyAuth("B.AI API key", []) },
 		models: Object.values(BAI_MODELS),
 		api: openAICompletionsApi(),
 	});

@@ -8,6 +8,10 @@
 
 - Added the B.AI provider, an OpenAI-compatible aggregator exposing upstream GPT, Claude, Gemini, DeepSeek, and other models via `https://api.b.ai/v1` (`BAI_API_KEY`).
 
+### Changed
+
+- The B.AI provider no longer reads its API key from the `BAI_API_KEY` environment variable; authentication relies solely on an `auth.json` credential stored via `/login`.
+
 ## [0.84.4] - 2026-08-28
 
 ### Added

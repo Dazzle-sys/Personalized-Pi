@@ -256,6 +256,9 @@ function rebuildBashResultRenderComponent(
 ): void {
 	const state = component.state;
 	component.clear();
+	if (options.displayMode === "title") {
+		return;
+	}
 
 	let output = getTextOutput(result as any, showImages).trim();
 	const truncation = result.details?.truncation;

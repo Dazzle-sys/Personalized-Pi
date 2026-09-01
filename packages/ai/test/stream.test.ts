@@ -27,6 +27,9 @@ const oauthTokens = await Promise.all([
 ]);
 const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken] = oauthTokens;
 
+// B.AI 认证仅凭 auth.json 凭证（/login 存储），与运行时一致
+const baiApiKey = await resolveApiKey("bai");
+
 // Calculator tool definition (same as examples)
 // Note: Using StringEnum helper because Google's API doesn't support anyOf/const patterns
 // that Type.Enum generates. Google requires { type: "string", enum: [...] } format.
@@ -511,7 +514,7 @@ describe("Generate E2E Tests", () => {
 		},
 	);
 
-	describe.skipIf(!process.env.BAI_API_KEY)("B.AI Provider (deepseek-v4-flash via OpenAI Completions)", () => {
+	describe.skipIf(!baiApiKey)("B.AI Provider (deepseek-v4-flash via OpenAI Completions)", () => {
 		const llm = getModel("bai", "deepseek-v4-flash");
 
 		it("should complete basic text generation", { retry: 3 }, async () => {

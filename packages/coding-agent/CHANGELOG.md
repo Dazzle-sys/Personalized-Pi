@@ -16,6 +16,8 @@
 
 - The default TUI renderer is now the alt-screen `fullscreen` mode, which owns the viewport and preserves the user's manually scrolled position during streaming and markdown reflow; the legacy main-screen renderer is used only when `regular` is selected explicitly (via `/settings` or `--tui-mode regular`) ([#7304](https://github.com/earendil-works/pi/issues/7304)).
 - The default agent-level retry now uses a 4s base delay with up to 12 attempts (4s, 8s, 16s, ...) instead of the previous 2s base / 3 attempts (2s, 4s, 8s). Override via `retry.maxRetries` and `retry.baseDelayMs`.
+- Tool calls now default to a single-line title (state glyph + short localized title) with three display modes — `title` (default), `preview`, and `expanded` — switched via the new `Tool display mode` setting or `Ctrl+O`. Clicking a tool title expands/collapses that individual call. Tool titles are localized to the interface language. (Tool box backgrounds also default to the terminal background.)
+- Tool call titles now prepend a theme-colored state marker (● pending, ✓ success, ✗ error) so execution state stays visible now that the tool box uses the terminal's default background instead of a fixed color.
 
 ### Removed
 
@@ -27,6 +29,7 @@
 - Print and JSON mode output is no longer localized and stays in English for scriptable consumption.
 - Switching the language in `/settings` now rebuilds the chat view so already rendered messages update instead of leaving mixed-language remnants.
 - Localized missed UI strings (llama extension status messages, tool render labels, retry abort messages).
+- Tool execution boxes in the built-in `dark`/`light` themes now use the terminal default background (`""`) instead of a fixed opaque color, so tool calls blend into the terminal; HTML export maps these to `transparent`.
 
 ## [0.84.4] - 2026-08-28
 

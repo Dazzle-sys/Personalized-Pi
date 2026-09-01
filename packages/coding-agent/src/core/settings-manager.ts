@@ -9,6 +9,7 @@ import lockfile from "proper-lockfile";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.ts";
 import { normalizePath, resolvePath } from "../utils/paths.ts";
 import { stripBom } from "../utils/text.ts";
+import type { ToolDisplayMode } from "./extensions/types.ts";
 import { DEFAULT_HTTP_IDLE_TIMEOUT_MS, parseHttpIdleTimeoutMs } from "./http-dispatcher.ts";
 
 export interface CompactionSettings {
@@ -46,6 +47,7 @@ export interface TerminalSettings {
 	hyperlinks?: boolean | "auto";
 	images?: "kitty" | "iterm2" | "auto" | false;
 	trueColor?: boolean | "auto";
+	toolDisplayMode?: ToolDisplayMode; // default: "title"
 }
 
 export interface ImageSettings {
@@ -1162,6 +1164,19 @@ export class SettingsManager {
 
 	getShowImages(): boolean {
 		return this.settings.terminal?.showImages ?? true;
+	}
+
+	getToolDisplayMode(): ToolDisplayMode {
+		return this.settings.terminal?.toolDisplayMode ?? "title";
+	}
+
+	setToolDisplayMode(mode: ToolDisplayMode): void {
+		if (!this.globalSettings.terminal) {
+			this.globalSettings.terminal = {};
+		}
+		this.globalSettings.terminal.toolDisplayMode = mode;
+		this.markModified("terminal", "toolDisplayMode");
+		this.save();
 	}
 
 	setShowImages(show: boolean): void {

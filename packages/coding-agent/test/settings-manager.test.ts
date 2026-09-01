@@ -25,6 +25,15 @@ describe("SettingsManager", () => {
 		}
 	});
 
+	describe("tool display mode", () => {
+		it("defaults to title and can be set", async () => {
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getToolDisplayMode()).toBe("title");
+			manager.setToolDisplayMode("preview");
+			expect(manager.getToolDisplayMode()).toBe("preview");
+		});
+	});
+
 	describe("preserves externally added settings", () => {
 		it("should preserve enabledModels when changing thinking level", async () => {
 			// Create initial settings file

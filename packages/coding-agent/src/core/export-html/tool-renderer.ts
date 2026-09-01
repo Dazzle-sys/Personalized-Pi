@@ -90,6 +90,7 @@ export function createToolHtmlRenderer(deps: ToolHtmlRendererDeps): ToolHtmlRend
 			argsComplete: true,
 			isPartial,
 			expanded,
+			displayMode: expanded ? "expanded" : "preview",
 			showImages: false,
 			isError,
 		};
@@ -142,7 +143,7 @@ export function createToolHtmlRenderer(deps: ToolHtmlRendererDeps): ToolHtmlRend
 				// Render collapsed
 				const collapsedComponent = toolDef.renderResult(
 					agentToolResult,
-					{ expanded: false, isPartial: false },
+					{ expanded: false, isPartial: false, displayMode: "preview" },
 					theme,
 					createRenderContext(toolCallId, renderedResultComponents.get(toolCallId), false, false, isError),
 				);
@@ -152,7 +153,7 @@ export function createToolHtmlRenderer(deps: ToolHtmlRendererDeps): ToolHtmlRend
 				// Render expanded
 				const expandedComponent = toolDef.renderResult(
 					agentToolResult,
-					{ expanded: true, isPartial: false },
+					{ expanded: true, isPartial: false, displayMode: "expanded" },
 					theme,
 					createRenderContext(toolCallId, renderedResultComponents.get(toolCallId), true, false, isError),
 				);

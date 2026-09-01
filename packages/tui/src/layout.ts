@@ -33,7 +33,11 @@ export interface LayoutFrame {
 	height: number;
 	lines: string[];
 	primaryScrollView?: ScrollView;
+	clickTargets: ScrollClickTargets;
 }
+
+/** Map<ScrollView, Map<contentRow, onClick>> — content rows within a scroll view that are clickable. */
+export type ScrollClickTargets = Map<ScrollView, Map<number, (col: number) => boolean>>;
 
 export interface ScrollbarGeometry {
 	column: number;
@@ -378,7 +382,40 @@ export function renderLayoutFrame(
 		height: safeHeight,
 		lines,
 		...(context.primaryScrollView === undefined ? {} : { primaryScrollView: context.primaryScrollView }),
+		clickTargets: collectScrollClickTargets(rootBox),
 	};
+}
+
+/**
+ * Build a contentRow -> onClick map for every scroll view, honoring the current scroll offset.
+ * A component opts in by implementing `onContentClick`; the rows it covers are those its rendered
+ * output occupies (its `rect` lines translated into the scroll view's content row space).
+ */
+function collectScrollClickTargets(root: LayoutBox): ScrollClickTargets {
+	const targets: ScrollClickTargets = new Map();
+	const visit = (box: LayoutBox, scrollBox: LayoutBox | undefined): void => {
+		const currentScrollBox = box.scrollView ? box : scrollBox;
+		if (currentScrollBox && box.component.onContentClick) {
+			const scrollView = currentScrollBox.scrollView!;
+			let rowMap = targets.get(scrollView);
+			if (!rowMap) {
+				rowMap = new Map();
+				targets.set(scrollView, rowMap);
+			}
+			const baseRow = scrollView.scrollTop + (box.rect.y - currentScrollBox.rect.y);
+			const lineCount =
+				box.lines?.length ?? (box.rect.height > 0 ? box.rect.height : (box.scrollContentLines?.length ?? 0));
+			for (let r = 0; r < lineCount; r++) {
+				const contentRow = baseRow + r;
+				rowMap.set(contentRow, (col) => box.component.onContentClick!(r, col));
+			}
+		}
+		for (const child of box.children) {
+			visit(child, currentScrollBox);
+		}
+	};
+	visit(root, undefined);
+	return targets;
 }
 
 function containsPoint(rect: LayoutRect, x: number, y: number): boolean {

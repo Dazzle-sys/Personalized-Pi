@@ -174,6 +174,19 @@ type OptionalThemeBg = "scrollbarThumb" | "searchMatchBg";
 
 type ColorMode = "truecolor" | "256color";
 
+// Background token keys. An empty value ("") resolves to the terminal's default background
+// in the TUI, and to ``transparent`` in HTML export so it doesn't paint a card with the text color.
+const BG_COLOR_KEYS: Set<string> = new Set([
+	"selectedBg",
+	"scrollbarThumb",
+	"searchMatchBg",
+	"userMessageBg",
+	"customMessageBg",
+	"toolPendingBg",
+	"toolSuccessBg",
+	"toolErrorBg",
+]);
+
 // ============================================================================
 // Color Utilities
 // ============================================================================
@@ -475,8 +488,8 @@ function getBuiltinThemes(): Record<string, ThemeJson> {
 		const darkPath = path.join(themesDir, "dark.json");
 		const lightPath = path.join(themesDir, "light.json");
 		BUILTIN_THEMES = {
-			dark: JSON.parse(stripBom(fs.readFileSync(darkPath, "utf-8"))) as ThemeJson,
-			light: JSON.parse(stripBom(fs.readFileSync(lightPath, "utf-8"))) as ThemeJson,
+			dark: parseThemeJsonContent(darkPath, fs.readFileSync(darkPath, "utf-8")),
+			light: parseThemeJsonContent(lightPath, fs.readFileSync(lightPath, "utf-8")),
 		};
 	}
 	return BUILTIN_THEMES;
@@ -631,18 +644,8 @@ function createTheme(themeJson: ThemeJson, mode?: ColorMode, sourcePath?: string
 	const resolvedColors = resolveThemeColors(withThemeColorFallbacks(themeJson.colors), themeJson.vars);
 	const fgColors: Record<ThemeColor, string | number> = {} as Record<ThemeColor, string | number>;
 	const bgColors: Record<ThemeBg, string | number> = {} as Record<ThemeBg, string | number>;
-	const bgColorKeys: Set<string> = new Set([
-		"selectedBg",
-		"scrollbarThumb",
-		"searchMatchBg",
-		"userMessageBg",
-		"customMessageBg",
-		"toolPendingBg",
-		"toolSuccessBg",
-		"toolErrorBg",
-	]);
 	for (const [key, value] of Object.entries(resolvedColors)) {
-		if (bgColorKeys.has(key)) {
+		if (BG_COLOR_KEYS.has(key)) {
 			bgColors[key as ThemeBg] = value;
 		} else {
 			fgColors[key as ThemeColor] = value;
@@ -848,6 +851,9 @@ export const theme: Theme = new Proxy({} as Theme, {
 	get(_target, prop) {
 		const t = (globalThis as Record<symbol, Theme>)[THEME_KEY];
 		if (!t) throw new Error("Theme not initialized. Call initTheme() first.");
+		// SAFETY: THEME_KEY stores a Theme instance (setGlobalTheme). The proxy forwards reads to it;
+		// a non-member access returns undefined, only reachable via the Theme public API, so the cast to
+		// a dynamic record is safe.
 		return (t as unknown as Record<string | symbol, unknown>)[prop];
 	},
 });
@@ -1075,8 +1081,9 @@ export function getResolvedThemeColors(themeName?: string): Record<string, strin
 		if (typeof value === "number") {
 			cssColors[key] = ansi256ToHex(value);
 		} else if (value === "") {
-			// Empty means default terminal color - use sensible fallback for HTML
-			cssColors[key] = defaultText;
+			// Empty means default terminal color - use sensible fallback for HTML.
+			// Background tokens resolve to transparent so they don't paint the text color as a card background.
+			cssColors[key] = BG_COLOR_KEYS.has(key) ? "transparent" : defaultText;
 		} else {
 			cssColors[key] = value;
 		}

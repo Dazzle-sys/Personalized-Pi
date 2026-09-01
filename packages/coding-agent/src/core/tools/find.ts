@@ -77,7 +77,7 @@ function formatFindCall(args: { pattern: string; path?: string; limit?: number }
 	const limit = args?.limit;
 	const invalidArg = invalidArgText(theme);
 	let text =
-		theme.fg("toolTitle", theme.bold("find")) +
+		theme.fg("toolTitle", theme.bold(t("find"))) +
 		" " +
 		(pattern === null ? invalidArg : theme.fg("accent", pattern || "")) +
 		theme.fg("toolOutput", ` ${t("in")} ${path === null ? invalidArg : path}`);
@@ -96,6 +96,9 @@ function formatFindResult(
 	theme: Theme,
 	showImages: boolean,
 ): string {
+	if (options.displayMode === "title") {
+		return "";
+	}
 	const output = getTextOutput(result, showImages).trim();
 	let text = "";
 	if (output) {
