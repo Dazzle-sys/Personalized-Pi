@@ -323,7 +323,7 @@ describe("Markdown component", () => {
 
 			const lines = markdown.render(24).map((line) => stripAnsi(line).trimEnd());
 
-			assert.deepStrictEqual(lines, ["- ```ts", "    alpha beta gamma", "  delta epsilon zeta", "  ```"]);
+			assert.deepStrictEqual(lines, ["- ```ts", "    alpha beta gamma", "    delta epsilon zeta", "  ```"]);
 		});
 	});
 
@@ -1755,6 +1755,25 @@ bar`,
 			const complete = new Markdown("```ts\nconst x = 1;\n```", 0, 0, defaultMarkdownTheme);
 
 			assert.strictEqual(partial.render(80).length, complete.render(80).length);
+		});
+	});
+
+	describe("Code block wrapping", () => {
+		it("keeps the code-block indent on every wrapped line", () => {
+			const source = `\`\`\`\n${String("x").repeat(60)}\n\`\`\``;
+			const markdown = new Markdown(source, 0, 0, defaultMarkdownTheme, undefined, {});
+			const rendered = markdown.render(20).map((line) => stripAnsi(line));
+
+			const fenceIndexes = rendered.flatMap((line, idx) => (line.trim().startsWith("```") ? [idx] : []));
+			const openIdx = fenceIndexes[0];
+			const closeIdx = fenceIndexes[fenceIndexes.length - 1];
+			assert.ok(openIdx !== undefined && closeIdx !== undefined && closeIdx > openIdx, "expected fenced code block");
+			const inner = rendered.slice(openIdx + 1, closeIdx).filter((line) => line.trim() !== "");
+
+			assert.ok(inner.length > 1, "expected the long line to wrap into multiple lines");
+			for (const line of inner) {
+				assert.ok(line.startsWith("  "), `expected 2-space code indent, got: ${JSON.stringify(line)}`);
+			}
 		});
 	});
 });
