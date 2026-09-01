@@ -1,4 +1,4 @@
-- 上游项目 'https://github.com/earendil-works/pi'
+- 上游项目 '<https://github.com/earendil-works/pi>'
 - 所有改动写入根目录的“README.md”文件中。
 - 不影响 LLM 执行的情况下完全集成国际化 (I18N)。
 

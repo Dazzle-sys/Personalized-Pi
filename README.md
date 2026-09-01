@@ -10,6 +10,44 @@
 >
 > **注意**：这是一份本地复刻源码，**并未**以 `@earendil-works/*` 发布到 npm。请从源码运行（见 [快速开始](#快速开始)），不要 `npm install -g`（那会装上官方包）。
 
+## 快速开始
+
+克隆源码、安装依赖并注册全局 `pi` 命令，按你的 shell 复制整段即可启动：
+
+### Bash
+
+```bash
+git clone https://github.com/Dazzle-sys/Personalized-Pi.git
+cd Personalized-Pi
+npm install --ignore-scripts
+# `--ignore-scripts` 会跳过 prepare 钩子，需显式生成模型目录数据（新克隆必做）
+npm run hydrate:model-data
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/pi <<'EOF'
+#!/usr/bin/env bash
+cd "$HOME/Personalized-Pi" && exec ./pi-test.sh "$@"
+EOF
+chmod +x ~/.local/bin/pi
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc   # 或 ~/.zshrc
+source ~/.bashrc
+pi
+```
+
+### PowerShell
+
+```powershell
+git clone https://github.com/Dazzle-sys/Personalized-Pi.git
+cd Personalized-Pi
+npm install --ignore-scripts
+if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
+Add-Content -Path $PROFILE -Value 'function pi { & "$HOME\Personalized-Pi\pi-test.ps1" @args }'
+. $PROFILE
+pi
+```
+
+> 克隆到默认的 `$HOME/Personalized-Pi` 时上面的路径可直接使用；改成其它目录请同步替换 wrapper 里的 `$HOME/Personalized-Pi`。
+
 ## 与上游的差异
 
 除以下定制外，其余能力与上游一致：
@@ -68,44 +106,6 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 - **安装时自动生成模型数据**：根 `prepare` 钩子在 `husky && npm run hydrate:model-data` 中离线生成 `packages/ai/src/providers/data/*.json`（gitignore 产物，仅补数据、不改已提交的 `models.generated.ts`/`.models.ts`），避免新克隆/新 worktree 因缺数据导致 `npm run check` 报错。注意：`npm install --ignore-scripts` / `npm ci --ignore-scripts` 会**跳过** prepare，需改用 `npm install` 或手动 `npm run hydrate:model-data`；联网的 `generate-image-models` 不含在内。
 - **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。
 - **gitleaks 白名单**：`.gitleaks.toml` 排除 `packages/ai/src/providers/data/`（生成模型目录，仅模型元数据与校验和，无凭据），避免 `structureHash` 误报。
-
-## 快速开始
-
-克隆源码、安装依赖并注册全局 `pi` 命令，按你的 shell 复制整段即可启动：
-
-### Bash
-
-```bash
-git clone https://github.com/Dazzle-sys/Personalized-Pi.git
-cd Personalized-Pi
-npm install --ignore-scripts
-# `--ignore-scripts` 会跳过 prepare 钩子，需显式生成模型目录数据（新克隆必做）
-npm run hydrate:model-data
-mkdir -p ~/.local/bin
-cat > ~/.local/bin/pi <<'EOF'
-#!/usr/bin/env bash
-cd "$HOME/Personalized-Pi" && exec ./pi-test.sh "$@"
-EOF
-chmod +x ~/.local/bin/pi
-export PATH="$HOME/.local/bin:$PATH"
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc   # 或 ~/.zshrc
-source ~/.bashrc
-pi
-```
-
-### PowerShell
-
-```powershell
-git clone https://github.com/Dazzle-sys/Personalized-Pi.git
-cd Personalized-Pi
-npm install --ignore-scripts
-if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
-Add-Content -Path $PROFILE -Value 'function pi { & "$HOME\Personalized-Pi\pi-test.ps1" @args }'
-. $PROFILE
-pi
-```
-
-> 克隆到默认的 `$HOME/Personalized-Pi` 时上面的路径可直接使用；改成其它目录请同步替换 wrapper 里的 `$HOME/Personalized-Pi`。
 
 ## 维护与同步上游
 
