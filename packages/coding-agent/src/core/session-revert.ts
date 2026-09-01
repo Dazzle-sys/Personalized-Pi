@@ -1,15 +1,26 @@
 import { spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
+import { resolve } from "node:path";
 
 export interface RevertSnapshot {
 	headCommit: string | null;
 	stashHash: string | null;
 	createdAt: string;
 	cwd: string;
+	/** Untracked file paths (repo-relative) present at snapshot time; preserved on revert. */
+	untrackedFiles: string[];
 }
 
 function runGit(cwd: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
 	const r = spawnSync("git", args, { cwd, encoding: "utf8", timeout: 5000 });
 	return { status: r.status, stdout: (r.stdout as string) ?? "", stderr: (r.stderr as string) ?? "" };
+}
+
+/** Untracked, non-ignored file paths (repo-relative), expanded to files, NUL-safe for spaces. */
+function listUntrackedFiles(cwd: string): string[] {
+	const r = runGit(cwd, ["ls-files", "--others", "--exclude-standard", "-z"]);
+	if (r.status !== 0) return [];
+	return r.stdout.split("\0").filter((p) => p.length > 0);
 }
 
 export function isGitRepo(cwd: string): boolean {
@@ -27,10 +38,11 @@ export function getHeadCommit(cwd: string): string | null {
 export function createRevertSnapshot(cwd: string): RevertSnapshot | null {
 	if (!isGitRepo(cwd)) return null;
 	const headCommit = getHeadCommit(cwd);
-	// ponytail: stash create 仅覆盖已跟踪文件的 index + working tree，未跟踪文件不纳入快照；如需完整未跟踪恢复，改用 stash push --include-untracked
+	// ponytail: stash create 仅覆盖已跟踪文件的 index + working tree，未跟踪文件不纳入；
+	// 我们额外记录未跟踪文件集，在 revert 时按集精准删除会话期间新增文件，保留既有未跟踪文件。
 	const stash = runGit(cwd, ["stash", "create"]);
 	const stashHash = stash.status === 0 ? stash.stdout.trim() || null : null;
-	return { headCommit, stashHash, createdAt: new Date().toISOString(), cwd };
+	return { headCommit, stashHash, createdAt: new Date().toISOString(), cwd, untrackedFiles: listUntrackedFiles(cwd) };
 }
 
 export function describeSnapshot(s: RevertSnapshot): string {
@@ -40,19 +52,28 @@ export function describeSnapshot(s: RevertSnapshot): string {
 
 export function executeRevert(cwd: string, snapshot: RevertSnapshot): { ok: true } | { ok: false; error: string } {
 	if (!isGitRepo(cwd)) return { ok: false, error: "not a git repository" };
-	if (snapshot.cwd && snapshot.cwd !== cwd) {
-		// 允许子目录回退，但跨仓库路径则拒绝
-		// 仅当 snapshot.cwd 与当前 cwd 完全不同且不在同一仓库根时才警告；此处简化为严格匹配
-		// 为兼容 fork 场景，不强制阻断，仅记录；如需严格可取消注释下一行
-		// return { ok: false, error: `snapshot cwd mismatch: ${snapshot.cwd} vs ${cwd}` };
-	}
 	if (snapshot.headCommit) {
 		const r = runGit(cwd, ["reset", "--hard", snapshot.headCommit]);
 		if (r.status !== 0) return { ok: false, error: r.stderr.trim() || "git reset failed" };
 	}
-	const clean = runGit(cwd, ["clean", "-fd"]);
-	if (clean.status !== 0) return { ok: false, error: clean.stderr.trim() || "git clean failed" };
+	// Precisely remove only untracked files created during the session (not present at
+	// snapshot time), preserving any untracked file that existed when the session started.
+	// This avoids the previous `git clean -fd`, which deleted pre-existing untracked files
+	// that stash create never captured, making them unrecoverable.
+	const kept = new Set(snapshot.untrackedFiles ?? []);
+	const toRemove = listUntrackedFiles(cwd).filter((p) => !kept.has(p));
+	for (const path of toRemove) {
+		try {
+			rmSync(resolve(cwd, path), { recursive: true, force: true });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			return { ok: false, error: `failed to remove ${path}: ${message}` };
+		}
+	}
 	if (snapshot.stashHash) {
+		// Restore the dirty tracked-file state captured at snapshot time.
+		// Patching-in is idempotent for our use: we already reset --hard to headCommit,
+		// so this re-applies just the index+working-tree changes that were stashed.
 		const apply = runGit(cwd, ["stash", "apply", "--index", snapshot.stashHash]);
 		if (apply.status !== 0) return { ok: false, error: apply.stderr.trim() || "git stash apply failed" };
 	}

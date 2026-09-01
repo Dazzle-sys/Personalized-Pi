@@ -30,6 +30,9 @@
 - Switching the language in `/settings` now rebuilds the chat view so already rendered messages update instead of leaving mixed-language remnants.
 - Localized missed UI strings (llama extension status messages, tool render labels, retry abort messages).
 - Tool execution boxes in the built-in `dark`/`light` themes now use the terminal default background (`""`) instead of a fixed opaque color, so tool calls blend into the terminal; HTML export maps these to `transparent`.
+- Localized the theme selector "Automatic" option; the previous `t("  Automatic")` key included a leading space and did not match the zh-CN dictionary, falling back to English.
+- Fixed `/revert` so it no longer deletes untracked files that existed before the session started. Snapshot records the session-start untracked set and revert removes only files created during the session, preserving anything the user already had; the stash-restore path is now reliable (`stash apply` on a bare commit was rejected).
+- Replaced the busy-wait spin in `models-config-writer` lock retry with a blocking `Atomics.wait`, eliminating CPU churn while keeping the synchronous semantics.
 
 ## [0.84.4] - 2026-08-28
 

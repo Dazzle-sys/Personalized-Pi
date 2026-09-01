@@ -92,7 +92,7 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 
 ### 会话回退（/revert）
 
-新增 `/revert`（别名 `/rollback`、`/回退`）将 git 工作区恢复到当前会话开始时的状态。会话创建时通过 `git stash create` 无侵入快照 `HEAD + index + working tree`（`stashHash | null`），连同 `headCommit/createdAt/cwd` 写入 `SessionHeader.revertSnapshot`（见 `packages/coding-agent/src/core/session-revert.ts` 与 `session-manager.ts#getRevertSnapshot()`）；执行时二次确认后依次 `git reset --hard <headCommit>`、`git clean -fd`、`git stash apply --index <stashHash>`，非 git 仓库或无快照时仅提示。确认与结果文案经 `t()` 中文化（`packages/coding-agent/src/i18n/locales/zh-CN/core.ts`），未跟踪文件的完整恢复为已知上限（`ponytail: stash create` 仅覆盖已跟踪文件）。
+新增 `/revert`（别名 `/rollback`、`/回退`）将 git 工作区恢复到当前会话开始时的状态。会话创建时通过 `git stash create` 无侵入快照 `HEAD + index + working tree`（`stashHash | null`），并把会话开始时已存在的**未跟踪文件集**（`untrackedFiles`）一并写入 `SessionHeader.revertSnapshot`（见 `packages/coding-agent/src/core/session-revert.ts` 与 `session-manager.ts#getRevertSnapshot()`）；执行时二次确认后 `git reset --hard <headCommit>`，再按快照时的未跟踪文件集**精准删除**会话期间新增的未跟踪文件（不再用会误删既有文件的 `git clean -fd`），最后 `git stash apply --index <stashHash>` 恢复已跟踪改动。非 git 仓库或无快照时仅提示；会话开始前已存在的未跟踪文件会被保留。
 
 ### TUI / UX 现代精致化（tui-ux-refresh）
 

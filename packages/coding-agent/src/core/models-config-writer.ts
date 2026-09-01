@@ -30,10 +30,11 @@ function acquireLockSyncWithRetry(path: string): () => void {
 					: undefined;
 			if (code !== "ELOCKED" || attempt === maxAttempts) throw error;
 			lastError = error;
-			const start = Date.now();
-			while (Date.now() - start < delayMs) {
-				// Sleep synchronously to keep callers synchronous (matches settings-manager).
-			}
+			// Block the main thread for delayMs without spinning the CPU. Atomics.wait is
+			// the synchronous sleep primitive in Node; callers must remain synchronous
+			// (matches settings-manager), so we can't fall back to an async sleep.
+			const sab = new SharedArrayBuffer(4);
+			Atomics.wait(new Int32Array(sab), 0, 0, delayMs);
 		}
 	}
 	throw (lastError as Error) ?? new Error("Failed to acquire models.json lock");

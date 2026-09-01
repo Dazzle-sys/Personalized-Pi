@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "vitest";
@@ -90,7 +90,13 @@ describe("session-revert", () => {
 			execSync("git config user.name 'test'", { cwd: dir });
 			// 无 commit 的空仓库
 			writeFileSync(join(dir, "untracked.txt"), "hello");
-			const snap = { headCommit: null, stashHash: null, createdAt: new Date().toISOString(), cwd: dir };
+			const snap = {
+				headCommit: null,
+				stashHash: null,
+				createdAt: new Date().toISOString(),
+				cwd: dir,
+				untrackedFiles: [],
+			};
 			const r = executeRevert(dir, snap);
 			assert.equal(r.ok, true);
 			assert.equal(existsSync(join(dir, "untracked.txt")), false);
@@ -99,17 +105,71 @@ describe("session-revert", () => {
 		}
 	});
 
+	it.skipIf(!hasGit())("回退后保留既有未跟踪文件，仅删除会话期间新增", () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-e2e-preuntracked-"));
+		try {
+			execSync("git init", { cwd: dir, stdio: "ignore" });
+			execSync("git config user.email 'test@test.com'", { cwd: dir });
+			execSync("git config user.name 'test'", { cwd: dir });
+			writeFileSync(join(dir, "a.txt"), "v1");
+			execSync("git add . && git commit -m init", { cwd: dir, stdio: "ignore" });
+
+			// 会话开始时已存在两个未跟踪文件
+			writeFileSync(join(dir, "pre-existing.txt"), "keep me");
+			mkdirSync(join(dir, "sub"));
+			writeFileSync(join(dir, "sub", "nested.txt"), "keep too");
+
+			const snap = createRevertSnapshot(dir);
+			assert.ok(snap, "快照不应为 null");
+			assert.deepEqual(snap!.untrackedFiles.sort(), ["pre-existing.txt", "sub/nested.txt"]);
+
+			// 会话期间：改动已跟踪文件 + 新增未跟踪文件
+			writeFileSync(join(dir, "a.txt"), "v2");
+			writeFileSync(join(dir, "session-new.txt"), "nuke me");
+
+			const r = executeRevert(dir, snap!);
+			assert.equal(r.ok, true);
+			// 已跟踪文件还原
+			assert.equal(readFileSync(join(dir, "a.txt"), "utf8"), "v1");
+			// 既有未跟踪文件被保留
+			assert.equal(readFileSync(join(dir, "pre-existing.txt"), "utf8"), "keep me");
+			assert.equal(readFileSync(join(dir, "sub", "nested.txt"), "utf8"), "keep too");
+			// 会话期间新增的未跟踪文件被删除
+			assert.equal(existsSync(join(dir, "session-new.txt")), false);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
 	it("describeSnapshot 格式化正确", () => {
-		const snap = { headCommit: "abc1234567890", stashHash: null, createdAt: new Date().toISOString(), cwd: "/tmp" };
+		const snap = {
+			headCommit: "abc1234567890",
+			stashHash: null,
+			createdAt: new Date().toISOString(),
+			cwd: "/tmp",
+			untrackedFiles: [],
+		};
 		const desc = describeSnapshot(snap);
 		assert.match(desc, /HEAD abc1234/);
-		const empty = { headCommit: null, stashHash: null, createdAt: new Date().toISOString(), cwd: "/tmp" };
+		const empty = {
+			headCommit: null,
+			stashHash: null,
+			createdAt: new Date().toISOString(),
+			cwd: "/tmp",
+			untrackedFiles: [],
+		};
 		assert.match(describeSnapshot(empty), /empty/);
 	});
 
 	it("非 git 仓库 executeRevert 返回失败", () => {
 		const dir = mkdtempSync(join(tmpdir(), "pi-not-repo2-"));
-		const snap = { headCommit: "abc", stashHash: null, createdAt: new Date().toISOString(), cwd: dir };
+		const snap = {
+			headCommit: "abc",
+			stashHash: null,
+			createdAt: new Date().toISOString(),
+			cwd: dir,
+			untrackedFiles: [],
+		};
 		const r = executeRevert(dir, snap);
 		assert.equal(r.ok, false);
 		rmSync(dir, { recursive: true, force: true });

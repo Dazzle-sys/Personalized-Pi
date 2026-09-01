@@ -208,7 +208,7 @@ function singleModeThemeItems(availableThemes: string[], currentTheme: string): 
 	return [
 		{
 			value: AUTOMATIC_THEME_VALUE,
-			label: t("  Automatic"),
+			label: `  ${t("Automatic")}`,
 			description: t("Use separate themes for light and dark terminal appearance"),
 		},
 		...themeItems(availableThemes, currentTheme),
