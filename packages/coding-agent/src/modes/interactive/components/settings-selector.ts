@@ -195,20 +195,23 @@ function modelItemLabel(model: Model<any>): string {
 	return `${model.id} ${theme.fg("muted", `[${model.provider}]`)}`;
 }
 
-function themeItems(availableThemes: string[]): SelectItem[] {
-	return availableThemes.map((name) => ({ value: name, label: name }));
+function themeItems(availableThemes: string[], currentTheme: string): SelectItem[] {
+	return availableThemes.map((name) => ({
+		value: name,
+		label: `${name === currentTheme ? "✓ " : "  "}${name}`,
+	}));
 }
 
 const AUTOMATIC_THEME_VALUE = "/";
 
-function singleModeThemeItems(availableThemes: string[]): SelectItem[] {
+function singleModeThemeItems(availableThemes: string[], currentTheme: string): SelectItem[] {
 	return [
 		{
 			value: AUTOMATIC_THEME_VALUE,
-			label: t("Automatic"),
+			label: t("  Automatic"),
 			description: t("Use separate themes for light and dark terminal appearance"),
 		},
-		...themeItems(availableThemes),
+		...themeItems(availableThemes, currentTheme),
 	];
 }
 
@@ -289,7 +292,7 @@ class ThemeSubmenu extends Container {
 		const menu = new SelectSubmenu(
 			t("Theme"),
 			t("Select a theme, or choose Automatic to follow terminal appearance."),
-			singleModeThemeItems(this.availableThemes),
+			singleModeThemeItems(this.availableThemes, this.singleTheme),
 			this.singleTheme,
 			(value) => {
 				if (value === AUTOMATIC_THEME_VALUE) {
@@ -405,7 +408,7 @@ class ThemeSubmenu extends Container {
 		return new SelectSubmenu(
 			title,
 			description,
-			themeItems(this.availableThemes),
+			themeItems(this.availableThemes, currentValue),
 			currentValue,
 			onSelect,
 			() => {
@@ -641,15 +644,16 @@ export class SettingsSelectorComponent extends Container {
 								const levels = (
 									model.reasoning ? getSupportedThinkingLevels(model) : ["off"]
 								) as ThinkingLevel[];
+								const activeLevel = currentModelThinkingLevels[ctx.model];
 								const items: SelectItem[] = levels.map((level) => ({
 									value: level,
-									label: level,
+									label: `${level === activeLevel ? "✓ " : "  "}${level}`,
 									description: t(THINKING_DESCRIPTIONS[level]),
 								}));
 								if (currentModelThinkingLevels[ctx.model] !== undefined) {
 									items.push({
 										value: CLEAR_OVERRIDE_VALUE,
-										label: t("(clear override)"),
+										label: t("  (clear override)"),
 										description: t("Revert to global default ({level})", { level: config.thinkingLevel }),
 									});
 								}

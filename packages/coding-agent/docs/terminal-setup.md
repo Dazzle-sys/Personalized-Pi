@@ -7,7 +7,7 @@ Pi uses the [Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-p
 Pi auto-detects OSC 8 hyperlinks, inline image protocols, and truecolor. If detection fails behind a terminal proxy or multiplexer, use these advanced overrides:
 
 | Capability | Environment variable | JSON setting |
-|------------|----------------------|--------------|
+| ------------ | ---------------------- | -------------- |
 | OSC 8 hyperlinks | `PI_HYPERLINKS=1\|0\|auto` | `terminal.hyperlinks: true\|false\|"auto"` |
 | Inline images | `PI_IMAGE_PROTOCOL=kitty\|iterm2\|none\|auto` | `terminal.images: "kitty"\|"iterm2"\|false\|"auto"` |
 | Truecolor | `PI_TRUE_COLOR=1\|0\|auto` | `terminal.trueColor: true\|false\|"auto"` |
@@ -115,6 +115,7 @@ VS Code 1.109.5 and newer enable Kitty keyboard protocol in the integrated termi
 VS Code versions older than 1.109.5 need an explicit terminal keybinding for `Shift+Enter`.
 
 `keybindings.json` locations:
+
 - macOS: `~/Library/Application Support/Code/User/keybindings.json`
 - Linux: `~/.config/Code/User/keybindings.json`
 - Windows: `%APPDATA%\\Code\\User\\keybindings.json`
@@ -127,6 +128,21 @@ Add to `keybindings.json`:
   "command": "workbench.action.terminal.sendSequence",
   "args": { "text": "\u001b[13;2u" },
   "when": "terminalFocus"
+}
+```
+
+## Zed (Integrated Terminal)
+
+Add these key bindings to your Zed `keymap.json`:
+
+```json
+{
+  "context": "Terminal",
+  "bindings": {
+    "shift-enter": ["terminal::SendText", "\u001b[13;2u"],
+    "ctrl--": ["terminal::SendText", "\u001b[45;5u"],
+    "ctrl-alt-]": ["terminal::SendText", "\u001b[93;7u"]
+  }
 }
 ```
 
@@ -162,6 +178,7 @@ If you already have an `actions` array, add the object to it. Fully close and re
 These terminals have limited escape sequence support. Modified Enter keys like `Ctrl+Enter` and `Shift+Enter` cannot be distinguished from plain `Enter`, preventing custom keybindings such as `submit: ["ctrl+enter"]` from working.
 
 For the best experience, use a terminal that supports the Kitty keyboard protocol:
+
 - [Kitty](https://sw.kovidgoyal.net/kitty/)
 - [Ghostty](https://ghostty.org/)
 - [WezTerm](https://wezfurlong.org/wezterm/)

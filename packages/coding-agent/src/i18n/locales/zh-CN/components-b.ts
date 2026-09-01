@@ -180,7 +180,7 @@ export const zhCN: Translations = {
 	"Deep reasoning (~16k tokens)": "深度推理（约 16k tokens）",
 	"Extra-high reasoning (~32k tokens)": "超深度推理（约 32k tokens）",
 	"Maximum reasoning": "最大推理",
-	"(clear override)": "（清除覆盖）",
+	"  (clear override)": "  （清除覆盖）",
 	"Revert to global default ({level})": "恢复为全局默认（{level}）",
 	"TUI mode": "TUI 模式",
 	"Interface layout; fullscreen (alt-screen) is the default": "界面布局；fullscreen（备用屏）为默认",
