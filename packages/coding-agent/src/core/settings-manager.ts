@@ -135,7 +135,7 @@ export interface Settings {
 	thinkingBudgets?: ThinkingBudgetsSettings; // Custom token budgets for thinking levels
 	editorPaddingX?: number; // Horizontal padding for input editor (default: 0)
 	outputPad?: 0 | 1; // Horizontal padding for chat message output (default: 1)
-	autocompleteMaxVisible?: number; // Max visible items in autocomplete dropdown (default: 5)
+	autocompleteMaxVisible?: number; // Max visible items in autocomplete dropdown (default: 10)
 	showHardwareCursor?: boolean; // Show terminal cursor while still positioning it for IME
 	markdown?: MarkdownSettings;
 	warnings?: WarningSettings;
@@ -1374,7 +1374,7 @@ export class SettingsManager {
 	}
 
 	getAutocompleteMaxVisible(): number {
-		return this.settings.autocompleteMaxVisible ?? 5;
+		return this.settings.autocompleteMaxVisible ?? 10;
 	}
 
 	setAutocompleteMaxVisible(maxVisible: number): void {

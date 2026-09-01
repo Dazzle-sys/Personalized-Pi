@@ -93,7 +93,7 @@ export class SelectSubmenu extends Container {
 	}
 
 	private buildSelectList(options: SelectItem[], preselect: string): SelectList {
-		const list = new SelectList(options, Math.min(options.length, 10), getSelectListTheme(), this.listLayout);
+		const list = new SelectList(options, Math.min(options.length, 15), getSelectListTheme(), this.listLayout);
 
 		const idx = options.findIndex((o) => o.value === preselect);
 		if (idx !== -1) list.setSelectedIndex(idx);

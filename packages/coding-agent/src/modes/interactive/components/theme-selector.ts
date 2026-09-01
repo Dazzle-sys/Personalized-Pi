@@ -35,7 +35,7 @@ export class ThemeSelectorComponent extends Container {
 		this.addChild(new DynamicBorder());
 
 		// Create selector
-		this.selectList = new SelectList(themeItems, 10, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
+		this.selectList = new SelectList(themeItems, 15, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
 
 		// Preselect current theme
 		const currentIndex = themes.indexOf(currentTheme);
