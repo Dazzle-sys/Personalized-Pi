@@ -56,6 +56,13 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 
 新增 `/revert`（别名 `/rollback`、`/回退`）将 git 工作区恢复到当前会话开始时的状态。会话创建时通过 `git stash create` 无侵入快照 `HEAD + index + working tree`（`stashHash | null`），连同 `headCommit/createdAt/cwd` 写入 `SessionHeader.revertSnapshot`（见 `packages/coding-agent/src/core/session-revert.ts` 与 `session-manager.ts#getRevertSnapshot()`）；执行时二次确认后依次 `git reset --hard <headCommit>`、`git clean -fd`、`git stash apply --index <stashHash>`，非 git 仓库或无快照时仅提示。确认与结果文案经 `t()` 中文化（`packages/coding-agent/src/i18n/locales/zh-CN/core.ts`），未跟踪文件的完整恢复为已知上限（`ponytail: stash create` 仅覆盖已跟踪文件）。
 
+### TUI / UX 现代精致化（tui-ux-refresh）
+
+- **主题焕新**：`dark.json` / `light.json` 从 Solarized 风重构为现代精致风（Tokyo-Night / GitHub-Light 启发），去饱和中性灰 + 单一克制 accent，语义色低饱和，重心放在正文对比与边框分级；仍支持 truecolor → 256 色回退与自定义主题（未新增 token / 未改 schema）。
+- **消息转向分隔线**：`MessageDivider`（`packages/coding-agent/src/modes/interactive/components/message-divider.ts`）在每个用户转向前绘制一条 `borderMuted` 细线，替代原先仅空白，营造「提问/回答」节奏。
+- **底栏统计分隔符**：`formatStatsParts`（`packages/coding-agent/src/modes/interactive/components/footer.ts`）以弱分隔符 ` • ` 连接 token/成本/上下文用量。
+- **loader 节奏**：spinner 默认间隔 80ms → 90ms，`DEFAULT_SPINNER_FRAMES` / `DEFAULT_SPINNER_INTERVAL_MS` 导出供默认与测试复用。
+
 ### 其余内部加固
 
 - **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。

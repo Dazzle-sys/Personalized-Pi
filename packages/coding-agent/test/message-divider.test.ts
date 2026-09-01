@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { MessageDivider } from "../src/modes/interactive/components/message-divider.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";
 import { stripAnsi } from "../src/utils/ansi.ts";
-import { MessageDivider } from "../src/modes/interactive/components/message-divider.ts";
 
 describe("MessageDivider", () => {
 	test("renders a full-width muted rule", () => {

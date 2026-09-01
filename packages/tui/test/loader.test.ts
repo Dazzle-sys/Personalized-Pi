@@ -1,10 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import {
-	DEFAULT_SPINNER_FRAMES,
-	DEFAULT_SPINNER_INTERVAL_MS,
-	Loader,
-} from "../src/components/loader.ts";
+import { DEFAULT_SPINNER_FRAMES, DEFAULT_SPINNER_INTERVAL_MS, Loader } from "../src/components/loader.ts";
 import type { TUI } from "../src/tui.ts";
 
 class FakeUi {
@@ -19,9 +15,15 @@ describe("Loader", () => {
 	});
 
 	it("hides the indicator when empty frames are set", () => {
-		const loader = new Loader(new FakeUi() as unknown as TUI, (s) => s, (s) => s, "working", {
-			frames: [],
-		});
+		const loader = new Loader(
+			new FakeUi() as unknown as TUI,
+			(s) => s,
+			(s) => s,
+			"working",
+			{
+				frames: [],
+			},
+		);
 		const [, line] = loader.render(20);
 		assert.ok(line.includes("working"));
 	});
