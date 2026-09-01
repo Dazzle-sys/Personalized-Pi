@@ -33,6 +33,7 @@
 ## Commands
 
 - After code changes (not docs): `npm run check` (full output, no tail). Fix all errors, warnings, and infos before committing. Does not run tests.
+- The husky pre-commit hook now runs `npm run check` (biome --write + tsgo) on every commit, so a commit fails unless check is green; `--ignore-scripts` installs skip it but regular `npm install`/`npm ci` activate it.
 - Never run `npm run build` or `npm test` unless requested by the user.
 - Never run the full vitest suite directly: it includes e2e tests that activate when endpoint/auth env vars are present. For all non-e2e tests, run `./test.sh` from the repo root. Otherwise run specific tests from the package root:
   - Vitest: `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run test/specific.test.ts`
@@ -47,7 +48,7 @@
 
 - Treat npm dep and lockfile changes as reviewed code. Direct external deps stay pinned to exact versions.
 - When updating `undici`, you MUST read its changelog/release notes for the target version and evaluate whether any changes may affect functionality before applying the update.
-- Hydrate/update locally with `npm install --ignore-scripts`; clean/CI-style with `npm ci --ignore-scripts`. Don't run lifecycle scripts unless the user asks.
+- Hydrate/update locally with `npm install --ignore-scripts`; clean/CI-style with `npm ci --ignore-scripts`. Don't run lifecycle scripts unless the user asks. **Note:** `--ignore-scripts` also skips the prepare hook, so the gitignored model data (`packages/ai/src/providers/data/*.json`) is NOT generated. On a fresh clone/worktree, run `npm run hydrate:model-data` once so `npm run check` (and the model catalog) doesn't error; the `prepare` hook (`husky && npm run hydrate:model-data`) only fires on installs WITHOUT `--ignore-scripts`.
 - If dep metadata changes, refresh `package-lock.json` with `npm install --package-lock-only --ignore-scripts`.
 - If `packages/coding-agent/npm-shrinkwrap.json` needs regen, run `node scripts/generate-coding-agent-shrinkwrap.mjs` (verify with `--check` or `npm run check`). New deps with lifecycle scripts require review and an explicit allowlist entry in that script; never add one silently.
 - Pre-commit blocks lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1`. Don't bypass unless the user wants the lockfile change committed.

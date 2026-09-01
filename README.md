@@ -79,6 +79,8 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 git clone https://github.com/Dazzle-sys/Personalized-Pi.git
 cd Personalized-Pi
 npm install --ignore-scripts
+# `--ignore-scripts` 会跳过 prepare 钩子，需显式生成模型目录数据（新克隆必做）
+npm run hydrate:model-data
 mkdir -p ~/.local/bin
 cat > ~/.local/bin/pi <<'EOF'
 #!/usr/bin/env bash
