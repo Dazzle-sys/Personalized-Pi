@@ -1,6 +1,6 @@
 # 上游同步纪律（Fork 维护）
 
-> 本 fork 的定制范围（与代码一致）：**i18n 中文化**（`packages/coding-agent/src/**` 改 `t()` 包装 + 独立 zh-CN 词典）、**B.A.I provider**（`packages/ai` 新增 `bai.ts`/`bai.models.ts` + `generate-models.ts` 模型数组）、**command-code provider**（`packages/ai/src/providers/commandcode.ts` + `COMMANDCODE_API_KEY`）、**provider 配置向导**（`core/models-config-writer.ts` + `interactive/components/provider-wizard*.ts`）、**Bedrock 类型硬化**（`DocumentType` cast、`arguments` 收窄为 `unknown`）、**gitleaks 白名单**（`.gitleaks.toml`）。
+> 本 fork 的定制范围（与代码一致）：**i18n 中文化**（`packages/coding-agent/src/**` 改 `t()` 包装 + 独立 zh-CN 词典）、**B.A.I provider**（`packages/ai` 新增 `bai.ts`/`bai.models.ts` + `generate-models.ts` 模型数组）、**command-code provider**（`packages/ai/src/providers/commandcode.ts` + `COMMANDCODE_API_KEY`）、**provider 配置向导**（`core/models-config-writer.ts` + `interactive/components/provider-wizard*.ts`）、**TUI 主题现代化**（`theme/dark.json`/`light.json` schema 重设计 + `message-divider` + `footer`/`loader` 打磨）、**工具 displayMode**（`extensions/types.ts` 的 `ToolDisplayMode`,工具渲染由 `expanded: boolean` 改 `displayMode`）、**session-revert**（`core/session-revert.ts` + `/revert` 命令接线）、**Bedrock 类型硬化**（`DocumentType` cast、`arguments` 收窄为 `unknown`）、**gitleaks 白名单**（`.gitleaks.toml`）。
 > 文档目的：让「跟上游同步」保持低成本、可回滚。**铁律：永不 rebase 上游，只用 merge。**
 
 ## 一、铁律
@@ -39,6 +39,9 @@ git commit -m "chore: sync upstream vX"
 | **`commandcode.ts` provider** | 上游罕见新增整块 provider。若冲突，以上游结构为准重新适配，保留 `COMMANDCODE_API_KEY` 环境变量名与 `baselineModels()` 导出契约。 |
 | **provider 配置向导**（`models-config-writer.ts`、`interactive/components/provider-wizard*.ts`） | 上游若改了 models.json 读写或 wizard UI → 以上游为准重新适配；`models-config-writer` 用 `proper-lockfile` 并发写，模式与 `settings-manager` 相同。 |
 | **`models.generated.ts` / `data/*.json`** | 生成产物，不入库。repo 里以 `npm run generate:models` 重新生成为准，不手动合。 |
+| **主题 schema**（`theme/dark.json`、`theme/light.json`） | **高冲突区**。fork 重设了键集合（Tokyo-Night 风,新增 `muted/dim/success/error/warning/border*/accent`,移除旧 `cyan/blue/green/red/yellow/gray/dimGray/darkGray`）。上游改主题时冲突在此；以上游为准重适配并同步 `theme-controller`/`theme.ts` 的引用。 |
+| **工具 displayMode**（`extensions/types.ts`、`core/tools/*` 渲染函数） | **高冲突区**。fork 把工具渲染参数由 `expanded: boolean` 改为 `displayMode: "title"\|"preview"\|"expanded"`。上游若改工具渲染签名 → 以上游为准重新适配（区别于上面的 `t()` 包装行）。 |
+| **session-revert**（`core/session-revert.ts` + `/revert` 接线） | 新文件本体低冲突（上游不碰 `session-revert.ts`）。接线在 `slash-commands.ts`/`interactive-mode.ts`,属上游高频区,冲突按 `t()` 包装规则处理。**注意**：该命令做 `reset --hard`+`clean -fd`,重适配时保留 `ponytail:` 的未跟踪文件告警。 |
 
 ## 四、i18n 冲突面管控
 
