@@ -29,6 +29,13 @@ export function formatTokens(count: number): string {
 	return `${Math.round(count / 1000000)}M`;
 }
 
+/** Join stat fragments with a subtle dim separator. Keeps the rest of the footer dim styling intact. */
+export function formatStatsParts(parts: string[]): string {
+	if (parts.length === 0) return "";
+	const sep = theme.fg("dim", " • ");
+	return parts.join(sep);
+}
+
 export function formatCwdForFooter(cwd: string, home: string | undefined): string {
 	if (!home) return cwd;
 
@@ -163,7 +170,7 @@ export class FooterComponent implements Component {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", t("xp")))}`);
 		}
 
-		let statsLeft = statsParts.join(" ");
+		let statsLeft = formatStatsParts(statsParts);
 
 		// Add model name on the right side, plus thinking level if model supports it
 		const modelName = state.model?.id || t("no-model");
