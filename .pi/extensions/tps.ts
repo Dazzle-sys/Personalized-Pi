@@ -1,5 +1,20 @@
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerTranslations, resolveLocaleFromEnv, setLocale, t } from "@earendil-works/pi-tui";
+
+// Extensions load via jiti into a separate module cache, so this pi-tui instance
+// doesn't inherit the app's locale. The app broadcasts the effective UI locale to
+// PI_LOCALE (applyLocaleSetting), so resolveLocaleFromEnv() here follows the
+// /settings language setting as well as the environment. Re-resolve each turn so a
+// live settings change is picked up.
+registerTranslations("zh-CN", {
+	TPS: "TPS",
+	"tok/s": "tok/s",
+	in: "输入",
+	out: "输出",
+	"cache r/w": "缓存读写",
+	total: "总计",
+});
 
 function isAssistantMessage(message: unknown): message is AssistantMessage {
 	if (!message || typeof message !== "object") return false;
@@ -39,9 +54,21 @@ export default function (pi: ExtensionAPI) {
 
 		if (output <= 0) return;
 
+		setLocale(resolveLocaleFromEnv());
+
 		const elapsedSeconds = elapsedMs / 1000;
 		const tokensPerSecond = output / elapsedSeconds;
-		const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s. out ${output.toLocaleString()}, in ${input.toLocaleString()}, cache r/w ${cacheRead.toLocaleString()}/${cacheWrite.toLocaleString()}, total ${totalTokens.toLocaleString()}, ${elapsedSeconds.toFixed(1)}s`;
+		const fmt = (n: number) => n.toLocaleString();
+		// notify renders in a dim status line, so emphasis uses bold (color-safe).
+		const message = [
+			`\x1b[1m${t("TPS")} ${tokensPerSecond.toFixed(1)} ${t("tok/s")}\x1b[22m`,
+			`${t("in")} ${fmt(input)}`,
+			`${t("out")} ${fmt(output)}`,
+			`${t("cache r/w")} ${fmt(cacheRead)}/${fmt(cacheWrite)}`,
+			`${t("total")} ${fmt(totalTokens)}`,
+			`${elapsedSeconds.toFixed(1)}s`,
+		].join(" · ");
+
 		ctx.ui.notify(message, "info");
 	});
 }

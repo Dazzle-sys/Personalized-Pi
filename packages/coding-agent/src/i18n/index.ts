@@ -33,4 +33,9 @@ registerTranslations("zh-CN", zhCN);
 export function applyLocaleSetting(language?: string): void {
 	const resolved = language && language !== "auto" ? language : resolveLocaleFromEnv();
 	setLocale(resolved);
+	// Extensions load via jiti into a separate module cache, so their pi-tui
+	// instance can't see the app's resolved locale through module state. Broadcast
+	// it to PI_LOCALE so extension code using resolveLocaleFromEnv() follows the
+	// effective UI locale (settings override/env), not just the raw environment.
+	process.env.PI_LOCALE = resolved;
 }

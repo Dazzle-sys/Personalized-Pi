@@ -170,17 +170,24 @@ export class FooterComponent implements Component {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", t("xp")))}`);
 		}
 
-		let statsLeft = formatStatsParts(statsParts);
+		const statsLeft = formatStatsParts(statsParts);
 
 		// Add model name on the right side, plus thinking level if model supports it
 		const modelName = state.model?.id || t("no-model");
 
-		let statsLeftWidth = visibleWidth(statsLeft);
+		// Merge pwd (with branch/session) into the left side of the single footer line.
+		// pwd stays left-aligned, token/cost/context stats follow, model is right-aligned.
+		let leftContent = pwd;
+		if (statsLeft) {
+			leftContent += ` • ${statsLeft}`;
+		}
 
-		// If statsLeft is too wide, truncate it
-		if (statsLeftWidth > width) {
-			statsLeft = truncateToWidth(statsLeft, width, "...");
-			statsLeftWidth = visibleWidth(statsLeft);
+		let leftWidth = visibleWidth(leftContent);
+
+		// If the whole left side (pwd + stats) is too wide, truncate it
+		if (leftWidth > width) {
+			leftContent = truncateToWidth(leftContent, width, theme.fg("dim", "..."));
+			leftWidth = visibleWidth(leftContent);
 		}
 
 		// Calculate available space for padding (minimum 2 spaces between stats and model)
@@ -198,43 +205,42 @@ export class FooterComponent implements Component {
 		let rightSide = rightSideWithoutProvider;
 		if (this.footerData.getAvailableProviderCount() > 1 && state.model) {
 			rightSide = `(${state.model!.provider}) ${rightSideWithoutProvider}`;
-			if (statsLeftWidth + minPadding + visibleWidth(rightSide) > width) {
+			if (leftWidth + minPadding + visibleWidth(rightSide) > width) {
 				// Too wide, fall back
 				rightSide = rightSideWithoutProvider;
 			}
 		}
 
 		const rightSideWidth = visibleWidth(rightSide);
-		const totalNeeded = statsLeftWidth + minPadding + rightSideWidth;
+		const totalNeeded = leftWidth + minPadding + rightSideWidth;
 
 		let statsLine: string;
 		if (totalNeeded <= width) {
 			// Both fit - add padding to right-align model
-			const padding = " ".repeat(width - statsLeftWidth - rightSideWidth);
-			statsLine = statsLeft + padding + rightSide;
+			const padding = " ".repeat(width - leftWidth - rightSideWidth);
+			statsLine = leftContent + padding + rightSide;
 		} else {
 			// Need to truncate right side
-			const availableForRight = width - statsLeftWidth - minPadding;
+			const availableForRight = width - leftWidth - minPadding;
 			if (availableForRight > 0) {
 				const truncatedRight = truncateToWidth(rightSide, availableForRight, "");
 				const truncatedRightWidth = visibleWidth(truncatedRight);
-				const padding = " ".repeat(Math.max(0, width - statsLeftWidth - truncatedRightWidth));
-				statsLine = statsLeft + padding + truncatedRight;
+				const padding = " ".repeat(Math.max(0, width - leftWidth - truncatedRightWidth));
+				statsLine = leftContent + padding + truncatedRight;
 			} else {
 				// Not enough space for right side at all
-				statsLine = statsLeft;
+				statsLine = leftContent;
 			}
 		}
 
-		// Apply dim to each part separately. statsLeft may contain color codes (for context %)
+		// Apply dim to each part separately. leftContent may contain color codes (for context %)
 		// that end with a reset, which would clear an outer dim wrapper. So we dim the parts
 		// before and after the colored section independently.
-		const dimStatsLeft = theme.fg("dim", statsLeft);
-		const remainder = statsLine.slice(statsLeft.length); // padding + rightSide
+		const dimStatsLeft = theme.fg("dim", leftContent);
+		const remainder = statsLine.slice(leftContent.length); // padding + rightSide
 		const dimRemainder = theme.fg("dim", remainder);
 
-		const pwdLine = truncateToWidth(theme.fg("dim", pwd), width, theme.fg("dim", "..."));
-		const lines = [pwdLine, dimStatsLeft + dimRemainder];
+		const lines = [dimStatsLeft + dimRemainder];
 
 		// Add extension statuses on a single line, sorted by key alphabetically
 		const extensionStatuses = this.footerData.getExtensionStatuses();
