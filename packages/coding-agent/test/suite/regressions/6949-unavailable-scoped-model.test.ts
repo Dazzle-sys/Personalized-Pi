@@ -39,8 +39,10 @@ function createInteractiveContext(options: {
 	return { context, getAvailableSnapshot, getSelector: () => selector, setScopedModels };
 }
 
-async function showModelsSelector(context: object): Promise<void> {
-	const show = Reflect.get(InteractiveMode.prototype, "showModelsSelector") as (this: object) => Promise<void>;
+async function showModelsSelector(context: Record<string, unknown>): Promise<void> {
+	const show = Reflect.get(InteractiveMode.prototype, "showModelsSelector") as (
+		this: Record<string, unknown>,
+	) => Promise<void>;
 	await show.call(context);
 }
 

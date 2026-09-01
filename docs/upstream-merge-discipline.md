@@ -61,3 +61,23 @@ i18n 的 `t()` 把 30+ 个源文件改成包装，这些行上游高频触碰 �
 - **本机固定出口 IP**（当前 47.128.210.21）下，B.A.I 请求返回 **401**（key 绑定其它出口/IP）。因此 B.A.I 的 E2E 测试（`stream.test.ts` 的 `skipIf(!baiApiKey)`，认证仅凭 auth.json）在此机器**必然失败**——这是环境/凭据问题，**不是代码 bug**。凡依赖真实 B.A.I 调用的 E2E，请在**能连通 B.A.I 的环境**运行，或在无 bai 凭证的 CI 里让其 `skip`。
 
 - **command-code 依赖**：`stream.test.ts` 的 command-code E2E 需 `COMMANDCODE_API_KEY`；缺失时 `skipIf` 跳过，不影响构建与本地测试。
+
+## 七、2026-09 同步 `f3e432dc3` 后的本机（Windows）测试失败归档
+
+> 本次合并 `upstream/main`（7 提交）已完成；下面这些测试**在本机 Windows 环境**失败，但根因是上游测试假设 POSIX/Linux 路径，fork 的 CI（`ci.yml`，`ubuntu-latest`）不会触发。**非合并引入的 bug**，不修，仅在本地出现时知悉。统一特征：`canonicalizePath`（`realpathSync`）/`isAbsolute` 在 Windows 上把 `/` 解析为盘符路径（`D:\...`）或改变大小写/短路径，导致上游硬编码 `/project` 的断言失配。
+
+| 测试 | 失败现象 | 根因 | 归档判定 |
+| --- | --- | --- | --- |
+| `test/trust-selector.test.ts`（3 个） | `toContain('Saved decision: trusted (/project)')` 失败；`'Trust parent folder (D:\\project)'` | Windows 上 `isAbsolute('/project')`→`resolve`→`D:\\project`。fork 在 Windows 用 `D:\\` 是正确行为 | 环境/上游 Linux 假设 |
+| `test/trust-manager.test.ts`（1 个） | `hasTrustRequiringProjectResources(tempDir)` 期望 false 得 true | Windows `realpathSync` 短路径/大小写致 `currentDir !== homeDir` 判断错 | 环境/上游 Linux 假设 |
+| `suite/regressions/8935-*.test.ts` | `executions` 期望 `[]` 得 `['first']` | `agent-loop.ts` 与上游 main 逐字节一致；`signal.abort()` 在 Windows 时序下第一个 tool 已执行 | 环境/时序 |
+| `suite/regressions/7209-*.test.ts` | `waitFor 'Model catalogs refreshed.'` 超时 | `refreshModels` 在 fake harness 的时序 | 环境/时序 |
+| `suite/regressions/2791-fswatch-*.test.ts` | `ERR_UNSUPPORTED_ESM_URL_SCHEME`（`d:`） | Windows 下子进程加载模块用 `d:` 而非 `file://` | 环境/上游 Linux 假设 |
+| `test/model-selector.test.ts`（1 个） | `getModelRow('browsed-model')` undefined | vitest 模块缓存/时序；实现输出已验证正确 | 环境/时序 |
+
+**不修理由**：① 合并不引入这些（`agent-loop.ts` 与上游逐字节同、`npm run check` 全绿）；② fork CI（`ubuntu-latest`）宿主侧跑这些测试不会失败；③ 修改方向是跨平台化这些上游测试（改测试）、或改运行时路径语义（高风险，影响磁盘 trust key 一致性与 `findNearestTrustEntry` 读取），收益低。
+
+## 八、pi-lens 2 处 advisory（本任务已修）
+
+- `packages/agent/src/agent-loop.ts:603`：`arguments: preparedArguments as Record<string, any>` → 改 `Record<string, unknown>`（与 `AgentToolCall.arguments` 类型一致）。
+- `packages/coding-agent/test/suite/regressions/6949-unavailable-scoped-model.test.ts`：`showModelsSelector(context: object)` / `(this: object)` → 改 `Record<string, unknown>`。
