@@ -78,6 +78,17 @@ OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider`，认证用 
 
 仅在 `/settings` 或 `--tui-mode regular` 显式选择时才回退到旧的 main-screen。
 
+### 全屏右键复制（替代上游仅 Windows 的右键粘贴）
+
+fullscreen（alt-screen）渲染器的右键行为与上游不同（`packages/tui/src/tui-alt-screen.ts` 的 `handleRightClickCopy`）：
+
+- **上游**：仅 Windows 下右键 === 粘贴剪贴板（`onRightClickPaste`，且排除 VSCode），非 Windows 右键无动作。
+- **fork**：移除 Windows 粘贴逻辑；右键且存在选中文本时**复制选中内容**到剪贴板，无选中则忽略。粘贴交由终端键盘（`Ctrl+V` / `Shift+Insert`）。
+- **原因**：fullscreen 启用了 SGR 鼠标上报，右键事件传给应用而非终端自行粘贴，故改为复制。
+- **复制路径**：经交互模式注入的原生剪贴板 `copySelection`（`interactive-mode.ts` → `utils/clipboard.ts` 的 `copyToClipboard`），失败回退 OSC 52；`copyOnSelect`（默认 true，鼠标释放自动复制选中文本）沿用上游（#8731）。反馈文案（`Copied!` / `Copy failed` / `Failed to copy to clipboard`）已本地化。
+
+> 行为差异：Windows fullscreen 下右键由「粘贴」变为「复制选中」；非 Windows 由「无动作」变为「右键复制选中」。
+
 ### 提示词历史持久化
 
 交互模式的聊天输入历史（上下键浏览）跨会话持久化，共 100 条，写入 `~/.pi/agent/prompt-history.json`，重启 `pi` 后仍可浏览（见 `packages/coding-agent/src/modes/interactive/components/custom-editor.ts` 与 `config.ts` 的 `getPromptHistoryPath()`）。
@@ -105,7 +116,6 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 
 - **安装时自动生成模型数据**：根 `prepare` 钩子在 `husky && npm run hydrate:model-data` 中离线生成 `packages/ai/src/providers/data/*.json`（gitignore 产物，仅补数据、不改已提交的 `models.generated.ts`/`.models.ts`），避免新克隆/新 worktree 因缺数据导致 `npm run check` 报错。注意：`npm install --ignore-scripts` / `npm ci --ignore-scripts` 会**跳过** prepare，需改用 `npm install` 或手动 `npm run hydrate:model-data`；联网的 `generate-image-models` 不含在内。
 - **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。
-- **gitleaks 白名单**：`.gitleaks.toml` 排除 `packages/ai/src/providers/data/`（生成模型目录，仅模型元数据与校验和，无凭据），避免 `structureHash` 误报。
 
 ## 维护与同步上游
 

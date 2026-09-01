@@ -1,6 +1,6 @@
 # 上游同步纪律（Fork 维护）
 
-> 本 fork 的定制范围（与代码一致）：**i18n 中文化**（`packages/coding-agent/src/**` 改 `t()` 包装 + 独立 zh-CN 词典）、**B.A.I provider**（`packages/ai` 新增 `bai.ts`/`bai.models.ts` + `generate-models.ts` 模型数组）、**command-code provider**（`packages/ai/src/providers/commandcode.ts` + `COMMANDCODE_API_KEY`）、**provider 配置向导**（`core/models-config-writer.ts` + `interactive/components/provider-wizard*.ts`）、**TUI 主题现代化**（`theme/dark.json`/`light.json` schema 重设计 + `message-divider` + `footer`/`loader` 打磨）、**工具 displayMode**（`extensions/types.ts` 的 `ToolDisplayMode`,工具渲染由 `expanded: boolean` 改 `displayMode`）、**session-revert**（`core/session-revert.ts` + `/revert` 命令接线）、**Bedrock 类型硬化**（`DocumentType` cast、`arguments` 收窄为 `unknown`）、**gitleaks 白名单**（`.gitleaks.toml`）。
+> 本 fork 的定制范围（与代码一致）：**i18n 中文化**（`packages/coding-agent/src/**` 改 `t()` 包装 + 独立 zh-CN 词典）、**B.A.I provider**（`packages/ai` 新增 `bai.ts`/`bai.models.ts` + `generate-models.ts` 模型数组）、**command-code provider**（`packages/ai/src/providers/commandcode.ts` + `COMMANDCODE_API_KEY`）、**provider 配置向导**（`core/models-config-writer.ts` + `interactive/components/provider-wizard*.ts`）、**TUI 主题现代化**（`theme/dark.json`/`light.json` schema 重设计 + `message-divider` + `footer`/`loader` 打磨）、**工具 displayMode**（`extensions/types.ts` 的 `ToolDisplayMode`,工具渲染由 `expanded: boolean` 改 `displayMode`）、**session-revert**（`core/session-revert.ts` + `/revert` 命令接线）、**Bedrock 类型硬化**（`DocumentType` cast、`arguments` 收窄为 `unknown`）。
 > 文档目的：让「跟上游同步」保持低成本、可回滚。**铁律：永不 rebase 上游，只用 merge。**
 
 ## 一、铁律

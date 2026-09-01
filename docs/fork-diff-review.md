@@ -8,18 +8,23 @@
 
 | 项 | 值 |
 | --- | --- |
-| 上游基线 | `earendil-works/pi` @ `853a80d26`(分叉点) |
-| 上游当前 HEAD | `3fc3ef532`(与本地 `upstream/main` 一致) |
-| 本地 HEAD | `8d058022d` |
-| 是否落后 | 否。`upstream/main` 是本地 HEAD 的祖先,上游全部提交已并入 |
-| 净差异 | 173 文件,+7640 / −1828(相对 `upstream/main`) |
-| fork 自研提交 | 33 个(含 2 个 merge 提交,无 rebase) |
+| 项 | 值 |
+| --- | --- |
+| 上游基线 | `earendil-works/pi` @ `853a80d26`(原始分叉点) |
+| 上游当前 HEAD | `b8b873b98`(已全部并入) |
+| 当前 merge-base | `b8b873b98` == `upstream/main`(完全同步) |
+| 本地 HEAD | `0a501fdfb`(merge: integrate upstream/main) |
+| 是否落后 | 否。已 `git merge upstream/main` 并入上游 3 个提交,merge-base == upstream/main |
+| 净差异 | 173 文件,+7728 / −1828(相对 `upstream/main`,已排除上游新提交) |
+| fork 自研提交 | 35 个(含 3 个 merge: f3e432dc3 / 19c07717c / 0a501fdfb,无 rebase) |
+
+> 2026-09-02 同步:并入上游 3 个提交(`b8b873b98` suppportMaxOutputTokens、`605a1b038` SIGWINCH seccomp、`3205678b3` approve contributors),`packages/ai/src/types.ts` 自动合并(fork 改 `KnownProvider`/`ToolCall.arguments`,上游改 `OpenAIResponsesCompat`,区域不同无冲突)。**当前工作树另有未提交改动**:CI 合规门禁与 `docs/license-compliance.md` 声明、`.gitleaks.toml` 已移除;单行 footer 与扩展 i18n(tps.ts)在途——这些尚未计入上表净差异。
 
 > 2026-09-01 深度核验:`npm run check` 工具链(tsgo、biome、ts-relative-imports、pinned-deps)全部通过;fork 新增测试(session-revert、models-config-writer、i18n-coverage、provider-wizard、language-setting、footer、message-divider、theme-*、tui 侧)全绿。核验中发现并修复一处 i18n 回归:主题选择器 `t("  Automatic")` 键值带前导空格,与 zh-CN 词典 `Automatic` 不匹配导致回退英文,已改为 `\`  ${t("Automatic")}\``(保持缩进对齐、键不掺杂空格),并由新增的`i18n-coverage.test.ts` 兜底防回归。
 
 合并纪律与 `docs/upstream-merge-discipline.md` 一致:**只 merge、不 rebase**。工作树干净,无冲突标记残留。
 
-上游基线 `853a80d26` 为分叉点;local HEAD 通过一个 merge 提交(`f3e432dc3`,并入上游 7 个提交)承接了上游全部内容,因此本地严格超前、无缺口。
+上游基线 `853a80d26` 为原始分叉点;local HEAD 累计通过 3 个 merge 提交(`f3e432dc3` 并入上游 7 个、`19c07717c` 并入 tui-ux-refresh、`0a501fdfb` 并入最新 3 个)承接上游全部内容,因此本地严格超前、无缺口。
 
 ## 差异分类索引
 
@@ -34,7 +39,7 @@
 | 5 | TUI 主题现代化 | `theme/{dark,light}.json`、`components/message-divider.ts`、`footer.ts`、`loader.ts` |
 | 6 | 工具 displayMode | `extensions/types.ts` 的 `ToolDisplayMode`、`core/tools/*` 渲染函数 |
 | 7 | 类型硬化 | `bedrock-converse-stream.ts`、`agent-loop.ts` |
-| 8 | 构建/模型数据自生成 | 根 `package.json` 的 `prepare` 钩子、`.gitleaks.toml`、`.gitignore` |
+| 8 | 构建/模型数据自生成 | 根 `package.json` 的 `prepare` 钩子、`.gitignore` |
 | 9 | 默认值调整 | 列表密度、agent retry、TUI alt-screen 等 |
 | 10 | 文档 | `README.md`、`AGENTS.md`、`docs/{lessons,upstream-merge-discipline}.md` |
 
