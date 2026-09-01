@@ -1,4 +1,4 @@
-import { Box, Markdown, type MarkdownTheme, Text, t } from "@earendil-works/pi-tui";
+import { LeftBarBox, Markdown, type MarkdownTheme, Text, t } from "@earendil-works/pi-tui";
 import type { ParsedSkillBlock } from "../../../core/agent-session.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { keyText } from "./keybinding-hints.ts";
@@ -8,13 +8,13 @@ import { keyText } from "./keybinding-hints.ts";
  * Uses same background color as custom messages for visual consistency.
  * Only renders the skill block itself - user message is rendered separately.
  */
-export class SkillInvocationMessageComponent extends Box {
+export class SkillInvocationMessageComponent extends LeftBarBox {
 	private expanded = false;
 	private skillBlock: ParsedSkillBlock;
 	private markdownTheme: MarkdownTheme;
 
 	constructor(skillBlock: ParsedSkillBlock, markdownTheme: MarkdownTheme = getMarkdownTheme()) {
-		super(1, 1, (t) => theme.bg("customMessageBg", t));
+		super(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
 		this.skillBlock = skillBlock;
 		this.markdownTheme = markdownTheme;
 		this.updateDisplay();

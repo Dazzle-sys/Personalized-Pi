@@ -18,6 +18,8 @@
 - The default agent-level retry now uses a 4s base delay with up to 12 attempts (4s, 8s, 16s, ...) instead of the previous 2s base / 3 attempts (2s, 4s, 8s). Override via `retry.maxRetries` and `retry.baseDelayMs`.
 - Tool calls now default to a single-line title (state glyph + short localized title) with three display modes — `title` (default), `preview`, and `expanded` — switched via the new `Tool display mode` setting or `Ctrl+O`. Clicking a tool title expands/collapses that individual call. Tool titles are localized to the interface language. (Tool box backgrounds also default to the terminal background.)
 - Tool call titles now prepend a theme-colored state marker (● pending, ✓ success, ✗ error) so execution state stays visible now that the tool box uses the terminal's default background instead of a fixed color.
+- Tool execution blocks render a left status bar (a thick `▌` colored by execution state: accent while pending, green on success, red on error) instead of a filled background, keeping tool calls compact and consistent with the state marker.
+- User and custom/system messages also use a `LeftBarBox` with a colored left bar instead of a filled background: accent for user messages, the custom-message label color for system/compaction/branch/skill messages.
 - The interactive-mode footer now renders the working directory, usage stats, and model on a single line: workspace left-aligned, stats following, model right-aligned (previously the workspace and stats/model were on two lines).
 
 ### Removed

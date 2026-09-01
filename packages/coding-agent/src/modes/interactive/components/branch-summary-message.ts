@@ -1,4 +1,4 @@
-import { Box, Markdown, type MarkdownTheme, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { LeftBarBox, Markdown, type MarkdownTheme, Spacer, Text, t } from "@earendil-works/pi-tui";
 import type { BranchSummaryMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { keyText } from "./keybinding-hints.ts";
@@ -7,13 +7,13 @@ import { keyText } from "./keybinding-hints.ts";
  * Component that renders a branch summary message with collapsed/expanded state.
  * Uses same background color as custom messages for visual consistency.
  */
-export class BranchSummaryMessageComponent extends Box {
+export class BranchSummaryMessageComponent extends LeftBarBox {
 	private expanded = false;
 	private message: BranchSummaryMessage;
 	private markdownTheme: MarkdownTheme;
 
 	constructor(message: BranchSummaryMessage, markdownTheme: MarkdownTheme = getMarkdownTheme()) {
-		super(1, 1, (t) => theme.bg("customMessageBg", t));
+		super(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
 		this.message = message;
 		this.markdownTheme = markdownTheme;
 		this.updateDisplay();

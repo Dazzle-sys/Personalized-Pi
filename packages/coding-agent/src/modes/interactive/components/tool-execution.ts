@@ -18,6 +18,10 @@ import { keyHint } from "./keybinding-hints.ts";
 
 const FALLBACK_PREVIEW_LINES = 10;
 
+// Left status bar prefix: a solid half-block + space, 2 terminal cells wide.
+const TOOL_BAR = "▌ ";
+const TOOL_BAR_WIDTH = 2;
+
 export interface ToolExecutionOptions {
 	showImages?: boolean;
 	imageWidthCells?: number;
@@ -79,8 +83,8 @@ export class ToolExecutionComponent extends Container {
 		// Always create all shell variants. contentBox is used for default renderer-based composition.
 		// selfRenderContainer is used when the tool renders its own framing.
 		// contentText is reserved for generic fallback rendering when no tool definition exists.
-		this.contentBox = new Box(1, 1, (text: string) => theme.bg("toolPendingBg", text));
-		this.contentText = new Text("", 1, 1, (text: string) => theme.bg("toolPendingBg", text));
+		this.contentBox = new Box(1, 1);
+		this.contentText = new Text("", 1, 1);
 		this.selfRenderContainer = new Container();
 
 		if (this.hasRendererDefinition()) {
@@ -153,6 +157,20 @@ export class ToolExecutionComponent extends Container {
 			: this.result?.isError
 				? `${theme.fg("error", "✗")} `
 				: `${theme.fg("success", "✓")} `;
+	}
+
+	/** Status color for the left bar, mirroring the state marker colors. */
+	private getStatusBarColor(): "accent" | "error" | "success" {
+		if (this.isPartial) return "accent";
+		return this.result?.isError ? "error" : "success";
+	}
+
+	private getStatusBar(): string {
+		return theme.fg(this.getStatusBarColor(), TOOL_BAR);
+	}
+
+	private isImageLine(line: string): boolean {
+		return line.includes("\x1b_G") || line.includes("\x1b]1337;File=");
 	}
 
 	private createCallFallback(): Component {
@@ -294,23 +312,16 @@ export class ToolExecutionComponent extends Container {
 			return lines;
 		}
 
-		return super.render(width);
+		return super
+			.render(Math.max(1, width - TOOL_BAR_WIDTH))
+			.map((line) => (this.isImageLine(line) ? line : this.getStatusBar() + line));
 	}
 
 	private updateDisplay(): void {
-		const bgFn = this.isPartial
-			? (text: string) => theme.bg("toolPendingBg", text)
-			: this.result?.isError
-				? (text: string) => theme.bg("toolErrorBg", text)
-				: (text: string) => theme.bg("toolSuccessBg", text);
-
 		let hasContent = false;
 		this.hideComponent = false;
 		if (this.hasRendererDefinition()) {
 			const renderContainer = this.getRenderShell() === "self" ? this.selfRenderContainer : this.contentBox;
-			if (renderContainer instanceof Box) {
-				renderContainer.setBgFn(bgFn);
-			}
 			renderContainer.clear();
 
 			const callRenderer = this.getCallRenderer();
@@ -371,7 +382,6 @@ export class ToolExecutionComponent extends Container {
 				}
 			}
 		} else {
-			this.contentText.setCustomBgFn(bgFn);
 			this.contentText.setText(this.formatToolExecution());
 			hasContent = true;
 		}

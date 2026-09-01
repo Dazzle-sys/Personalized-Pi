@@ -1,4 +1,4 @@
-import { Box, Markdown, type MarkdownTheme, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { LeftBarBox, Markdown, type MarkdownTheme, Spacer, Text, t } from "@earendil-works/pi-tui";
 import type { CompactionSummaryMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { keyText } from "./keybinding-hints.ts";
@@ -7,13 +7,13 @@ import { keyText } from "./keybinding-hints.ts";
  * Component that renders a compaction message with collapsed/expanded state.
  * Uses same background color as custom messages for visual consistency.
  */
-export class CompactionSummaryMessageComponent extends Box {
+export class CompactionSummaryMessageComponent extends LeftBarBox {
 	private expanded = false;
 	private message: CompactionSummaryMessage;
 	private markdownTheme: MarkdownTheme;
 
 	constructor(message: CompactionSummaryMessage, markdownTheme: MarkdownTheme = getMarkdownTheme()) {
-		super(1, 1, (t) => theme.bg("customMessageBg", t));
+		super(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
 		this.message = message;
 		this.markdownTheme = markdownTheme;
 		this.updateDisplay();

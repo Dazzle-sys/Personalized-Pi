@@ -1,5 +1,5 @@
 import type { Component } from "@earendil-works/pi-tui";
-import { Box, Container, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { Container, LeftBarBox, Spacer, Text, t } from "@earendil-works/pi-tui";
 import type { EntryRenderer } from "../../../core/extensions/types.ts";
 import type { CustomEntry } from "../../../core/session-manager.ts";
 import { theme } from "../theme/theme.ts";
@@ -46,7 +46,7 @@ export class CustomEntryComponent extends Container {
 			component = this.renderer(this.entry, { expanded: this._expanded }, theme);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			const box = new Box(1, 1, (text) => theme.bg("customMessageBg", text));
+			const box = new LeftBarBox(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
 			box.addChild(
 				new Text(
 					theme.fg("error", t("[{type}] renderer failed: {message}", { type: this.entry.customType, message })),

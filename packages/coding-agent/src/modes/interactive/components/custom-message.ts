@@ -1,6 +1,6 @@
 import type { TextContent } from "@earendil-works/pi-ai";
 import type { Component } from "@earendil-works/pi-tui";
-import { Box, Container, Markdown, type MarkdownTheme, Spacer, Text } from "@earendil-works/pi-tui";
+import { Container, LeftBarBox, Markdown, type MarkdownTheme, Spacer, Text } from "@earendil-works/pi-tui";
 import type { MessageRenderer } from "../../../core/extensions/types.ts";
 import type { CustomMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
@@ -12,7 +12,7 @@ import { getMarkdownTheme, theme } from "../theme/theme.ts";
 export class CustomMessageComponent extends Container {
 	private message: CustomMessage<unknown>;
 	private customRenderer?: MessageRenderer;
-	private box: Box;
+	private box: LeftBarBox;
 	private customComponent?: Component;
 	private markdownTheme: MarkdownTheme;
 	private _expanded = false;
@@ -32,8 +32,8 @@ export class CustomMessageComponent extends Container {
 
 		this.addChild(new Spacer(1));
 
-		// Create box with purple background (used for default rendering)
-		this.box = new Box(1, 1, (t) => theme.bg("customMessageBg", t));
+		// Create box with purple left bar (used for default rendering)
+		this.box = new LeftBarBox(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
 
 		this.rebuild();
 	}
