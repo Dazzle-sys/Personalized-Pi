@@ -17,5 +17,8 @@
 
 ### 4. `npm run check` 在 base main 即失败：先确认预存错误归属再谈提交门槛
 
-- **教训**：UI 改动完成后跑 `npm run check` 报 804 个 `TS2345 ... not assignable to type 'never'`（722 在 `test/*`，82 在 `packages/ai/src/providers/*.models.ts`），无一在我的改动文件。这是 `packages/ai` 模型目录生成（`models.generated.ts` 与 provider models）在 base main 已漂移导致的预存问题，与本任务无关。
-- **修复**：用 `npm run check > /tmp/check.log` 落盘后 `grep` 我改动的具体文件，确认零新增；不擅自去修 804 个模型类型错（AGENTS 规定 `models.generated.ts` 只能走 `generate-models.ts` 重生成，且属独立维护事项）。遇到 base 就挂的检查，先 `git status`/落盘日志区分「本任务引入」vs「base 预存」，再如实上报，绝不含糊宣称全绿。本机 `tmux` 不可用，交互目检改用测试断言替代。
+- **教训**：UI 改动完成后跑 `npm run check` 报 804 个 `TS2345 ... not assignable to type 'never'`（722 在 `test/*`，82 在 `packages/ai/src/providers/*.models.ts`），无一在我的改动文件。
+- **误诊**：最初归因于「`models.generated.ts` 生成漂移」——错。
+- **真根因**：`packages/ai/src/providers/data/*.json`（`data/*.json` 是 **gitignore 的生成产物**）在新建的 git worktree 里**缺失**。`.models.ts` 用 `import values from "./data/*.json" with { type: "json" }` 读取它：文件不存在时 `tsgo` 把它推断为 `unknown`，传给 `flattenModelCatalog<..., TGroups extends ModelGroups>` 满足不了约束→泛型塌缩成 `never`→模型 ID 联合变 `never`→800+ 处 `not assignable to never`。主工作树因之前已 `npm run generate:models` 生成过 `data/`，所以正常；worktree 不带 gitignore 文件、又没有 `prepare`/`postinstall` 钩子自动生成，才失败。
+- **修复**：`npm run generate:models`（root，内含 `node scripts/generate-models.ts --strict`）重新生成 `data/*.json`（gitignore，不提交；`models.generated.ts`/`.models.ts` 未变，`image-models.generated.ts` 也回干净），`npm run check` 即绿。
+- **教训沉淀**：① 新建 worktree/克隆后若 `check` 报大量模型类型 `never` 错，先确认 `data/*.json` 是否存在，跑 `npm run generate:models` 即可，别误判为生成漂移；② 遇到 base 就挂的检查，先 `git status`/落盘日志区分「本任务引入」vs「环境缺生成产物」，再如实上报，绝不含糊宣称全绿；③ 本机 `tmux` 不可用，交互目检改用测试断言替代。
