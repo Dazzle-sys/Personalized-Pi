@@ -136,6 +136,7 @@ import { FooterComponent, formatTokens } from "./components/footer.ts";
 import { formatKeyText, keyDisplayText, keyHint, keyText, rawKeyHint } from "./components/keybinding-hints.ts";
 import { LoginDialogComponent } from "./components/login-dialog.ts";
 import { createMermaidMarkdownTransformer } from "./components/mermaid.ts";
+import { MessageDivider } from "./components/message-divider.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
 import {
 	type AuthSelectorProvider,
@@ -3692,6 +3693,8 @@ export class InteractiveMode {
 				const textContent = this.getUserMessageText(message);
 				if (textContent) {
 					if (this.chatContainer.children.length > 0) {
+						this.chatContainer.addChild(new Spacer(1));
+						this.chatContainer.addChild(new MessageDivider());
 						this.chatContainer.addChild(new Spacer(1));
 					}
 					const skillBlock = parseSkillBlock(textContent);
