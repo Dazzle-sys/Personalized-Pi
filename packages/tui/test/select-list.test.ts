@@ -141,4 +141,14 @@ describe("SelectList", () => {
 			"unexpected group header",
 		);
 	});
+
+	it("limits total rendered lines to maxVisible when grouping is active", () => {
+		const withHeader = { ...testTheme, groupHeader: (text: string) => `▸ ${text}` };
+		const items = ["a", "b", "c", "d", "e", "f"].map((value) => ({ value, label: value, group: `G${value}` }));
+		const list = new SelectList(items, 5, withHeader);
+		const rendered = list.render(80);
+
+		// +1 accounts for a possible scroll-indicator line.
+		assert.ok(rendered.length <= 6, `expected <=6 lines, got ${rendered.length}`);
+	});
 });

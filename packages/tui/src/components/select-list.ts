@@ -85,12 +85,33 @@ export class SelectList implements Component {
 
 		const primaryColumnWidth = this.getPrimaryColumnWidth();
 
-		// Calculate visible range with scrolling
-		const startIndex = Math.max(
-			0,
-			Math.min(this.selectedIndex - Math.floor(this.maxVisible / 2), this.filteredItems.length - this.maxVisible),
-		);
-		const endIndex = Math.min(startIndex + this.maxVisible, this.filteredItems.length);
+		// Choose the visible item window so items + their group-header lines fit within maxVisible.
+		const countWindowLines = (from: number, to: number): number => {
+			let lines = to - from;
+			let lastGroup = from > 0 ? this.filteredItems[from - 1]?.group : undefined;
+			for (let i = from; i < to; i++) {
+				const group = this.filteredItems[i]?.group;
+				if (group && group !== lastGroup) {
+					lines++;
+					lastGroup = group;
+				}
+			}
+			return lines;
+		};
+		let startIndex = this.selectedIndex;
+		let endIndex = this.selectedIndex + 1;
+		while (startIndex > 0 || endIndex < this.filteredItems.length) {
+			if (startIndex > 0 && countWindowLines(startIndex - 1, endIndex) <= this.maxVisible) {
+				startIndex--;
+			} else if (
+				endIndex < this.filteredItems.length &&
+				countWindowLines(startIndex, endIndex + 1) <= this.maxVisible
+			) {
+				endIndex++;
+			} else {
+				break;
+			}
+		}
 
 		// Render visible items, inserting a group header whenever the group changes
 		let currentGroup = startIndex > 0 ? this.filteredItems[startIndex - 1]?.group : undefined;
