@@ -14,6 +14,7 @@ export interface SelectItem {
 	value: string;
 	label: string;
 	description?: string;
+	group?: string;
 }
 
 export interface SelectListTheme {
@@ -22,6 +23,7 @@ export interface SelectListTheme {
 	description: (text: string) => string;
 	scrollInfo: (text: string) => string;
 	noMatch: (text: string) => string;
+	groupHeader?: (text: string) => string;
 }
 
 export interface SelectListTruncatePrimaryContext {
@@ -90,10 +92,18 @@ export class SelectList implements Component {
 		);
 		const endIndex = Math.min(startIndex + this.maxVisible, this.filteredItems.length);
 
-		// Render visible items
+		// Render visible items, inserting a group header whenever the group changes
+		let currentGroup = startIndex > 0 ? this.filteredItems[startIndex - 1]?.group : undefined;
 		for (let i = startIndex; i < endIndex; i++) {
 			const item = this.filteredItems[i];
 			if (!item) continue;
+
+			if (item.group && item.group !== currentGroup) {
+				if (this.theme.groupHeader) {
+					lines.push(this.theme.groupHeader(item.group));
+				}
+				currentGroup = item.group;
+			}
 
 			const isSelected = i === this.selectedIndex;
 			const descriptionSingleLine = item.description ? normalizeToSingleLine(item.description) : undefined;

@@ -113,4 +113,32 @@ describe("SelectList", () => {
 		assert.ok(rendered[0].includes("…"));
 		assert.equal(visibleIndexOf(rendered[0], "first"), visibleIndexOf(rendered[1], "second"));
 	});
+
+	it("renders a group header when the group changes between items", () => {
+		const withHeader = { ...testTheme, groupHeader: (text: string) => `▸ ${text}` };
+		const items = [
+			{ value: "model", label: "model", group: "Model" },
+			{ value: "thinking", label: "thinking", group: "Model" },
+			{ value: "new", label: "new", group: "Session" },
+		];
+		const list = new SelectList(items, 5, withHeader);
+		const rendered = list.render(80);
+
+		assert.ok(rendered.includes("▸ Model"), "expected a group header for 'Model'");
+		assert.ok(rendered.includes("▸ Session"), "expected a group header for 'Session'");
+	});
+
+	it("renders no group header when items have no group", () => {
+		const items = [
+			{ value: "a", label: "a" },
+			{ value: "b", label: "b" },
+		];
+		const list = new SelectList(items, 5, testTheme);
+		const rendered = list.render(80);
+
+		assert.ok(
+			rendered.every((line) => !line.startsWith("▸")),
+			"unexpected group header",
+		);
+	});
 });

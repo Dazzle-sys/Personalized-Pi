@@ -225,6 +225,7 @@ export interface AutocompleteItem {
 	value: string;
 	label: string;
 	description?: string;
+	group?: string;
 }
 
 type Awaitable<T> = T | Promise<T>;
@@ -233,6 +234,7 @@ export interface SlashCommand {
 	name: string;
 	description?: string;
 	argumentHint?: string;
+	category?: string;
 	// Function to get argument completions for this command
 	// Returns null if no argument completion is available
 	getArgumentCompletions?(argumentPrefix: string): Awaitable<AutocompleteItem[] | null>;
@@ -324,6 +326,7 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 						name,
 						label: name,
 						description: fullDesc || undefined,
+						...(typeof cmd === "object" && "category" in cmd && cmd.category ? { group: cmd.category } : {}),
 					};
 				});
 
