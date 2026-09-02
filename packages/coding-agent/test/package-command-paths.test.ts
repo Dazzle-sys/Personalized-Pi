@@ -18,6 +18,7 @@ import { ModelRuntime } from "../src/core/model-runtime.ts";
 import type { ResolvedPaths } from "../src/core/package-manager.ts";
 import { InMemorySettingsStorage, SettingsManager } from "../src/core/settings-manager.ts";
 import { ProjectTrustStore } from "../src/core/trust-manager.ts";
+import { setLocale } from "../src/i18n/index.ts";
 import { main } from "../src/main.ts";
 import { ConfigSelectorComponent } from "../src/modes/interactive/components/config-selector.ts";
 import { handlePackageCommand } from "../src/package-manager-cli.ts";
@@ -160,6 +161,12 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		}) as typeof process.exit);
 		process.env[ENV_AGENT_DIR] = agentDir;
 		process.chdir(projectDir);
+
+		// The package-command output is asserted in English; pin the locale so the test
+		// is deterministic regardless of the machine's LANG/LC_ALL (which would otherwise
+		// localize these strings to zh-CN).
+		vi.stubEnv("PI_LOCALE", "en");
+		setLocale("en");
 	});
 
 	afterEach(() => {
