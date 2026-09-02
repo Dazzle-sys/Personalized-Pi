@@ -54,7 +54,7 @@ class UserMessageList implements Component {
 			const normalizedMessage = message.text.replace(/\n/g, " ").trim();
 
 			// First line: cursor + message
-			const cursor = isSelected ? theme.fg("accent", "› ") : "  ";
+			const cursor = isSelected ? theme.fg("accent", "→ ") : "  ";
 			const maxMsgWidth = width - 2; // Account for cursor (2 chars)
 			const truncatedMsg = truncateToWidth(normalizedMessage, maxMsgWidth);
 			const messageLine = cursor + (isSelected ? theme.bold(truncatedMsg) : truncatedMsg);
@@ -120,7 +120,7 @@ export class UserMessageSelectorComponent extends Container {
 
 		// Add header
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.bold(t("Fork from Message")), 1, 0));
+		this.addChild(new Text(theme.bold(theme.fg("accent", t("Fork from Message"))), 1, 0));
 		this.addChild(
 			new Text(
 				theme.fg("muted", t("Select a user message to copy the active path up to that point into a new session")),
