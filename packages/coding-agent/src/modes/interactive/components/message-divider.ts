@@ -8,6 +8,6 @@ export class MessageDivider implements Component {
 	}
 
 	render(width: number): string[] {
-		return [theme.fg("borderMuted", "─".repeat(Math.max(1, width)))];
+		return [theme.fg("borderAccent", "─".repeat(Math.max(1, width)))];
 	}
 }
