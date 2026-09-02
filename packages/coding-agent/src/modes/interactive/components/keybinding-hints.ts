@@ -41,9 +41,9 @@ export function keyDisplayText(keybinding: Keybinding): string {
 }
 
 export function keyHint(keybinding: Keybinding, description: string): string {
-	return theme.fg("dim", keyText(keybinding)) + theme.fg("muted", ` ${t(description)}`);
+	return theme.fg("accent", keyText(keybinding)) + theme.fg("muted", ` ${t(description)}`);
 }
 
 export function rawKeyHint(key: string, description: string): string {
-	return theme.fg("dim", formatKeyText(key)) + theme.fg("muted", ` ${t(description)}`);
+	return theme.fg("accent", formatKeyText(key)) + theme.fg("muted", ` ${t(description)}`);
 }
