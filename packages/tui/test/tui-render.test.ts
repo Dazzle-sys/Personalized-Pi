@@ -900,3 +900,78 @@ describe("TUI differential rendering", () => {
 		tui.stop();
 	});
 });
+
+describe("TUI scrollback-preserving edits", () => {
+	async function boot(lines: string[]): Promise<{
+		terminal: LoggingVirtualTerminal;
+		tui: TUI;
+		component: TestComponent;
+	}> {
+		const terminal = new LoggingVirtualTerminal(40, 10);
+		const tui: TUI = new TuiMainScreen(terminal);
+		const component = new TestComponent();
+		tui.addChild(component);
+		component.lines = lines;
+		tui.start();
+		await terminal.waitForRender();
+		terminal.clearWrites();
+		return { terminal, tui, component };
+	}
+
+	it("edit entirely above the viewport leaves scrollback and viewport untouched", async () => {
+		const { terminal, tui, component } = await boot(Array.from({ length: 15 }, (_, i) => `Line ${i}`));
+
+		// Index 1 sits in scrollback (viewport top is index 5 for 15 lines / 10 rows).
+		component.lines = component.lines.map((l, i) => (i === 1 ? "Line 1 CHANGED" : l));
+		tui.requestRender();
+		await terminal.waitForRender();
+
+		const writes = terminal.getWrites();
+		assert.ok(!writes.includes("\x1b[3J"), "must not clear scrollback");
+		assert.ok(!writes.includes("\x1b[2J"), "must not clear the screen");
+		assert.strictEqual(writes, "", "scrollback-only edit must not write to the terminal");
+		assert.ok(terminal.getViewport()[0]?.includes("Line 5"), "viewport stays anchored at the bottom");
+
+		tui.stop();
+	});
+
+	it("edit spanning into the viewport renders only the visible delta without clearing scrollback", async () => {
+		const { terminal, tui, component } = await boot(Array.from({ length: 15 }, (_, i) => `Line ${i}`));
+
+		// Lines 3-4 are above viewport (top=5); lines 5-7 are visible.
+		component.lines = component.lines.map((l, i) => (i >= 3 && i <= 7 ? `${l} CHANGED` : l));
+		tui.requestRender();
+		await terminal.waitForRender();
+
+		const writes = terminal.getWrites();
+		assert.ok(!writes.includes("\x1b[3J"), "must not clear scrollback");
+		assert.ok(!writes.includes("\x1b[2J"), "must not clear the screen");
+		const viewport = terminal.getViewport();
+		assert.ok(viewport[0]?.includes("Line 5 CHANGED"), "visible changed line is re-rendered");
+		assert.ok(viewport[2]?.includes("Line 7 CHANGED"), "changed line within viewport is rendered");
+		assert.ok(viewport[3]?.includes("Line 8"), "unchanged line below the edit is preserved");
+		assert.ok(viewport[viewport.length - 1]?.includes("Line 14"), "end of content stays visible");
+
+		tui.stop();
+	});
+
+	it("appending after a scrollback edit still works without a full redraw", async () => {
+		const { terminal, tui, component } = await boot(Array.from({ length: 15 }, (_, i) => `Line ${i}`));
+
+		component.lines = component.lines.map((l, i) => (i === 2 ? "Line 2 CHANGED" : l));
+		tui.requestRender();
+		await terminal.waitForRender();
+		terminal.clearWrites();
+
+		component.lines = [...component.lines, "Line 15"];
+		tui.requestRender();
+		await terminal.waitForRender();
+
+		const writes = terminal.getWrites();
+		assert.ok(!writes.includes("\x1b[3J"), "append after scrollback edit must not clear scrollback");
+		assert.ok(!writes.includes("\x1b[2J"), "append after scrollback edit must not clear the screen");
+		assert.ok(terminal.getViewport().includes("Line 15"), "appended line appears in the viewport");
+
+		tui.stop();
+	});
+});

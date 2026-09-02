@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Fixed main-screen edits to lines above the viewport no longer clearing scrollback or yanking the reading position to the top; such edits update the buffer model and only draw the visible delta, and a shrink below the viewport still re-anchors with a full redraw.
 - Guarded slash-command argument autocomplete against a completer rejecting (e.g. a credential fetch timing out); the menu now closes instead of surfacing an unhandled rejection.
 
 ### Removed

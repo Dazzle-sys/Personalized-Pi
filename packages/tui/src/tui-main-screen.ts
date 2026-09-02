@@ -446,12 +446,43 @@ export class TuiMainScreen extends TuiBase implements TUI {
 			return;
 		}
 
-		// Differential rendering can only touch what was actually visible.
-		// If the first changed line is above the previous viewport, we need a full redraw.
+		// Differential rendering can only touch what was actually visible. Lines above
+		// the previous viewport live in terminal scrollback, which cannot be rewritten
+		// in place. When a change touches them, the previous behavior was a full clear
+		// + re-render from the top: that wiped scrollback (\x1b[3J) and yanked the
+		// reading position back to the top. Instead leave scrollback untouched and only
+		// draw the visible delta.
+		const renderStart = Math.max(firstChanged, prevViewportTop);
+		const prevViewportBottom = prevViewportTop + height - 1;
 		if (firstChanged < prevViewportTop) {
-			logRedraw(`firstChanged < viewportTop (${firstChanged} < ${prevViewportTop})`);
-			fullRender(true);
-			return;
+			if (lastChanged < prevViewportTop) {
+				// Change is entirely above the viewport: nothing on screen changed. Delete
+				// stale kitty images by id (position-independent), sync the buffer model,
+				// and keep the viewport and hardware cursor anchored where they were.
+				logRedraw(`change above viewport (${firstChanged}-${lastChanged} < ${prevViewportTop})`);
+				const imageDeletes = this.deleteChangedKittyImages(firstChanged, lastChanged);
+				if (imageDeletes) this.terminal.write(imageDeletes);
+				this.cursorRow = Math.max(0, newLines.length - 1);
+				this.previousLines = newLines;
+				this.previousKittyImageIds = this.collectKittyImageIds(newLines);
+				this.previousWidth = width;
+				this.previousHeight = height;
+				this.previousViewportTop = prevViewportTop;
+				this.positionHardwareCursor(cursorPos, newLines.length);
+				return;
+			}
+			// The change reaches the viewport. If content still fills the visible region
+			// (its last line is at or below the viewport bottom) the modeled viewport is
+			// trustworthy, so clamp the render start to the viewport top and draw only
+			// the visible rows without disturbing scrollback. If content ends above the
+			// viewport bottom the viewport model is stale (e.g. inflated by a transient
+			// component): re-anchor with a full redraw so stale rows are cleared.
+			if (newLines.length - 1 < prevViewportBottom) {
+				logRedraw(`shrink below viewport bottom (content end ${newLines.length - 1} < ${prevViewportBottom})`);
+				fullRender(true);
+				return;
+			}
+			logRedraw(`change spans viewport top (${firstChanged} < ${prevViewportTop} <= ${lastChanged})`);
 		}
 
 		// Render from first changed line to end
@@ -459,8 +490,7 @@ export class TuiMainScreen extends TuiBase implements TUI {
 		const output = new BoundedTerminalWriter((data) => this.terminal.write(data));
 		output.append("\x1b[?2026h"); // Begin synchronized output
 		output.append(this.deleteChangedKittyImages(firstChanged, lastChanged));
-		const prevViewportBottom = prevViewportTop + height - 1;
-		const moveTargetRow = appendStart ? firstChanged - 1 : firstChanged;
+		const moveTargetRow = appendStart ? renderStart - 1 : renderStart;
 		if (moveTargetRow > prevViewportBottom) {
 			const currentScreenRow = Math.max(0, Math.min(height - 1, hardwareCursorRow - prevViewportTop));
 			const moveToBottom = height - 1 - currentScreenRow;
@@ -484,11 +514,11 @@ export class TuiMainScreen extends TuiBase implements TUI {
 
 		output.append(appendStart ? "\r\n" : "\r"); // Move to column 0
 
-		// Only render changed lines (firstChanged to lastChanged), not all lines to end
+		// Only render changed lines (renderStart to lastChanged), not all lines to end
 		// This reduces flicker when only a single line changes (e.g., spinner animation)
 		const renderEnd = Math.min(lastChanged, newLines.length - 1);
-		for (let i = firstChanged; i <= renderEnd; i++) {
-			if (i > firstChanged) output.append("\r\n");
+		for (let i = renderStart; i <= renderEnd; i++) {
+			if (i > renderStart) output.append("\r\n");
 			const line = newLines[i];
 			const isImage = isImageLine(line);
 			const imageReservedRows = isImage ? this.getKittyImageReservedRows(newLines, i, renderEnd) : 1;
