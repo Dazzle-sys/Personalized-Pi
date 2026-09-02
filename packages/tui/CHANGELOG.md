@@ -12,6 +12,10 @@
 - Localized built-in component strings (settings/select hints, loader default message, editor paste markers and scroll border, alt-screen search bar, clipboard flash, image fallback, main-screen crash message); paste-marker parsing now derives its regex from the active locale. English output is unchanged.
 - Right-clicking an active text selection in the fullscreen TUI copies it to the clipboard instead of pasting.
 
+### Fixed
+
+- Guarded slash-command argument autocomplete against a completer rejecting (e.g. a credential fetch timing out); the menu now closes instead of surfacing an unhandled rejection.
+
 ### Removed
 
 - Removed the alt-screen right-click paste handler (`onRightClickPaste`, enabled on Windows only); right-click no longer pastes in fullscreen because the terminal forwards mouse events to the TUI.

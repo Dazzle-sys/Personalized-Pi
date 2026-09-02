@@ -355,7 +355,15 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 				return null;
 			}
 
-			const argumentSuggestions = await command.getArgumentCompletions(argumentText);
+			let argumentSuggestions: AutocompleteItem[] | null;
+			try {
+				argumentSuggestions = await command.getArgumentCompletions(argumentText);
+			} catch {
+				// A completer can reject (e.g. a credential fetch that times out). Treat it
+				// as no completions so the menu stays closed instead of leaking an unhandled
+				// rejection through the autocomplete fetch chain.
+				return null;
+			}
 			if (!Array.isArray(argumentSuggestions) || argumentSuggestions.length === 0) {
 				return null;
 			}
