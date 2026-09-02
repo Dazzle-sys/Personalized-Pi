@@ -74,6 +74,10 @@ export function executeRevert(cwd: string, snapshot: RevertSnapshot): { ok: true
 		// Restore the dirty tracked-file state captured at snapshot time.
 		// Patching-in is idempotent for our use: we already reset --hard to headCommit,
 		// so this re-applies just the index+working-tree changes that were stashed.
+		// Note: `stash apply` does NOT drop the stash, so repeated /revert calls for the
+		// same snapshot accumulate `git stash list` entries. Harmless: the same
+		// stashHash is re-applied idempotently, and keeping it lets a later re-revert
+		// still restore the snapshot state.
 		const apply = runGit(cwd, ["stash", "apply", "--index", snapshot.stashHash]);
 		if (apply.status !== 0) return { ok: false, error: apply.stderr.trim() || "git stash apply failed" };
 	}
