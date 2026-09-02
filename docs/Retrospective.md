@@ -28,3 +28,8 @@
 - **教训**：按 `using-git-worktrees` 默认把 worktree 建在 `pi/.worktrees/<branch>`（仓库内部）。完成后在主库跑 `npm run check`，biome 报「Found a nested root configuration, but there's already a root configuration」——它在遍历时把 worktree 里的 `biome.json` 当成了嵌套根配置，主库 check 直接失败。这是我在主库引入的回归（worktree 存在期间）。
 - **修复**：合并完移除 worktree（`git worktree remove .worktrees/<b>` + `git worktree prune` + `git branch -d <b>`）后，主库 `npm run check` 即恢复。worktree 移除会连带清掉 **gitignore 的生成产物**（如 `data/*.json`），但主库自身的这些产物不受影响。
 - **教训沉淀**：① 在仓库根内建 worktree 会影响主库的 biome/其它按目录发现配置的工具——要么放仓库外、要么完成后及时移除；② 移 worktree 前先确认分支已并入目标分支（`git branch --contains`）且 worktree 无未提交改动再删。
+
+### 6. vitest 批量跑多文件会因全局状态污染产生假失败；区分「环境预存」与「本任务引入」
+
+- **教训**：2026-09-02 UI 一致性执行，一次跑 `args.test.ts` + `resource-loader.test.ts` 报 4 个失败，单独跑 `args.test.ts` 却 81/81 全绿——是测试间共享的 `initTheme`/locale 全局状态互相污染，非我的改动。`session-selector-path-delete.test.ts` 报 `EPERM symlink`（Windows 无符号链接权限）、`package-command-paths.test.ts` 报「期待英文，实际中文」（本 fork 默认 zh-CN locale）——均为**预先存在的环境/语言失败**，与本次改动无关。
+- **沉淀**：① 批量跑 vitest 多文件若出失败，先**单文件复跑**排除全局状态污染；② 环境类失败（`EPERM`/`symlink`、i18n 语言不匹配）要 `git status` 或落盘日志确认归属，再如实上报，别把环境失败记到任务头上；③ 受影响模块的验证以「单文件跑 + `npm run check`」为准，不被无关文件的预存失败干扰。
