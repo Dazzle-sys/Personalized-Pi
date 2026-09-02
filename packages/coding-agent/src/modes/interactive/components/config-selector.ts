@@ -203,7 +203,9 @@ class ConfigSelectorHeader implements Component {
 	invalidate(): void {}
 
 	render(width: number): string[] {
-		const title = theme.bold(this.writeScope === "project" ? t("Project Local Resources") : t("Global Resources"));
+		const title = theme.bold(
+			theme.fg("accent", this.writeScope === "project" ? t("Project Local Resources") : t("Global Resources")),
+		);
 		const sep = theme.fg("muted", " · ");
 		const switchHint = this.projectModeAvailable ? keyHint("tui.input.tab", "switch mode") + sep : "";
 		const actionHint =
