@@ -130,7 +130,7 @@ class SessionSelectorHeader implements Component {
 
 	render(width: number): string[] {
 		const title = this.scope === "current" ? t("Resume Session (Current Folder)") : t("Resume Session (All)");
-		const leftText = theme.bold(title);
+		const leftText = theme.bold(theme.fg("accent", title));
 
 		const sortLabel =
 			this.sortMode === "threaded" ? t("Threaded") : this.sortMode === "recent" ? t("Recent") : t("Fuzzy");
@@ -484,7 +484,7 @@ class SessionList implements Component, Focusable {
 			}
 
 			// Cursor
-			const cursor = isSelected ? theme.fg("accent", "› ") : "  ";
+			const cursor = isSelected ? theme.fg("accent", "→ ") : "  ";
 
 			// Calculate available width for message
 			const prefixWidth = visibleWidth(prefix);
