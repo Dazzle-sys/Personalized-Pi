@@ -59,7 +59,7 @@
 		"toolDiffRemoved": "error",
 		"toolDiffContext": "muted",
 
-		"syntaxComment": "#5b6b8c",
+		"syntaxComment": "#7d8bb3",
 		"syntaxKeyword": "#bb9af7",
 		"syntaxFunction": "#7aa2f7",
 		"syntaxVariable": "#c0caf5",
@@ -70,7 +70,7 @@
 		"syntaxPunctuation": "#89ddff",
 
 		"thinkingOff": "borderMuted",
-		"thinkingMinimal": "#4a5568",
+		"thinkingMinimal": "#6b7a99",
 		"thinkingLow": "borderAccent",
 		"thinkingMedium": "accent",
 		"thinkingHigh": "#bb9af7",
