@@ -67,8 +67,11 @@ function createSymlinkedSessionPaths(): {
 	mkdirSync(sharedDir, { recursive: true });
 	const aliasASessions = join(aliasADir, "sessions");
 	const aliasBSessions = join(aliasBDir, "sessions");
-	symlinkSync(sharedDir, aliasASessions);
-	symlinkSync(sharedDir, aliasBSessions);
+	// Windows symbolic links need admin/Developer Mode; directory junctions do not, and both
+	// resolve to the same real path (which is what the selector dedups on).
+	const type = process.platform === "win32" ? "junction" : undefined;
+	symlinkSync(sharedDir, aliasASessions, type);
+	symlinkSync(sharedDir, aliasBSessions, type);
 
 	const parentRealPath = join(sharedDir, "parent.jsonl");
 	const childRealPath = join(sharedDir, "child.jsonl");
