@@ -1,7 +1,7 @@
 import type { Component } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 
-/** Full-width thin rule using borderMuted, used to separate message turns. */
+/** Full-width thin rule using borderAccent, used to separate message turns. */
 export class MessageDivider implements Component {
 	invalidate(): void {
 		// No cached state.

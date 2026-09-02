@@ -66,7 +66,7 @@ OpenAI 兼容端点 `https://api.b.ai/v1`，认证仅凭 auth.json 凭证（/log
 
 ### Command-code 提供商
 
-OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider`，认证用 `COMMANDCODE_API_KEY`（`packages/ai/src/providers/commandcode.ts`）。模型目录与 E2E 覆盖见 [Provider 配置](packages/coding-agent/docs/providers.md#command-code-fork-custom)。
+OpenAI/Anthropic 兼容端点 `https://api.commandcode.ai/provider/v1`，认证用 `COMMANDCODE_API_KEY`（`packages/ai/src/providers/commandcode.ts`）。模型目录与 E2E 覆盖见 [Provider 配置](packages/coding-agent/docs/providers.md#command-code-fork-custom)。
 
 ### Provider 配置向导
 

@@ -160,7 +160,7 @@ Store credentials in `~/.pi/agent/auth.json`:
 
 ### Command Code (fork custom)
 
-Command Code 是 OpenAI/Anthropic 兼容聚合端点 `https://api.commandcode.ai/provider`，认证用 `COMMANDCODE_API_KEY`。本复刻对其做了定制：
+Command Code 是 OpenAI/Anthropic 兼容聚合端点 `https://api.commandcode.ai/provider/v1`，认证用 `COMMANDCODE_API_KEY`。本复刻对其做了定制：
 
 - 模型目录经 `GET /provider/v1/models` 动态拉取（该端点公开），覆盖 GPT、Claude、DeepSeek、Kimi、Qwen、GLM、Gemini、Grok、MiMo 等家族；Claude 模型走 Anthropic Messages 端点，其余模型走 OpenAI Chat Completions 端点。
 - `COMMANDCODE_API_KEY` 存在且可连通时自动刷新目录；失败或未配置时回退到内置的少量基线模型（DeepSeek、GPT-5、Claude 各一），不阻塞启动。
