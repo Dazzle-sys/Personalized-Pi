@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getResolvedThemeColors } from "../src/modes/interactive/theme/theme.ts";
+import { contrastRatio } from "./theme-contrast.ts";
 
 describe("light theme palette (modern refined)", () => {
 	test("light theme resolves modern refined anchors", () => {
@@ -12,5 +13,10 @@ describe("light theme palette (modern refined)", () => {
 		expect(colors.userMessageBg).toBe("#eef2f7");
 		// Contrast guard: not the washed-out old value.
 		expect(colors.accent).not.toBe("#5a8080");
+	});
+
+	test("light thinkingMinimal is readable", () => {
+		const colors = getResolvedThemeColors("light");
+		expect(contrastRatio(colors.thinkingMinimal, "#ffffff")).toBeGreaterThanOrEqual(3.0);
 	});
 });
