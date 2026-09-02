@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "AMD Radeon Cloud real-call smoke evidence (sanitized)",
+  "description": "Records the observable result of one real streaming call made through pi's own adapter against the AMD Radeon Cloud free endpoint. The API key is a secret and is intentionally NOT stored here; the reproducible gated smoke lives in packages/ai/test/stream.test.ts (AMD block, triggered by AMD_RADEON_API_KEY).",
+  "provider": "amd-radeon",
+  "model": "Qwen3.8-Flash-Next",
+  "api": "openai-completions",
+  "baseUrl": "https://developer.amd.com.cn/radeon/api/v1",
+  "endpoint": "{baseUrl}/chat/completions",
+  "auth": { "kind": "api_key", "prefix": "rc-", "env": "AMD_RADEON_API_KEY" },
+  "observedResult": {
+    "stopReason": "stop",
+    "textBlockReturned": true,
+    "textLength": 9,
+    "thinkingBlocksReturned": true,
+    "usage": {
+      "input": 54,
+      "output": 35,
+      "reasoning": 31,
+      "totalTokens": 89
+    }
+  },
+  "notes": [
+    "Ran through pi's openai-completions adapter (compat.streamSimple -> builtinModels amd-radeon).",
+    "Reasoning is streamed by default as delta.reasoning (delta.content carries the final text); pi surfaces it as thinking blocks.",
+    "The endpoint does not support store / developer role / reasoning_effort, so compat sets those to false to avoid rejected requests."
+  ]
+}

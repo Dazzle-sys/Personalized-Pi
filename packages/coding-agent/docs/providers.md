@@ -104,8 +104,25 @@ pi
 | Xiaomi MiMo Token Plan (China) | `XIAOMI_TOKEN_PLAN_CN_API_KEY` | `xiaomi-token-plan-cn` |
 | Xiaomi MiMo Token Plan (Amsterdam) | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | `xiaomi-token-plan-ams` |
 | Xiaomi MiMo Token Plan (Singapore) | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | `xiaomi-token-plan-sgp` |
+| AMD Radeon Cloud | `AMD_RADEON_API_KEY` | `amd-radeon` |
 
 Reference for environment variables and `auth.json` keys: [`const envMap`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts) in [`packages/ai/src/env-api-keys.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts).
+
+### AMD Radeon Cloud (fork custom)
+
+AMD Radeon Cloud 的 [Token Factory](https://developer.amd.com.cn/radeon/tokenfactory) 在 Public Free Model APIs 下免费开放 5 个共享模型（Qwen3.8-Flash-Next、DeepSeek-V4-Flash、DeepSeek-V4-Flash-Vision-Exp、MiniCPM5-1B、MiniCPM-V46），走 OpenAI 兼容端点
+`https://developer.amd.com.cn/radeon/api/v1`。API key 以 `rc-` 开头，在 Token Factory 登录后于模型详情或 Profile 页获取（账号需通过验证）。同一 key 适用于全部免费模型，仅 `model` 字段不同。Dedicated Model APIs 需付费 credits，本提供商不收录。
+
+```bash
+export AMD_RADEON_API_KEY=rc-...
+pi
+```
+
+同样可在交互界面的 `/login` 里选择 AMD Radeon Cloud 将 key 存入 `auth.json`（键为 `amd-radeon`）。
+
+#### 冒烟验证结果（真实调用）
+
+使用用户提供的 `rc-` key，经 pi 的真实适配器对 `Qwen3.8-Flash-Next`（免费文本模型）完成一次流式调用，可检视结果：`stopReason=stop`，返回非空文本块，`usage.totalTokens>0`（含 `reasoning_tokens`，模型默认流式输出 `delta.reasoning`，pi 解析为 thinking 块）。该 key 属机密，不存入仓库；带 key 的可复现冒烟由 `packages/ai/test/stream.test.ts` 的 AMD 门控 E2E 块承担（设置 `AMD_RADEON_API_KEY` 即触发）。
 
 ### B.AI (fork custom)
 

@@ -1349,6 +1349,37 @@ describe("Generate E2E Tests", () => {
 		});
 	});
 
+	describe.skipIf(!process.env.AMD_RADEON_API_KEY)(
+		"AMD Radeon Cloud Provider (Qwen3.8-Flash-Next via OpenAI Completions)",
+		() => {
+			const llm = getModel("amd-radeon", "Qwen3.8-Flash-Next");
+			const thinkingOptions = {
+				thinkingEnabled: true,
+				reasoningEffort: "high",
+			} satisfies StreamOptionsWithExtras;
+
+			it("should complete basic text generation", { retry: 3, timeout: 60000 }, async () => {
+				await basicTextGeneration(llm);
+			});
+
+			it("should handle tool calling", { retry: 3, timeout: 60000 }, async () => {
+				await handleToolCall(llm);
+			});
+
+			it("should handle streaming", { retry: 3, timeout: 60000 }, async () => {
+				await handleStreaming(llm);
+			});
+
+			it("should handle thinking mode", { retry: 3, timeout: 60000 }, async () => {
+				await handleThinking(llm, thinkingOptions);
+			});
+
+			it("should handle multi-turn with thinking and tools", { retry: 3, timeout: 60000 }, async () => {
+				await multiTurn(llm, thinkingOptions);
+			});
+		},
+	);
+
 	describe.skipIf(!process.env.ANT_LING_API_KEY)("Ant Ling Provider (Ling 2.6 Flash via OpenAI Completions)", () => {
 		const llm = getModel("ant-ling", "Ling-2.6-flash");
 

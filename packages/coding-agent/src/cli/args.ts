@@ -425,6 +425,7 @@ ${chalk.bold(t("Environment Variables:"))}
   CLOUDFLARE_GATEWAY_ID            - ${t("Cloudflare AI Gateway slug (required for AI Gateway)")}
   QWEN_TOKEN_PLAN_API_KEY          - ${t("Qwen Token Plan API key (international region)")}
   QWEN_TOKEN_PLAN_CN_API_KEY       - ${t("Qwen Token Plan API key (China region)")}
+  AMD_RADEON_API_KEY                - ${t("AMD Radeon Cloud API key")}
   XIAOMI_API_KEY                   - ${t("Xiaomi MiMo API key (api.xiaomimimo.com billing)")}
   XIAOMI_TOKEN_PLAN_CN_API_KEY     - ${t("Xiaomi MiMo Token Plan API key (China region)")}
   XIAOMI_TOKEN_PLAN_AMS_API_KEY    - ${t("Xiaomi MiMo Token Plan API key (Amsterdam region)")}

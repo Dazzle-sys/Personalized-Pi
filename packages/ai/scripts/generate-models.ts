@@ -2443,6 +2443,76 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 			}
 		}
 
+		// AMD Radeon Cloud Token Factory exposes exactly these five shared free models
+		// ("Public Free Model APIs") behind an OpenAI-compatible endpoint. The same API
+		// key works for all of them; only the `model` field changes. Dedicated Model
+		// APIs require paid credits and are intentionally omitted (free models only).
+		const AMD_RADEON_BASE_URL = "https://developer.amd.com.cn/radeon/api/v1";
+		const amdRadeonCompat: OpenAICompletionsCompat = {
+			supportsDeveloperRole: false,
+			supportsStore: false,
+			supportsReasoningEffort: false,
+			maxTokensField: "max_tokens",
+		};
+		const amdRadeonModels = [
+			{
+				id: "Qwen3.8-Flash-Next",
+				reasoning: true,
+				input: ["text"] as const,
+				contextWindow: 262144,
+				maxTokens: 32768,
+			},
+			{
+				id: "DeepSeek-V4-Flash",
+				reasoning: true,
+				input: ["text"] as const,
+				contextWindow: 1048576,
+				maxTokens: 65536,
+			},
+			{
+				id: "DeepSeek-V4-Flash-Vision-Exp",
+				reasoning: true,
+				input: ["text", "image"] as const,
+				contextWindow: 1048576,
+				maxTokens: 65536,
+			},
+			{
+				id: "MiniCPM5-1B",
+				reasoning: true,
+				input: ["text"] as const,
+				contextWindow: 131072,
+				maxTokens: 32768,
+			},
+			{
+				id: "MiniCPM-V46",
+				reasoning: false,
+				input: ["text", "image"] as const,
+				contextWindow: 262144,
+				maxTokens: 32768,
+			},
+		] as const;
+
+		for (const amdModel of amdRadeonModels) {
+			models.push({
+				id: amdModel.id,
+				name: amdModel.id,
+				api: "openai-completions",
+				provider: "amd-radeon",
+				baseUrl: AMD_RADEON_BASE_URL,
+				compat: amdRadeonCompat,
+				reasoning: amdModel.reasoning,
+				input: [...amdModel.input],
+				cost: {
+					input: 0,
+					output: 0,
+					cacheRead: 0,
+					cacheWrite: 0,
+				},
+				contextWindow: amdModel.contextWindow,
+				maxTokens: amdModel.maxTokens,
+			});
+		}
+
 		console.log(`Loaded ${models.length} tool-capable models from models.dev`);
 		return models;
 	} catch (error) {

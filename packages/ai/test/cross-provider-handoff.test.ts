@@ -82,6 +82,8 @@ const PROVIDER_MODEL_PAIRS: ProviderModelPair[] = [
 	{ provider: "xai", model: "grok-4.3", label: "xai-grok-4.3" },
 	// Cerebras
 	{ provider: "cerebras", model: "zai-glm-4.7", label: "cerebras-zai-glm-4.7" },
+	// AMD Radeon Cloud
+	{ provider: "amd-radeon", model: "Qwen3.8-Flash-Next", label: "amd-radeon-qwen3.8-flash-next" },
 	// Cloudflare Workers AI
 	{ provider: "cloudflare-workers-ai", model: "@cf/moonshotai/kimi-k2.6", label: "cloudflare-kimi-k2.6" },
 	// Cloudflare AI Gateway

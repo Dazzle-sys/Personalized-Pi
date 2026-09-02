@@ -1,4 +1,4 @@
-# Pi 复刻 经验教训
+# Pi 复刻 Retrospective
 
 ### 1. 遗漏提交导致 clone 失败与信任损耗：AGENTS.md 与 README 仓库地址必须原子提交
 

@@ -89,6 +89,7 @@ Unified LLM API with provider collections, automatic auth resolution, token and 
 - **Kimi For Coding** (Moonshot AI subscription endpoint, uses Anthropic-compatible API)
 - **Qwen Token Plan** (separate Individual and existing catalogs, with a separate China provider)
 - **Xiaomi MiMo** (defaults to API billing endpoint, with separate Token Plan providers for `cn`/`ams`/`sgp` regions)
+- **AMD Radeon Cloud** (free shared models from the [Radeon Cloud Token Factory](https://developer.amd.com.cn/radeon/tokenfactory), via `AMD_RADEON_API_KEY`)
 - **Any OpenAI-compatible API**: Ollama, vLLM, LM Studio, etc.
 
 ## Installation
@@ -450,6 +451,7 @@ Built-in providers resolve these env vars (Node.js; in browsers pass `apiKey` ex
 | Xiaomi MiMo Token Plan (China) | `XIAOMI_TOKEN_PLAN_CN_API_KEY` |
 | Xiaomi MiMo Token Plan (Amsterdam) | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` |
 | Xiaomi MiMo Token Plan (Singapore) | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` |
+| AMD Radeon Cloud | `AMD_RADEON_API_KEY` |
 | GitHub Copilot | `COPILOT_GITHUB_TOKEN` |
 
 `qwen-token-plan-individual` and `qwen-token-plan` share the international endpoint and

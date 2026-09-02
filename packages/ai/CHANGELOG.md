@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added the AMD Radeon Cloud provider, exposing the five free shared models from the [Radeon Cloud Token Factory](https://developer.amd.com.cn/radeon/tokenfactory) (Qwen3.8-Flash-Next, DeepSeek-V4-Flash, DeepSeek-V4-Flash-Vision-Exp, MiniCPM5-1B, MiniCPM-V46) behind the OpenAI-compatible endpoint `https://developer.amd.com.cn/radeon/api/v1` (`AMD_RADEON_API_KEY`).
+
 - Added the Command Code provider, an OpenAI- and Anthropic-compatible aggregator upstream of GPT, Claude, DeepSeek, Kimi, Qwen, GLM, Gemini, and other models via `https://api.commandcode.ai/provider` (`COMMANDCODE_API_KEY`).
 
 - Added the B.AI provider, an OpenAI-compatible aggregator exposing upstream GPT, Claude, Gemini, DeepSeek, and other models via `https://api.b.ai/v1` (`BAI_API_KEY`).

@@ -4,9 +4,9 @@
   </a>
 </p>
 
-# Pi Agent Harness
+# Pi
 
-> 本仓库是 [Pi Agent Harness](https://github.com/earendil-works/pi) 的**本地复刻**
+> 本仓库是 [Pi](https://github.com/earendil-works/pi) 的**本地复刻**
 >
 > **注意**：这是一份本地复刻源码，**并未**以 `@earendil-works/*` 发布到 npm。请从源码运行（见 [快速开始](#快速开始)），不要 `npm install -g`（那会装上官方包）。
 
