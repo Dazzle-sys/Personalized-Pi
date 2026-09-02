@@ -112,6 +112,12 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 - **底栏统计分隔符**：`formatStatsParts`（`packages/coding-agent/src/modes/interactive/components/footer.ts`）以弱分隔符 ` • ` 连接 token/成本/上下文用量。
 - **loader 节奏**：spinner 默认间隔 80ms → 90ms，`DEFAULT_SPINNER_FRAMES` / `DEFAULT_SPINNER_INTERVAL_MS` 导出供默认与测试复用。
 
+### 顶层面板视觉统一（ui-consistency）
+
+- **面板标题**：顶层选择面板标题统一 `theme.bold(theme.fg("accent", ...))`（此前 `session`/`user-message`/`tree`/`config` 仅加粗、`model` 无标题）。
+- **选中光标**：简单列表选中光标统一 `→ `（`SelectList` 值列表一致）；树形 `tree-selector` 保留 `› ` 以配合 `│ └ ├` 连接符。
+- **对比度提升**：`dark.syntaxComment` `#5b6b8c`→`#7d8bb3`（3.2→5.3）、`dark.thinkingMinimal` `#4a5568`→`#6b7a99`（2.4→4.1）、`light.thinkingMinimal` `#b0b8c0`→`#828c9c`（2.0→3.4）；新增 WCAG 对比度守卫测试（`test/theme-contrast.ts`）防回归。
+
 ### 其余内部加固
 
 - **安装时自动生成模型数据**：根 `prepare` 钩子在 `husky && npm run hydrate:model-data` 中离线生成 `packages/ai/src/providers/data/*.json`（gitignore 产物，仅补数据、不改已提交的 `models.generated.ts`/`.models.ts`），避免新克隆/新 worktree 因缺数据导致 `npm run check` 报错。注意：`npm install --ignore-scripts` / `npm ci --ignore-scripts` 会**跳过** prepare，需改用 `npm install` 或手动 `npm run hydrate:model-data`；联网的 `generate-image-models` 不含在内。
