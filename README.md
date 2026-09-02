@@ -122,6 +122,7 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 
 - **安装时自动生成模型数据**：根 `prepare` 钩子在 `husky && npm run hydrate:model-data` 中离线生成 `packages/ai/src/providers/data/*.json`（gitignore 产物，仅补数据、不改已提交的 `models.generated.ts`/`.models.ts`），避免新克隆/新 worktree 因缺数据导致 `npm run check` 报错。注意：`npm install --ignore-scripts` / `npm ci --ignore-scripts` 会**跳过** prepare，需改用 `npm install` 或手动 `npm run hydrate:model-data`；联网的 `generate-image-models` 不含在内。
 - **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。
+- **配置资源路径跨平台归一化**：config-selector 生成的资源 pattern（如 extensions/skills/prompts/themes 的 `-`/`+`/`!` 前缀路径）统一用正斜杠 `/`（复用 `package-manager.toPosixPath`），避免 Windows 上 `path.relative` 产出反斜杠 `\` 导致 settings.json 不可移植（Linux 上正常）。
 
 ## 维护与同步上游
 

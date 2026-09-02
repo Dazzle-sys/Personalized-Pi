@@ -33,3 +33,11 @@
 
 - **教训**：2026-09-02 UI 一致性执行，一次跑 `args.test.ts` + `resource-loader.test.ts` 报 4 个失败，单独跑 `args.test.ts` 却 81/81 全绿——是测试间共享的 `initTheme`/locale 全局状态互相污染，非我的改动。`session-selector-path-delete.test.ts` 报 `EPERM symlink`（Windows 无符号链接权限）、`package-command-paths.test.ts` 报「期待英文，实际中文」（本 fork 默认 zh-CN locale）——均为**预先存在的环境/语言失败**，与本次改动无关。
 - **沉淀**：① 批量跑 vitest 多文件若出失败，先**单文件复跑**排除全局状态污染；② 环境类失败（`EPERM`/`symlink`、i18n 语言不匹配）要 `git status` 或落盘日志确认归属，再如实上报，别把环境失败记到任务头上；③ 受影响模块的验证以「单文件跑 + `npm run check`」为准，不被无关文件的预存失败干扰。
+
+### 7. Windows 跨平台测试/路径三坑：junction、path.sep、locale 固定
+
+- **教训**：2026-09-02 处理预存测试失败，三个坑都源于 Windows 与 CI（Linux/en）差异。
+  - `symlinkSync` 在 Windows 需管理员/开发者模式，`EPERM`；目录别名改用**junction**（`process.platform === "win32" ? "junction" : undefined`）免权限，realpath 解析一致，测试通过。
+  - `path.relative` 在 Windows 产出**反斜杠**；config-selector 资源 pattern 直接存进 settings，导致 `\` 不可移植。修复：复用 `package-manager.toPosixPath`（`.split(sep).join("/")`）归一化为 `/`（package-manager 早已用此约定，config-selector 未跟进）。
+  - 断言英文串的 CLI 测试在 zh locale 机器失败（`main()` 每次 `applyLocaleSetting()` 从环境解析）；修复：测试 `beforeEach` 里 `vi.stubEnv("PI_LOCALE", "en")` + `setLocale("en")`（`main()` 仅 print/json 才强制 en，故需同时改环境）让断言确定性复现。
+- **沉淀**：① Windows 上目录 symlink 用 junction 免提权；② 任何写入 settings/跨平台格式的 `path.relative` 输出应过 `toPosixPath`；③ 断言英文的 CLI/自更新测试须固定 locale（环境变量 + setLocale 双保险），避免被机器 `LANG`/`LC_ALL` 影响。
