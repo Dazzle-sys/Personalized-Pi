@@ -116,16 +116,23 @@ describe("ToolExecutionComponent parity", () => {
 			process.cwd(),
 		);
 
+		const assertBarColor = (expected: "accent" | "success" | "error"): void => {
+			const raw = component.render(120).join("\n");
+			expect(raw).toContain(theme.fg(expected, "▌ "));
+			// State is conveyed by the status bar color; the title carries no glyph marker.
+			expect(stripAnsi(raw)).not.toMatch(/[●✓✗]/);
+		};
+
 		// Pending while the tool call is in flight.
-		expect(stripAnsi(component.render(120).join("\n"))).toContain("●");
+		assertBarColor("accent");
 
 		// Success once a non-error result arrives.
 		component.updateResult({ content: [{ type: "text", text: "ok" }], details: {}, isError: false }, false);
-		expect(stripAnsi(component.render(120).join("\n"))).toContain("✓");
+		assertBarColor("success");
 
 		// Error state.
 		component.updateResult({ content: [{ type: "text", text: "boom" }], details: {}, isError: true }, false);
-		expect(stripAnsi(component.render(120).join("\n"))).toContain("✗");
+		assertBarColor("error");
 	});
 
 	test("uses built-in rendering for built-in overrides without custom renderers", () => {
@@ -244,7 +251,6 @@ describe("ToolExecutionComponent parity", () => {
 		// bottom padding gutter. A 4th blank row means the redundant leading Spacer crept
 		// back in and wasted vertical space.
 		expect(lines).toHaveLength(3);
-		expect(lines[1]).toContain("✓");
 		expect(lines[1]).toContain("$ git status");
 		expect(lines[0].trim()).toBe("▌");
 		expect(lines[2].trim()).toBe("▌");

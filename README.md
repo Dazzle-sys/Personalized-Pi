@@ -126,7 +126,7 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 - **Bedrock 类型硬化**：`bedrock-converse-stream.ts` 将 tool-use 的 `arguments` 收窄为 `unknown` 并 cast 为 `DocumentType`，消除非法类型安全告警。
 - **配置资源路径跨平台归一化**：config-selector 生成的资源 pattern（如 extensions/skills/prompts/themes 的 `-`/`+`/`!` 前缀路径）统一用正斜杠 `/`（复用 `package-manager.toPosixPath`），避免 Windows 上 `path.relative` 产出反斜杠 `\` 导致 settings.json 不可移植（Linux 上正常）。
 - **主屏渲染不破坏 scrollback**：`TuiMainScreen` 对视口上方（scrollback 内）行的修改不再用 `ESC[3J` 全清重放，而是仅更新缓冲模型并绘制可见区；仅在内容收缩到视口底部之上时才 full redraw 重新锚定。详见各包 CHANGELOG。
-- **Tool 框去冗余顶部空格**：`ToolExecutionComponent` 不再在 `Box(1,1)` 自带 padding 之外再加一个 `Spacer(1)`，消除了折叠 tool 框顶部双倍留白、连续 tool 调用之间 4 行空缝的问题；每个 tool 框上下各留 1 行 padding。
+- **Tool 框样式统一（▌ 左条 + 默认背景 + 无状态符号）**：删掉 tool 标题上的 ●/✓/✗ 状态符号（状态只由左侧 `▌` 条颜色表达：蓝=进行中、绿=成功、红=错误）；`edit` tool 框（自渲染 `self` shell）也改用 `▌` 左条 + 终端默认背景，去掉之前的不透明 `toolSuccessBg`/`toolErrorBg`/`toolPendingBg` 填充，使所有 tool 框外观一致。
 
 ## 维护与同步上游
 

@@ -30,6 +30,7 @@
 ### Fixed
 
 - Tool execution boxes no longer add a redundant leading spacer on top of the content box's own padding, which doubled the top padding and left a 4-row blank seam between consecutive tool calls; collapsed tool boxes now take exactly one padded row above and one below the title.
+- Removed the redundant state glyph (●/✓/✗) from tool call titles: execution state is now conveyed solely by the color of the left status bar (accent pending, green success, red error). The `edit` tool box, which used a `self` render shell, now also draws the same `▌` status bar on a terminal-default background instead of a fixed opaque `toolSuccessBg`/`toolErrorBg`/`toolPendingBg` fill, so all tool boxes share one consistent look.
 - Model-facing error strings (shell configuration, extension blocking) are no longer localized; tool results sent to the model stay in English.
 - Print and JSON mode output is no longer localized and stays in English for scriptable consumption.
 - Switching the language in `/settings` now rebuilds the chat view so already rendered messages update instead of leaving mixed-language remnants.

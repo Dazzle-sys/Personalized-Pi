@@ -151,12 +151,9 @@ export class ToolExecutionComponent extends Container {
 		};
 	}
 
+	/** State is conveyed by the status bar color (see getStatusBar); no redundant glyph on the title. */
 	private getStateMarker(): string {
-		return this.isPartial
-			? `${theme.fg("accent", "●")} `
-			: this.result?.isError
-				? `${theme.fg("error", "✗")} `
-				: `${theme.fg("success", "✓")} `;
+		return "";
 	}
 
 	/** Status color for the left bar, mirroring the state marker colors. */
@@ -289,15 +286,16 @@ export class ToolExecutionComponent extends Container {
 		}
 
 		if (this.hasRendererDefinition() && this.getRenderShell() === "self") {
-			const contentLines = this.selfRenderContainer.render(width);
+			const contentLines = this.selfRenderContainer.render(Math.max(1, width - TOOL_BAR_WIDTH));
 			if (contentLines.length === 0 && this.imageComponents.length === 0) {
 				return [];
 			}
 
 			const lines: string[] = [];
 			if (contentLines.length > 0) {
-				lines.push("");
-				lines.push(...contentLines);
+				// self-rendered content (e.g. the edit box) already carries its own Box padding, so
+				// prefix each line with the status bar without adding an extra leading row.
+				lines.push(...contentLines.map((line) => (this.isImageLine(line) ? line : this.getStatusBar() + line)));
 			}
 			for (let i = 0; i < this.imageComponents.length; i++) {
 				const spacer = this.imageSpacers[i];

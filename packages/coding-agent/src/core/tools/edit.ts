@@ -261,34 +261,18 @@ function formatEditResult(
 	return undefined;
 }
 
-function getEditHeaderBg(
-	preview: EditPreview | undefined,
-	settledError: boolean | undefined,
-	theme: Theme,
-): (text: string) => string {
-	if (preview) {
-		if ("error" in preview) {
-			return (text: string) => theme.bg("toolErrorBg", text);
-		}
-		return (text: string) => theme.bg("toolSuccessBg", text);
-	}
-	if (settledError) {
-		return (text: string) => theme.bg("toolErrorBg", text);
-	}
-	return (text: string) => theme.bg("toolPendingBg", text);
-}
-
 function buildEditCallComponent(
 	component: EditCallRenderComponent,
 	args: RenderableEditArgs | undefined,
 	theme: Theme,
 	cwd: string,
-	stateMarker: string,
 	displayMode?: string,
 ): EditCallRenderComponent {
-	component.setBgFn(getEditHeaderBg(component.preview, component.settledError, theme));
+	// State is conveyed by the tool box's status bar color (in ToolExecutionComponent), so the
+	// edit call header keeps the terminal default background (identity bg) and no glyph marker.
+	component.setBgFn((text: string) => text);
 	component.clear();
-	component.addChild(new Text(`${stateMarker}${formatEditCall(args, theme, cwd)}`, 0, 0));
+	component.addChild(new Text(formatEditCall(args, theme, cwd), 0, 0));
 
 	if (!component.preview) {
 		return component;
@@ -421,18 +405,7 @@ export function createEditToolDefinition(
 				});
 			}
 
-			return buildEditCallComponent(
-				component,
-				args,
-				theme,
-				context.cwd,
-				context.isPartial
-					? `${theme.fg("accent", "●")} `
-					: context.isError
-						? `${theme.fg("error", "✗")} `
-						: `${theme.fg("success", "✓")} `,
-				context.displayMode,
-			);
+			return buildEditCallComponent(component, args, theme, context.cwd, context.displayMode);
 		},
 		renderResult(result, _options, theme, context) {
 			const callComponent = context.state.callComponent;
@@ -462,11 +435,6 @@ export function createEditToolDefinition(
 						context.args as RenderableEditArgs | undefined,
 						theme,
 						context.cwd,
-						context.isPartial
-							? `${theme.fg("accent", "●")} `
-							: context.isError
-								? `${theme.fg("error", "✗")} `
-								: `${theme.fg("success", "✓")} `,
 						context.displayMode,
 					);
 				}
