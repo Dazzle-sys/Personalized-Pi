@@ -201,6 +201,13 @@ export const zhCN: Translations = {
 	"Reload keybindings, extensions, skills, prompts, themes, and context files":
 		"重新加载键位、扩展、技能、提示词、主题与上下文文件",
 	"Quit {app}": "退出 {app}",
+	// slash-command category group labels（分类源为中文，恒等映射以满足 i18n 覆盖校验）
+	信息: "信息",
+	模型: "模型",
+	会话: "会话",
+	传输: "传输",
+	账号: "账号",
+	其他: "其他",
 
 	// core/trust-manager.ts
 	Trust: "信任",

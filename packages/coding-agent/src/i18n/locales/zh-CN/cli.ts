@@ -114,6 +114,7 @@ export const zhCN: Translations = {
 	"Cerebras API key": "Cerebras API 密钥",
 	"B.AI API key": "B.AI API 密钥",
 	"Command Code API key": "Command Code API 密钥",
+	"AMD Radeon Cloud API key": "AMD Radeon Cloud API 密钥",
 	"xAI Grok API key": "xAI Grok API 密钥",
 	"Fireworks API key": "Fireworks API 密钥",
 	"Together AI API key": "Together AI API 密钥",
