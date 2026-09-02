@@ -427,10 +427,10 @@ export function createEditToolDefinition(
 				theme,
 				context.cwd,
 				context.isPartial
-					? theme.fg("accent", "●") + " "
+					? `${theme.fg("accent", "●")} `
 					: context.isError
-						? theme.fg("error", "✗") + " "
-						: theme.fg("success", "✓") + " ",
+						? `${theme.fg("error", "✗")} `
+						: `${theme.fg("success", "✓")} `,
 				context.displayMode,
 			);
 		},
@@ -463,10 +463,10 @@ export function createEditToolDefinition(
 						theme,
 						context.cwd,
 						context.isPartial
-							? theme.fg("accent", "●") + " "
+							? `${theme.fg("accent", "●")} `
 							: context.isError
-								? theme.fg("error", "✗") + " "
-								: theme.fg("success", "✓") + " ",
+								? `${theme.fg("error", "✗")} `
+								: `${theme.fg("success", "✓")} `,
 						context.displayMode,
 					);
 				}
