@@ -114,9 +114,11 @@ agent 层请求重试默认值从上游的 `maxRetries: 3` / `baseDelayMs: 2000`
 
 ### 顶层面板视觉统一（ui-consistency）
 
-- **面板标题**：顶层选择面板标题统一 `theme.bold(theme.fg("accent", ...))`（此前 `session`/`user-message`/`tree`/`config` 仅加粗、`model` 无标题）。
+- **面板标题**：顶层选择面板标题统一 `theme.bold(theme.fg("accent", ...))`（此前 `session`/`user-message`/`tree`/`config` 仅加粗、`model` 无标题，现 `model` 已补标题）。
 - **选中光标**：简单列表选中光标统一 `→ `（`SelectList` 值列表一致）；树形 `tree-selector` 保留 `› ` 以配合 `│ └ ├` 连接符。
-- **对比度提升**：`dark.syntaxComment` `#5b6b8c`→`#7d8bb3`（3.2→5.3）、`dark.thinkingMinimal` `#4a5568`→`#6b7a99`（2.4→4.1）、`light.thinkingMinimal` `#b0b8c0`→`#828c9c`（2.0→3.4）；新增 WCAG 对比度守卫测试（`test/theme-contrast.ts`）防回归。
+- **对比度提升**：`dark.syntaxComment` `#5b6b8c`→`#7d8bb3`（3.2→5.3）、`dark.thinkingMinimal` `#4a5568`→`#6b7a99`（2.4→4.1）、`light.thinkingMinimal` `#b0b8c0`→`#828c9c`（2.0→3.4）、`dim` 暗色 `#5c6673`→`#6b7480`（3.0→3.75）/亮色 `#8b949e`→`#7d8794`（2.9→3.6）；新增 WCAG 对比度守卫测试（`test/theme-contrast.ts`）防回归。
+- **消息分隔线**：`MessageDivider` 由 `borderMuted` 改为 `borderAccent`，消息转向分隔更醒目。
+- **快捷键键名**：`keyHint`/`rawKeyHint` 的键名由 `dim` 改 `accent`，帮助文本中键位更易扫读（描述仍 `muted`）。
 
 ### 其余内部加固
 

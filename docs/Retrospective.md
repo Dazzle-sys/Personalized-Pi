@@ -41,3 +41,8 @@
   - `path.relative` 在 Windows 产出**反斜杠**；config-selector 资源 pattern 直接存进 settings，导致 `\` 不可移植。修复：复用 `package-manager.toPosixPath`（`.split(sep).join("/")`）归一化为 `/`（package-manager 早已用此约定，config-selector 未跟进）。
   - 断言英文串的 CLI 测试在 zh locale 机器失败（`main()` 每次 `applyLocaleSetting()` 从环境解析）；修复：测试 `beforeEach` 里 `vi.stubEnv("PI_LOCALE", "en")` + `setLocale("en")`（`main()` 仅 print/json 才强制 en，故需同时改环境）让断言确定性复现。
 - **沉淀**：① Windows 上目录 symlink 用 junction 免提权；② 任何写入 settings/跨平台格式的 `path.relative` 输出应过 `toPosixPath`；③ 断言英文的 CLI/自更新测试须固定 locale（环境变量 + setLocale 双保险），避免被机器 `LANG`/`LC_ALL` 影响。
+
+### 8. 改 `t()` key 必须同步 zh-CN 词典；`i18n-coverage` 是 npm run check 不覆盖的漏网
+
+- **教训**：2026-09-02 把 tree-selector 标题由 `t("  Session Tree")`（带前导空格）改成 `t("Session Tree")`，但 zh-CN 词典只保留旧的带空格 key。`i18n-coverage.test.ts` 立即报缺 `"Session Tree"`。此 bug 在提交时未被发现，因为 **pre-commit 的 `npm run check` 只跑 biome/tsgo/依赖检查，不跑 vitest**；`i18n-coverage` 必须单独 `node .../vitest --run .../i18n-coverage.test.ts` 才触发。
+- **沉淀**：① 任何改动 `t()` 字面 key（含去/加前导空格、改文案）必须同步更新 zh-CN 词典（五个词典文件之一），否则 `i18n-coverage` 挂；② `npm run check` ≠ 全部测试通过，改动涉 i18n 时显式补跑 `i18n-coverage.test.ts`；③ 删除带前导空格的旧 key 时先 `grep` 确认无其它调用，避免留死 key。
