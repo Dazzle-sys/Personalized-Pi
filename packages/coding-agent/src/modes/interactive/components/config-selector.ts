@@ -18,6 +18,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { CONFIG_DIR_NAME } from "../../../config.ts";
 import type { PathMetadata, ResolvedPaths, ResolvedResource } from "../../../core/package-manager.ts";
+import { toPosixPath } from "../../../core/package-manager.ts";
 import type { PackageSource, SettingsManager } from "../../../core/settings-manager.ts";
 import { canonicalizePath, isLocalPath, resolvePath } from "../../../utils/paths.ts";
 import { theme } from "../theme/theme.ts";
@@ -802,7 +803,7 @@ class ResourceList implements Component, Focusable {
 		const sourceScope = this.getItemScope(item);
 		if (scope !== sourceScope) return item.path;
 		const baseDir = item.metadata.baseDir ?? this.getTopLevelBaseDir(sourceScope);
-		return relative(baseDir, item.path);
+		return toPosixPath(relative(baseDir, item.path));
 	}
 
 	private createPackageOverrideSource(item: ResourceItem): PackageSource {
@@ -859,12 +860,12 @@ class ResourceList implements Component, Focusable {
 	private getResourcePattern(item: ResourceItem): string {
 		const scope = item.metadata.scope as "user" | "project";
 		const baseDir = item.metadata.baseDir ?? this.getTopLevelBaseDir(scope);
-		return relative(baseDir, item.path);
+		return toPosixPath(relative(baseDir, item.path));
 	}
 
 	private getPackageResourcePattern(item: ResourceItem): string {
 		const baseDir = item.metadata.baseDir ?? dirname(item.path);
-		return relative(baseDir, item.path);
+		return toPosixPath(relative(baseDir, item.path));
 	}
 }
 

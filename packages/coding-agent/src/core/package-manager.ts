@@ -215,7 +215,7 @@ const IGNORE_FILE_NAMES = [".gitignore", ".ignore", ".fdignore"];
 
 type IgnoreMatcher = ReturnType<typeof ignore>;
 
-function toPosixPath(p: string): string {
+export function toPosixPath(p: string): string {
 	return p.split(sep).join("/");
 }
 
