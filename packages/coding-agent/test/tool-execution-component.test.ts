@@ -223,6 +223,33 @@ describe("ToolExecutionComponent parity", () => {
 		expect(rendered).not.toContain("[Showing lines 2001-4000 of 4000. Full output:");
 	});
 
+	test("collapsed bash box keeps exactly one line of padding above and below", () => {
+		const operations: BashOperations = {
+			exec: async () => ({ exitCode: 0 }),
+		};
+		const tool = createBashToolDefinition(process.cwd(), { operations, exposeSessionEnvironment: false });
+		const component = new ToolExecutionComponent(
+			"bash",
+			"tool-pad-1",
+			{ command: "git status" },
+			{},
+			tool,
+			createFakeTui(),
+			process.cwd(),
+		);
+		component.updateResult({ content: [{ type: "text", text: "ok" }], details: {}, isError: false }, false);
+
+		const lines = stripAnsi(component.render(120).join("\n")).split("\n");
+		// A collapsed default-shell box is exactly 3 rows: top padding gutter, call title,
+		// bottom padding gutter. A 4th blank row means the redundant leading Spacer crept
+		// back in and wasted vertical space.
+		expect(lines).toHaveLength(3);
+		expect(lines[1]).toContain("✓");
+		expect(lines[1]).toContain("$ git status");
+		expect(lines[0].trim()).toBe("▌");
+		expect(lines[2].trim()).toBe("▌");
+	});
+
 	test("does not duplicate built-in headers when passed the active built-in definition", () => {
 		const component = new ToolExecutionComponent(
 			"read",

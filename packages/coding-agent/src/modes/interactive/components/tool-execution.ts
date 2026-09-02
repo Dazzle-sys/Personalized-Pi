@@ -78,9 +78,9 @@ export class ToolExecutionComponent extends Container {
 		this.ui = ui;
 		this.cwd = cwd;
 
-		this.addChild(new Spacer(1));
-
 		// Always create all shell variants. contentBox is used for default renderer-based composition.
+		// No leading Spacer here: contentBox (Box(1,1)) already provides one line of padding above and
+		// below the content, so an extra Spacer doubled the top padding and wasted vertical space.
 		// selfRenderContainer is used when the tool renders its own framing.
 		// contentText is reserved for generic fallback rendering when no tool definition exists.
 		this.contentBox = new Box(1, 1);
