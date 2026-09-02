@@ -300,7 +300,7 @@ export const zhCN: Translations = {
 	filters: "过滤",
 	cycle: "循环",
 	"Label (empty to remove):": "标签（留空移除）：",
-	"  Session Tree": "  会话树",
+	"Session Tree": "会话树",
 
 	// trust-selector.ts
 	trusted: "受信任",
