@@ -79,7 +79,7 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 		// Add top border
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(t("Thinking Level"), 0, 0));
+		this.addChild(new Text(theme.bold(theme.fg("accent", t("Thinking Level"))), 0, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(
 			new Text(t("{keys} cycles thinking levels in-session", { keys: keyDisplayText("app.thinking.cycle") }), 0, 0),

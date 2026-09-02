@@ -21,6 +21,7 @@
 - Tool execution blocks render a left status bar (a thick `▌` colored by execution state: accent while pending, green on success, red on error) instead of a filled background, keeping tool calls compact and consistent with the state marker.
 - User and custom/system messages also use a `LeftBarBox` with a colored left bar instead of a filled background: accent for user messages, the custom-message label color for system/compaction/branch/skill messages.
 - The interactive-mode footer now renders the working directory, usage stats, and model on a single line: workspace left-aligned, stats following, model right-aligned (previously the workspace and stats/model were on two lines).
+- Unified the look of top-level selection dialogs: the theme and show-images selectors now render a bold accent title and an `Enter to select · Esc to cancel` hint, and the current value is marked with a leading `✓` (matching the thinking/model selectors); the thinking-selector title now uses the accent color.
 
 ### Removed
 
@@ -36,6 +37,7 @@
 - Localized the theme selector "Automatic" option; the previous `t("  Automatic")` key included a leading space and did not match the zh-CN dictionary, falling back to English.
 - Fixed `/revert` so it no longer deletes untracked files that existed before the session started. Snapshot records the session-start untracked set and revert removes only files created during the session, preserving anything the user already had; the stash-restore path is now reliable (`stash apply` on a bare commit was rejected).
 - Replaced the busy-wait spin in `models-config-writer` lock retry with a blocking `Atomics.wait`, eliminating CPU churn while keeping the synchronous semantics.
+- Raised light-theme `success`/`warning`/`error` colors to meet WCAG AA (≥4.5:1): `success #1a7f37`, `warning #9a6700`, `error #cf222e`.
 
 ## [0.84.4] - 2026-08-28
 

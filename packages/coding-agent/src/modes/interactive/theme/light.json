@@ -9,9 +9,9 @@
 		"border": "#a8b6c9",
 		"borderAccent": "#6a9dd6",
 		"borderMuted": "#d4d9e0",
-		"success": "#2f9e44",
-		"error": "#d64550",
-		"warning": "#b0882e",
+		"success": "#1a7f37",
+		"error": "#cf222e",
+		"warning": "#9a6700",
 		"selectedBg": "#d9e2ee",
 		"userMsgBg": "#eef2f7",
 		"customMsgBg": "#efeaf7"

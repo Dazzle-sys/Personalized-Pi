@@ -229,6 +229,7 @@ export const zhCN: Translations = {
 	No: "否",
 	"Show images inline in terminal": "在终端中内联显示图片",
 	"Show text placeholder instead": "改为显示文本占位符",
+	"  Enter to select · Esc to cancel": "  Enter 选择 · Esc 取消",
 
 	// skill-invocation-message.ts
 	"[skill]": "[技能]",
@@ -241,9 +242,6 @@ export const zhCN: Translations = {
 	"Context overflow detected, ": "检测到上下文溢出，",
 	"Auto-compacting... ({keys} to cancel)": "自动压缩中…（{keys} 取消）",
 	"Summarizing branch... ({keys} to cancel)": "正在总结分支…（{keys} 取消）",
-
-	// theme-selector.ts
-	"(current)": "（当前）",
 
 	// thinking-selector.ts
 	"Thinking Level": "思考级别",
