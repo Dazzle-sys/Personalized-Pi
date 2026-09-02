@@ -102,6 +102,9 @@ export class ModelSelectorComponent extends Container implements Focusable {
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
 
+		// Title
+		this.addChild(new Text(theme.bold(theme.fg("accent", t("Select model"))), 0, 0));
+
 		// Add hint about model filtering
 		if (scopedModels.length > 0) {
 			this.scopeText = new Text(this.getScopeText(), 0, 0);

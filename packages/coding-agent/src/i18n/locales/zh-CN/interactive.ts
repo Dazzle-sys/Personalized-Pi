@@ -2,6 +2,7 @@ import type { Translations } from "@earendil-works/pi-tui";
 
 /** Simplified Chinese translations (keys are the English source strings). */
 export const zhCN: Translations = {
+	"Select model": "选择模型",
 	// 启动横幅与更新提示
 	"Anthropic subscription auth is active. Third-party harness usage draws from extra usage and is billed per token, not your Claude plan limits. Manage extra usage at https://claude.ai/settings/usage. Disable this warning in /settings.":
 		"Anthropic 订阅认证已生效。第三方框架用量将从额外用量中扣除并按 token 计费，不占用你的 Claude 套餐额度。可在 https://claude.ai/settings/usage 管理额外用量。可在 /settings 中关闭此警告。",

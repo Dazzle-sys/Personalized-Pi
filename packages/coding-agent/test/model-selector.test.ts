@@ -56,6 +56,21 @@ describe("model selector", () => {
 		selector.dispose();
 	});
 
+	it("renders a top title", async () => {
+		harness = await createHarness({ models: [{ id: "current-model", name: "Current Model", reasoning: true }] });
+		const selector = new ModelSelectorComponent(
+			createFakeTui(),
+			harness.getModel("current-model")!,
+			harness.session.modelRuntime,
+			[],
+			() => {},
+			() => {},
+		);
+		const rendered = stripAnsi(selector.render(120).join("\n"));
+		expect(rendered).toContain("Select model");
+		selector.dispose();
+	});
+
 	it("lists every catalog that failed to refresh", async () => {
 		harness = await createHarness();
 		vi.spyOn(harness.session.modelRuntime, "refresh").mockResolvedValue({
