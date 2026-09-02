@@ -19,4 +19,9 @@ describe("light theme palette (modern refined)", () => {
 		const colors = getResolvedThemeColors("light");
 		expect(contrastRatio(colors.thinkingMinimal, "#ffffff")).toBeGreaterThanOrEqual(3.0);
 	});
+
+	test("light dim text is readable", () => {
+		const colors = getResolvedThemeColors("light");
+		expect(contrastRatio(colors.dim, "#ffffff")).toBeGreaterThanOrEqual(3.5);
+	});
 });

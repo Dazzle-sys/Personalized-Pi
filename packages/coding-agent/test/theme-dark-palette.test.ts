@@ -26,4 +26,9 @@ describe("dark theme palette (modern refined)", () => {
 		// The faintest thinking tier must still be discernible (AA large text).
 		expect(contrastRatio(colors.thinkingMinimal, bg)).toBeGreaterThanOrEqual(3.0);
 	});
+
+	test("dark dim text is readable", () => {
+		const colors = getResolvedThemeColors("dark");
+		expect(contrastRatio(colors.dim, "#16181e")).toBeGreaterThanOrEqual(3.5);
+	});
 });
