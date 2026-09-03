@@ -433,6 +433,7 @@ export const zhCN: Translations = {
 
 	// modes/print-mode
 	"Extension error ({path}): {error}": "扩展错误（{path}）：{error}",
+	"No output. Run pi --help to see usage.": "无输出。运行 pi --help 查看用法。",
 	"Request aborted": "请求已中止",
 	"Request failed": "请求失败",
 

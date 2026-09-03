@@ -171,3 +171,8 @@ export async function runPrintMode(runtimeHost: AgentSessionRuntime, options: Pr
 		await flushRawStdout();
 	}
 }
+
+/** Empty-output hint for CLI text mode (translated via t()). */
+export function formatCliEmpty(): string {
+	return t("No output. Run pi --help to see usage.");
+}

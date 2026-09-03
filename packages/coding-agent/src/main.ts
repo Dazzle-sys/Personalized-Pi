@@ -664,13 +664,13 @@ async function runExperimentalCommand(args: string[]): Promise<boolean> {
 			runClient: runClientCommand,
 		});
 		if (!result.ok) {
-			for (const error of result.errors) console.error(chalk.red(`Error: ${error}`));
+			for (const error of result.errors) console.error(chalk.red(`${t("Error")}: ${error}`));
 			process.exitCode = 1;
 			return true;
 		}
 		return true;
 	} catch (error) {
-		console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+		console.error(chalk.red(`${t("Error")}: ${error instanceof Error ? error.message : String(error)}`));
 		process.exitCode = 1;
 		return true;
 	}

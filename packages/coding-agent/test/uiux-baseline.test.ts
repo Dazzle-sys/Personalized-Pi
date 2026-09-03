@@ -18,7 +18,8 @@ describe("uiux footer baseline", () => {
 	});
 });
 
-import { stripTerminalSequences, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { setLocale, stripTerminalSequences, t, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import "../src/i18n/index.ts";
 import { keyHint, rawKeyHint } from "../src/modes/interactive/components/keybinding-hints.ts";
 
 describe("uiux truncation", () => {
@@ -40,5 +41,21 @@ describe("uiux key hints", () => {
 	});
 	it("rawKeyHint 透传按键", () => {
 		expect(rawKeyHint("ctrl+c", "Cancel")).toContain("ctrl+c");
+	});
+});
+
+describe("uiux i18n", () => {
+	it("zh-CN 覆盖关键 key", () => {
+		setLocale("zh-CN");
+		try {
+			expect(t("Loading...")).toBe("加载中…");
+			expect(t("Copied!")).toBe("已复制！");
+		} finally {
+			setLocale("en");
+		}
+	});
+	it("CLI 空输出有可操作提示", async () => {
+		const { formatCliEmpty } = await import("../src/modes/print-mode.ts");
+		expect(formatCliEmpty()).toContain("pi");
 	});
 });
