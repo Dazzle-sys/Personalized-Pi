@@ -1,8 +1,14 @@
 import type { Component } from "../tui.ts";
 import { truncateToWidth, visibleWidth } from "../utils.ts";
 
+/** 单行截断函数入口，委托给全仓唯一的 truncateToWidth()。 */
+export function renderTruncated(line: string, width: number): string {
+	return truncateToWidth(line, width);
+}
+
 /**
- * Text component that truncates to fit viewport width
+ * Text component that truncates to fit viewport width.
+ * 全仓唯一截断入口为 truncateToWidth()，本组件只做调用不手写 slice 截断。
  */
 export class TruncatedText implements Component {
 	private text: string;

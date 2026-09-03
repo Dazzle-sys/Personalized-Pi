@@ -1041,6 +1041,8 @@ export function applyBackgroundToLine(line: string, width: number, bgFn: (text: 
 
 /**
  * Truncate text to fit within a maximum visible width, adding ellipsis if needed.
+ * 全仓唯一截断入口（Task 3/4 直接复用）：调用方禁止手写 `slice` 截断，
+ * 一律走本函数；宽字符/ANSI 按 visibleWidth() 口径计量。
  * Optionally pad with spaces to reach exactly maxWidth.
  * Properly handles ANSI escape codes (they don't count toward width).
  *
