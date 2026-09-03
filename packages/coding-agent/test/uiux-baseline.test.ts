@@ -19,6 +19,7 @@ describe("uiux footer baseline", () => {
 });
 
 import { stripTerminalSequences, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { keyHint, rawKeyHint } from "../src/modes/interactive/components/keybinding-hints.ts";
 
 describe("uiux truncation", () => {
 	it("中文截断不超宽", () => {
@@ -28,5 +29,16 @@ describe("uiux truncation", () => {
 	it("ASCII 截断精确", () => {
 		// 默认 ellipsis="..." 会补省略号；传 "" 测纯截断精度（同一入口，reset 码剥离后比对）
 		expect(stripTerminalSequences(truncateToWidth("hello world", 5, ""))).toBe("hello");
+	});
+});
+
+describe("uiux key hints", () => {
+	it("keyHint 走 accent+muted 且含描述", () => {
+		// 注：brief 示例用 "editor:confirm"，该 id 不存在；改用真实 id "tui.select.confirm"
+		const out = keyHint("tui.select.confirm", "Confirm");
+		expect(out).toContain("Confirm");
+	});
+	it("rawKeyHint 透传按键", () => {
+		expect(rawKeyHint("ctrl+c", "Cancel")).toContain("ctrl+c");
 	});
 });
