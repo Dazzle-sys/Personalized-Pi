@@ -4,7 +4,7 @@
 
 - 上游项目 'https://github.com/earendil-works/pi' 推送地址 'https://github.com/Dazzle-sys/Personalized-Pi'
 - 所有改动写入根目录的 'README.md' 文件中
-- 不影响 LLM 执行的情况下全量集成国际化 (I18N)
+- 不影响 LLM 模型执行的情况下全量集成国际化 I18N
 
 ## Conversational Style
 
