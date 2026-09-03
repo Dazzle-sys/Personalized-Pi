@@ -21,6 +21,10 @@
 
 - Removed the alt-screen right-click paste handler (`onRightClickPaste`, enabled on Windows only); right-click no longer pastes in fullscreen because the terminal forwards mouse events to the TUI.
 
+### Breaking Changes
+
+- Removed coding-agent environment-variable defaults from pi-tui. Applications must configure the hardware cursor and clear-on-shrink behavior through the renderer constructor and `setClearOnShrink()`. `PI_DEBUG_REDRAW` is now `PI_TUI_DEBUG_REDRAW`; debug and crash log filenames now use the `pi-tui-` prefix. When no log directory is supplied, redraw logging is disabled and crash dumps are written to the OS temp directory. ([#8699](https://github.com/earendil-works/pi/pull/8699) by [@geraschenko](https://github.com/geraschenko))
+
 ## [0.84.4] - 2026-08-28
 
 ### Added

@@ -145,6 +145,9 @@ export const zhCN: Translations = {
 	"Config directory (default: ~/{dir}/agent)": "配置目录（默认：~/{dir}/agent）",
 	"Session storage directory (overridden by --session-dir)": "会话存储目录（可被 --session-dir 覆盖）",
 	"Override package directory (for Nix/Guix store paths)": "覆盖包目录（用于 Nix/Guix store 路径）",
+	"Experimental server profile and socket directory (default: ~/.pi/server)":
+		"实验性服务端配置与 socket 目录（默认：~/.pi/server）",
+	"Logical experimental server ID (overridden by --server-id)": "逻辑实验性服务端 ID（可被 --server-id 覆盖）",
 	"Disable startup network operations when set to 1/true/yes": "设为 1/true/yes 时禁用启动时的网络操作",
 	"Override install telemetry when set to 1/true/yes or 0/false/no":
 		"设为 1/true/yes 或 0/false/no 时覆盖安装遥测设置",
@@ -221,6 +224,7 @@ export const zhCN: Translations = {
 	"Command {command} does not define a builder": "命令 {command} 未定义 builder",
 	"Command {command} failed without an error": "命令 {command} 失败且未返回错误",
 	"{option} requires a value": "{option} 需要一个值",
+	"{option} does not take a value": "{option} 不接受值",
 	"{option} may only be specified once": "{option} 只能指定一次",
 	// cli/experimental/transport-address.ts
 	'Unsupported {option} transport "{protocol}"': "不支持的 {option} 传输协议 “{protocol}”",

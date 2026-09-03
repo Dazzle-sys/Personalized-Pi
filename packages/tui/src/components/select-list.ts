@@ -1,6 +1,6 @@
 import { t } from "../i18n/i18n.ts";
 import { getKeybindings } from "../keybindings.ts";
-import type { Component } from "../tui.ts";
+import type { Component, TuiMouseEvent, TuiMouseEventResult } from "../tui.ts";
 import { truncateToWidth, visibleWidth } from "../utils.ts";
 
 const DEFAULT_PRIMARY_COLUMN_WIDTH = 32;
@@ -44,6 +44,7 @@ export class SelectList implements Component {
 	private items: SelectItem[] = [];
 	private filteredItems: SelectItem[] = [];
 	private selectedIndex: number = 0;
+	private mousePressedIndex: number | undefined;
 	private maxVisible: number = 5;
 	private theme: SelectListTheme;
 	private layout: SelectListLayoutOptions;
@@ -85,33 +86,8 @@ export class SelectList implements Component {
 
 		const primaryColumnWidth = this.getPrimaryColumnWidth();
 
-		// Choose the visible item window so items + their group-header lines fit within maxVisible.
-		const countWindowLines = (from: number, to: number): number => {
-			let lines = to - from;
-			let lastGroup = from > 0 ? this.filteredItems[from - 1]?.group : undefined;
-			for (let i = from; i < to; i++) {
-				const group = this.filteredItems[i]?.group;
-				if (group && group !== lastGroup) {
-					lines++;
-					lastGroup = group;
-				}
-			}
-			return lines;
-		};
-		let startIndex = this.selectedIndex;
-		let endIndex = this.selectedIndex + 1;
-		while (startIndex > 0 || endIndex < this.filteredItems.length) {
-			if (startIndex > 0 && countWindowLines(startIndex - 1, endIndex) <= this.maxVisible) {
-				startIndex--;
-			} else if (
-				endIndex < this.filteredItems.length &&
-				countWindowLines(startIndex, endIndex + 1) <= this.maxVisible
-			) {
-				endIndex++;
-			} else {
-				break;
-			}
-		}
+		// Calculate visible range with scrolling
+		const { startIndex, endIndex } = this.getVisibleRange();
 
 		// Render visible items, inserting a group header whenever the group changes
 		let currentGroup = startIndex > 0 ? this.filteredItems[startIndex - 1]?.group : undefined;
@@ -141,6 +117,46 @@ export class SelectList implements Component {
 		return lines;
 	}
 
+	handleMouse(event: TuiMouseEvent): TuiMouseEventResult | undefined {
+		if (this.filteredItems.length === 0) return undefined;
+		if (event.type === "wheel" && event.wheelDelta) {
+			const delta = event.wheelDelta < 0 ? -1 : 1;
+			const previousIndex = this.selectedIndex;
+			this.selectedIndex = Math.max(0, Math.min(this.filteredItems.length - 1, this.selectedIndex + delta));
+			if (this.selectedIndex !== previousIndex) this.notifySelectionChange();
+			return { handled: true, render: this.selectedIndex !== previousIndex };
+		}
+		if (event.type !== "move" && event.button !== "left") return undefined;
+		const { startIndex, endIndex } = this.getVisibleRange();
+		const itemIndex = startIndex + event.y;
+		if (itemIndex < startIndex || itemIndex >= endIndex) return undefined;
+
+		if (event.type === "move" || event.type === "press") {
+			if (event.type === "press") this.mousePressedIndex = itemIndex;
+			const changed = this.selectedIndex !== itemIndex;
+			if (changed) {
+				this.selectedIndex = itemIndex;
+				this.notifySelectionChange();
+			}
+			return {
+				handled: true,
+				focus: event.type === "press",
+				...(event.type === "move" ? { render: changed } : {}),
+			};
+		}
+		if (event.type === "click") {
+			const clickedIndex = this.mousePressedIndex ?? itemIndex;
+			this.mousePressedIndex = undefined;
+			const changed = this.selectedIndex !== clickedIndex;
+			this.selectedIndex = clickedIndex;
+			if (changed) this.notifySelectionChange();
+			const selectedItem = this.filteredItems[this.selectedIndex];
+			if (selectedItem) this.onSelect?.(selectedItem);
+			return { handled: true };
+		}
+		return undefined;
+	}
+
 	handleInput(keyData: string): void {
 		const kb = getKeybindings();
 		// Up arrow - wrap to bottom when at top
@@ -166,6 +182,37 @@ export class SelectList implements Component {
 				this.onCancel();
 			}
 		}
+	}
+
+	private getVisibleRange(): { startIndex: number; endIndex: number } {
+		// Choose the visible item window so items + their group-header lines fit within maxVisible.
+		const countWindowLines = (from: number, to: number): number => {
+			let lines = to - from;
+			let lastGroup = from > 0 ? this.filteredItems[from - 1]?.group : undefined;
+			for (let i = from; i < to; i++) {
+				const group = this.filteredItems[i]?.group;
+				if (group && group !== lastGroup) {
+					lines++;
+					lastGroup = group;
+				}
+			}
+			return lines;
+		};
+		let startIndex = this.selectedIndex;
+		let endIndex = this.selectedIndex + 1;
+		while (startIndex > 0 || endIndex < this.filteredItems.length) {
+			if (startIndex > 0 && countWindowLines(startIndex - 1, endIndex) <= this.maxVisible) {
+				startIndex--;
+			} else if (
+				endIndex < this.filteredItems.length &&
+				countWindowLines(startIndex, endIndex + 1) <= this.maxVisible
+			) {
+				endIndex++;
+			} else {
+				break;
+			}
+		}
+		return { startIndex, endIndex };
 	}
 
 	private renderItem(

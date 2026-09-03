@@ -438,6 +438,8 @@ ${chalk.bold(t("Environment Variables:"))}
   ${ENV_AGENT_DIR.padEnd(32)} - ${t("Config directory (default: ~/{dir}/agent)", { dir: CONFIG_DIR_NAME })}
   ${ENV_SESSION_DIR.padEnd(32)} - ${t("Session storage directory (overridden by --session-dir)")}
   PI_PACKAGE_DIR                   - ${t("Override package directory (for Nix/Guix store paths)")}
+  PI_SERVER_DIR                    - ${t("Experimental server profile and socket directory (default: ~/.pi/server)")}
+  PI_SERVER_ID                     - ${t("Logical experimental server ID (overridden by --server-id)")}
   PI_OFFLINE                       - ${t("Disable startup network operations when set to 1/true/yes")}
   PI_TELEMETRY                     - ${t("Override install telemetry when set to 1/true/yes or 0/false/no")}
   PI_SHARE_VIEWER_URL              - ${t("Base URL for /share command (default: https://pi.dev/session/)")}

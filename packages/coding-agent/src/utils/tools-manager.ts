@@ -104,22 +104,47 @@ export function getToolPath(tool: "fd" | "rg"): string | null {
 	return null;
 }
 
-// Fetch latest release version from GitHub
-async function getLatestVersion(repo: string): Promise<string> {
+// Resolve the latest release version from the release page redirect.
+// The api.github.com releases endpoint counts against the anonymous API
+// quota (60 requests/hour per IP), which is permanently exhausted behind
+// shared egress IPs such as corporate proxies and CI runners. The web
+// endpoint answers with a redirect to the tagged release at no quota cost
+// and lives on the same origin as the binary download itself.
+export async function getLatestVersion(repo: string): Promise<string> {
 	const response = await fetchWithRetry(
-		`https://api.github.com/repos/${repo}/releases/latest`,
+		`https://github.com/${repo}/releases/latest`,
 		{
 			headers: { "User-Agent": `${APP_NAME}-coding-agent` },
+			redirect: "manual",
 		},
 		{ timeoutMs: NETWORK_TIMEOUT_MS },
 	);
 
-	if (!response.ok) {
-		throw new Error(t("GitHub API error: {status}", { status: response.status }));
+	// Only the status and headers matter here. Discard the body so the
+	// connection can be reused.
+	try {
+		await response.body?.cancel();
+	} catch {
+		// Discarding the body is best-effort.
 	}
 
-	const data = (await response.json()) as { tag_name: string };
-	return data.tag_name.replace(/^v/, "");
+	const location = response.status >= 300 && response.status < 400 ? response.headers.get("location") : null;
+	if (!location) {
+		throw new Error(
+			t("Failed to resolve latest {repo} release: HTTP {status} without redirect", {
+				repo,
+				status: response.status,
+			}),
+		);
+	}
+
+	const tag = new URL(location, "https://github.com").pathname.split("/").pop();
+	if (!tag || !location.includes("/releases/tag/")) {
+		throw new Error(
+			t("Failed to resolve latest {repo} release: unexpected redirect to {location}", { repo, location }),
+		);
+	}
+	return decodeURIComponent(tag).replace(/^v/, "");
 }
 
 // Download a file from URL
@@ -127,7 +152,7 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 	const response = await fetchWithRetry(url, undefined, { timeoutMs: DOWNLOAD_TIMEOUT_MS });
 
 	if (!response.ok) {
-		throw new Error(t("Failed to download: {status}", { status: response.status }));
+		throw new Error(t("Download failed with HTTP {status}: {url}", { status: response.status, url }));
 	}
 
 	if (!response.body) {
@@ -247,11 +272,9 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 	const plat = platform();
 	const architecture = arch();
 
-	// Get latest version
-	let version = await getLatestVersion(config.repo);
-	if (tool === "fd" && plat === "darwin" && architecture === "x64") {
-		version = "10.3.0";
-	}
+	// fd is pinned on darwin/x64, so skip the version lookup there.
+	const version =
+		tool === "fd" && plat === "darwin" && architecture === "x64" ? "10.3.0" : await getLatestVersion(config.repo);
 
 	// Get asset name for this platform
 	const assetName = config.getAssetName(version, plat, architecture);
@@ -377,11 +400,23 @@ export async function ensureTool(
 		onStatus?.({ type: "info", message: t("{name} installed to {path}", { name: config.name, path }) });
 		return path;
 	} catch (e) {
+		// Include the error cause chain: fetch failures surface as a bare
+		// "fetch failed" TypeError with the actionable detail (DNS, TLS,
+		// timeout) hidden in the cause. Depth-capped to guard against
+		// circular cause chains.
+		const messages: string[] = [];
+		for (
+			let current: unknown = e, depth = 0;
+			current instanceof Error && depth < 5;
+			current = current.cause, depth++
+		) {
+			if (!messages.includes(current.message)) messages.push(current.message);
+		}
 		onStatus?.({
 			type: "warning",
 			message: t("Failed to download {name}: {error}", {
 				name: config.name,
-				error: e instanceof Error ? e.message : String(e),
+				error: messages.length > 0 ? messages.join(": ") : String(e),
 			}),
 		});
 		return undefined;

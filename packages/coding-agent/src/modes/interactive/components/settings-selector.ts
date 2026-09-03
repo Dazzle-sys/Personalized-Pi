@@ -525,7 +525,7 @@ export class SettingsSelectorComponent extends Container {
 			{
 				id: "cache-miss-notices",
 				label: t("Cache miss notices"),
-				description: t("Show transcript notices for significant prompt-cache misses and compaction costs"),
+				description: t("Show transcript notices for cache costs and provider recovery diagnostics"),
 				currentValue: config.showCacheMissNotices ? "true" : "false",
 				values: ["true", "false"],
 			},

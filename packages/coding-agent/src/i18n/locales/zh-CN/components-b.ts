@@ -145,8 +145,8 @@ export const zhCN: Translations = {
 	"Mermaid diagrams": "Mermaid 图表",
 	"Render Mermaid code blocks as Unicode diagrams": "将 Mermaid 代码块渲染为 Unicode 图表",
 	"Cache miss notices": "缓存未命中提示",
-	"Show transcript notices for significant prompt-cache misses and compaction costs":
-		"在会话记录中显示重要的提示词缓存未命中与上下文压缩开销提示",
+	"Show transcript notices for cache costs and provider recovery diagnostics":
+		"在会话记录中显示缓存开销与提供方恢复诊断提示",
 	"Collapse changelog": "折叠更新日志",
 	"Show condensed changelog after updates": "更新后显示精简的更新日志",
 	"Quiet startup": "静默启动",

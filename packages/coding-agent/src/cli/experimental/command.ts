@@ -1,5 +1,4 @@
 import { t } from "@earendil-works/pi-tui";
-
 export interface NamedCommandInvocation {
 	readonly command: string;
 }
@@ -17,19 +16,29 @@ export type CommandOptionParseResult<TValue> =
 	| { readonly ok: false; readonly error: string };
 
 export interface CommandOption<TValue> {
-	readonly name: `--${string}`;
+	readonly name: `-${string}`;
+	readonly flag?: boolean;
+	readonly repeatable?: boolean;
 	parse(value: string): CommandOptionParseResult<TValue>;
 }
 
 export function valueOption<TValue>(
-	name: `--${string}`,
+	name: `-${string}`,
 	parse: (value: string) => CommandOptionParseResult<TValue>,
+	options: { readonly repeatable?: boolean } = {},
 ): CommandOption<TValue> {
-	return { name, parse };
+	return { name, parse, ...options };
 }
 
-export function stringOption(name: `--${string}`): CommandOption<string> {
-	return valueOption(name, (value) => ({ ok: true, value }));
+export function stringOption(
+	name: `-${string}`,
+	options: { readonly repeatable?: boolean } = {},
+): CommandOption<string> {
+	return valueOption(name, (value) => ({ ok: true, value }), options);
+}
+
+export function flagOption(name: `-${string}`): CommandOption<boolean> {
+	return { name, flag: true, parse: () => ({ ok: true, value: true }) };
 }
 
 export interface ParsedCommandInput {
@@ -184,21 +193,31 @@ export class Command<
 				break;
 			}
 
-			let value = equals === -1 ? undefined : argument.slice(equals + 1);
-			if (value === undefined) {
-				const next = argv[index + 1];
-				if (next !== undefined && !next.startsWith("-")) {
-					value = next;
-					index++;
+			let value: string;
+			if (option.flag === true) {
+				if (equals !== -1) {
+					parsed.errors.push(t("{option} does not take a value", { option: name }));
+					continue;
 				}
-			}
-			if (value === undefined || value === "") {
-				parsed.errors.push(t("{option} requires a value", { option: name }));
-				continue;
+				value = "";
+			} else {
+				let candidate = equals === -1 ? undefined : argument.slice(equals + 1);
+				if (candidate === undefined) {
+					const next = argv[index + 1];
+					if (next !== undefined && !next.startsWith("-")) {
+						candidate = next;
+						index++;
+					}
+				}
+				if (candidate === undefined || candidate === "") {
+					parsed.errors.push(t("{option} requires a value", { option: name }));
+					continue;
+				}
+				value = candidate;
 			}
 
 			const values = parsed.values.get(name) ?? [];
-			if (values.length > 0) {
+			if (values.length > 0 && option.repeatable !== true) {
 				parsed.errors.push(t("{option} may only be specified once", { option: name }));
 				continue;
 			}

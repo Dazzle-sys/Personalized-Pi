@@ -296,8 +296,12 @@ export const zhCN: Translations = {
 	"Failed to copy to clipboard": "复制到剪贴板失败",
 
 	// utils/tools-manager.ts
-	"GitHub API error: {status}": "GitHub API 错误：{status}",
+	"Failed to resolve latest {repo} release: HTTP {status} without redirect":
+		"解析 {repo} 最新版本失败：HTTP {status} 且无重定向",
+	"Failed to resolve latest {repo} release: unexpected redirect to {location}":
+		"解析 {repo} 最新版本失败：意外重定向到 {location}",
 	"Failed to download: {status}": "下载失败：{status}",
+	"Download failed with HTTP {status}: {url}": "下载失败，HTTP {status}：{url}",
 	"No response body": "响应无内容",
 	"exit status {status}": "退出状态 {status}",
 	"Failed to extract {asset}: {failure}": "解压 {asset} 失败：{failure}",

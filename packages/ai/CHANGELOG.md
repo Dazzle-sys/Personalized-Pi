@@ -10,6 +10,15 @@
 
 - Added the B.AI provider, an OpenAI-compatible aggregator exposing upstream GPT, Claude, Gemini, DeepSeek, and other models via `https://api.b.ai/v1` (`BAI_API_KEY`).
 
+- Added Anthropic per-turn effort persistence, deterministic historical effort markers, and signed-thinking mismatch recovery for supported Claude models across Anthropic Messages transports, including OpenRouter.
+
+### Fixed
+
+- Fixed the Qwen Token Plan Individual catalog to include Qwen3.8 Flash ([#9021](https://github.com/earendil-works/pi/issues/9021)).
+- Removed the unnecessary Chord dependency from pi-ai by defining its exported `JsonValue` type directly.
+- Fixed GitHub Copilot Claude Fable 5 requests to use the Anthropic Messages adapter so selected reasoning levels are sent ([#8961](https://github.com/earendil-works/pi/issues/8961)).
+- Fixed OpenAI Codex SSE parsing to process terminal events that are not followed by a blank line ([#9047](https://github.com/earendil-works/pi/issues/9047)).
+
 ### Changed
 
 - The B.AI provider no longer reads its API key from the `BAI_API_KEY` environment variable; authentication relies solely on an `auth.json` credential stored via `/login`.
