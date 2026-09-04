@@ -46,3 +46,13 @@
 
 - **教训**：2026-09-02 把 tree-selector 标题由 `t("  Session Tree")`（带前导空格）改成 `t("Session Tree")`，但 zh-CN 词典只保留旧的带空格 key。`i18n-coverage.test.ts` 立即报缺 `"Session Tree"`。此 bug 在提交时未被发现，因为 **pre-commit 的 `npm run check` 只跑 biome/tsgo/依赖检查，不跑 vitest**；`i18n-coverage` 必须单独 `node .../vitest --run .../i18n-coverage.test.ts` 才触发。
 - **沉淀**：① 任何改动 `t()` 字面 key（含去/加前导空格、改文案）必须同步更新 zh-CN 词典（五个词典文件之一），否则 `i18n-coverage` 挂；② `npm run check` ≠ 全部测试通过，改动涉 i18n 时显式补跑 `i18n-coverage.test.ts`；③ 删除带前导空格的旧 key 时先 `grep` 确认无其它调用，避免留死 key。
+
+### 9. pi TUI 现代面板风重构（2026-09-04）：subagent-driven 全流程经验
+
+- **背景**：7 任务（Panel 原语→token→编辑器→聊天流→选择器→footer/启动屏→实测）全部走子 agent 实现 + 任务审查 + 最终全分支审查，一次合入 main，零返工合并。
+- **教训 1——vitest 必须在包目录内跑**：worktree 根跑 `node node_modules/vitest/dist/cli.js --run packages/...` 会命中 `packages/tui` 的陈旧 dist（如 Panel 无 handleMouse 的假失败）；正确姿势 `cd packages/coding-agent && node ../../node_modules/vitest/dist/cli.js --run test/xxx.test.ts`（vitest.config.ts 源码别名才生效）。T4/T5/T6 连续踩中，已记入计划 ledger 跨任务备注才止住。
+- **教训 2——`/theme` 不是 slash 命令**：T7 实测发现输入 `/theme` 会当聊天消息提交（用户面板 + agent 开工）。主题选择器实际入口是 `/settings` → Theme 子菜单。以后写 TUI 实测脚本别假设命令存在，先查 slash-command 注册。
+- **教训 3——plan 里互斥的 i18n 键名**：Task 6 计划正文两处写了不同形状的键（`{name}: {count}` vs 中文键）。含中文的 key 不适合做 en 源键，取参数化英文 key。写计划时 i18n 键只定一处，其余引用。
+- **教训 4——theme-schema.json 运行时没人读**：真正的主题校验在 `theme-json.ts` 的 TypeBox 内联 schema。加必填 token 必须双处同步（schema 文档 + theme-json.ts），否则旧自定义主题加载期放行、调用期崩。T2 靠实现者疑虑才补上。
+- **教训 5——基线 worktree 记得删**：T7 为 test.sh 对照建的 `D:/BC/pi-baseline` 自称已删实际还在，收尾时 `git worktree list` 发现并补删。以后要求 agent 删资源后贴 `worktree list` 证据。
+- **沉淀**：实测管线（`/tmp/pi-capture/wt/`：node-pty 捕获→xterm-headless 回放 txt/html→grep 断言）在 Windows 无 tmux 环境下可用；注意 `term.write()` 异步需等 ~800ms 再读 buffer，且回放 txt 中文间多一空格是宽字符占位 artifact、非产品问题。
