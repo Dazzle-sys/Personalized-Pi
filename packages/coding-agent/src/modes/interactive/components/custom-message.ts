@@ -1,6 +1,6 @@
 import type { TextContent } from "@earendil-works/pi-ai";
 import type { Component } from "@earendil-works/pi-tui";
-import { Container, LeftBarBox, Markdown, type MarkdownTheme, Spacer, Text } from "@earendil-works/pi-tui";
+import { Container, LeftBarBox, Markdown, type MarkdownTheme, Panel, Spacer, Text } from "@earendil-works/pi-tui";
 import type { MessageRenderer } from "../../../core/extensions/types.ts";
 import type { CustomMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
@@ -13,6 +13,7 @@ export class CustomMessageComponent extends Container {
 	private message: CustomMessage<unknown>;
 	private customRenderer?: MessageRenderer;
 	private box: LeftBarBox;
+	private panel: Panel;
 	private customComponent?: Component;
 	private markdownTheme: MarkdownTheme;
 	private _expanded = false;
@@ -34,6 +35,13 @@ export class CustomMessageComponent extends Container {
 
 		// Create box with purple left bar (used for default rendering)
 		this.box = new LeftBarBox(1, 1, (bar: string) => theme.fg("customMessageLabel", bar));
+		// 外层 Panel 铺 customMessageBg，与 user/assistant 面板统一视觉层次
+		this.panel = new Panel({
+			bg: (text: string) => theme.bg("customMessageBg", text),
+			padX: 0,
+			padY: 0,
+		});
+		this.panel.addChild(this.box);
 
 		this.rebuild();
 	}
@@ -63,7 +71,7 @@ export class CustomMessageComponent extends Container {
 			this.removeChild(this.customComponent);
 			this.customComponent = undefined;
 		}
-		this.removeChild(this.box);
+		this.removeChild(this.panel);
 
 		// Try custom renderer first - it handles its own styling
 		if (this.customRenderer) {
@@ -84,8 +92,8 @@ export class CustomMessageComponent extends Container {
 			}
 		}
 
-		// Default rendering uses our box
-		this.addChild(this.box);
+		// Default rendering uses our box (inside the bg panel)
+		this.addChild(this.panel);
 		this.box.clear();
 
 		// Default rendering: label + content

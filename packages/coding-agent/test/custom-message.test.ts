@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { MessageRenderer, MessageRenderOptions } from "../src/core/extensions/types.ts";
 import type { CustomMessage } from "../src/core/messages.ts";
 import { CustomMessageComponent } from "../src/modes/interactive/components/custom-message.ts";
-import { initTheme } from "../src/modes/interactive/theme/theme.ts";
+import { initTheme, theme } from "../src/modes/interactive/theme/theme.ts";
 import { stripAnsi } from "../src/utils/ansi.ts";
 
 describe("CustomMessageComponent", () => {
@@ -40,5 +40,21 @@ describe("CustomMessageComponent", () => {
 				.map(stripAnsi)
 				.some((line) => line.startsWith("custom")),
 		).toBe(true);
+	});
+
+	test("default rendering wraps content in customMessageBg panel", () => {
+		initTheme("dark");
+		const message: CustomMessage = {
+			role: "custom",
+			customType: "test",
+			content: "hello custom",
+			display: true,
+			timestamp: Date.now(),
+		};
+		const component = new CustomMessageComponent(message, undefined, undefined, 1);
+		const lines = component.render(40);
+		expect(lines.some((line) => stripAnsi(line).includes("hello custom"))).toBe(true);
+		// 面板背景码存在（customMessageBg），且左条色 customMessageLabel 保留
+		expect(lines.some((line) => line.includes(theme.getBgAnsi("customMessageBg")))).toBe(true);
 	});
 });

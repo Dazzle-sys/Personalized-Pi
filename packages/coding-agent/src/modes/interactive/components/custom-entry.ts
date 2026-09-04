@@ -1,5 +1,5 @@
 import type { Component } from "@earendil-works/pi-tui";
-import { Container, LeftBarBox, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { Container, LeftBarBox, Panel, Spacer, Text, t } from "@earendil-works/pi-tui";
 import type { EntryRenderer } from "../../../core/extensions/types.ts";
 import type { CustomEntry } from "../../../core/session-manager.ts";
 import { theme } from "../theme/theme.ts";
@@ -54,7 +54,14 @@ export class CustomEntryComponent extends Container {
 					0,
 				),
 			);
-			component = box;
+			// 错误回退框同样套 customMessageBg，与 custom 消息家族统一
+			const panel = new Panel({
+				bg: (text: string) => theme.bg("customMessageBg", text),
+				padX: 0,
+				padY: 0,
+			});
+			panel.addChild(box);
+			component = panel;
 		}
 
 		if (!component) {
