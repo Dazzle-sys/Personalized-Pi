@@ -187,8 +187,8 @@ describe("FooterComponent width handling", () => {
 		});
 		const footer = new FooterComponent(session, createFooterData(1));
 
-		const statsLine = stripAnsi(footer.render(120)[0]);
-		expect(statsLine).toContain("$1.250");
+		const stats = stripAnsi(footer.render(120).join("\n"));
+		expect(stats).toContain("$1.250");
 	});
 
 	it("shows the latest cache hit rate when cache usage is present", () => {
@@ -204,8 +204,8 @@ describe("FooterComponent width handling", () => {
 		});
 		const footer = new FooterComponent(session, createFooterData(1));
 
-		const statsLine = stripAnsi(footer.render(120)[0]);
-		expect(statsLine).toContain("CH25.0%");
+		const stats = stripAnsi(footer.render(120).join("\n"));
+		expect(stats).toContain("CH25.0%");
 	});
 
 	it("marks Kimi Coding costs as subscription estimates", () => {
@@ -222,14 +222,14 @@ describe("FooterComponent width handling", () => {
 		});
 		const footer = new FooterComponent(session, createFooterData(1));
 
-		expect(stripAnsi(footer.render(120)[0])).toContain("$1.234 (sub)");
+		expect(stripAnsi(footer.render(120).join("\n"))).toContain("$1.234 (sub)");
 	});
 
 	it("marks explicitly identified subscription auth", () => {
 		const session = createSession({ sessionName: "", provider: "anthropic", usingSubscription: true });
 		const footer = new FooterComponent(session, createFooterData(1));
 
-		expect(stripAnsi(footer.render(120)[0])).toContain("$0.000 (sub)");
+		expect(stripAnsi(footer.render(120).join("\n"))).toContain("$0.000 (sub)");
 	});
 
 	it("does not mark generic OAuth sign-in as a subscription", () => {
@@ -245,13 +245,13 @@ describe("FooterComponent width handling", () => {
 			},
 		});
 		const footer = new FooterComponent(session, createFooterData(1));
-		const stats = stripAnsi(footer.render(120)[0]);
+		const stats = stripAnsi(footer.render(120).join("\n"));
 
 		expect(stats).toContain("$1.234");
 		expect(stats).not.toContain("(sub)");
 	});
 
-	it("merges pwd, stats and model onto a single footer line", () => {
+	it("splits pwd/model and token stats across two footer lines", () => {
 		const session = createSession({
 			sessionName: "sess",
 			usage: {
@@ -264,9 +264,9 @@ describe("FooterComponent width handling", () => {
 		});
 		const footer = new FooterComponent(session, createFooterData(1));
 
-		const line = stripAnsi(footer.render(120)[0]);
-		expect(line).toContain("/tmp/project (main)");
-		expect(line).toContain("↑100");
-		expect(line).toContain("test-model");
+		const lines = footer.render(120).map((line) => stripAnsi(line));
+		expect(lines[0]).toContain("/tmp/project (main)");
+		expect(lines[0]).toContain("test-model");
+		expect(lines[1]).toContain("↑100");
 	});
 });

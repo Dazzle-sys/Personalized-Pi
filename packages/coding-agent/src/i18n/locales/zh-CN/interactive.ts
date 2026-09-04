@@ -80,6 +80,8 @@ export const zhCN: Translations = {
 	"[Prompt conflicts]": "[提示词冲突]",
 	"[Extension issues]": "[扩展问题]",
 	"[Theme conflicts]": "[主题冲突]",
+	"{keys} to view full list": "{keys} 查看完整列表",
+	"{name}: {count}": "{name}: {count} 个",
 
 	// 会话、分叉与会话树
 	"Failed to create session": "创建会话失败",

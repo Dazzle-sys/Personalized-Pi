@@ -50,6 +50,107 @@ export function formatCwdForFooter(cwd: string, home: string | undefined): strin
 	return relativeToHome === "" ? "~" : `~${sep}${relativeToHome}`;
 }
 
+/** Footer 两级布局的输入：主行放 pwd + context%，次行放 token/费用统计。 */
+export interface FooterLayoutInput {
+	pwd: string;
+	/** token/费用等统计片段（不含 context%，由 contextDisplay 单独承载）。 */
+	statsParts: string[];
+	/** 已格式化好的 context 文本，如 "3%/1M (auto)"（不含颜色，阈值着色由纯函数负责）。 */
+	contextDisplay: string;
+	/** context 百分比数值，用于阈值变色（>70 warning / >90 error）；缺省则不着色。 */
+	contextPercentValue?: number;
+	modelName: string;
+	/** 仅模型支持 reasoning 时传入；"off" 显示为 thinking off。 */
+	thinkingLevel?: string;
+	providerCount: number;
+	providerName?: string;
+	extensionStatuses?: ReadonlyMap<string, string>;
+	width: number;
+}
+
+/**
+ * 主行：pwd (branch • session) • context% …… 右侧 model • thinking（muted 档，context% 阈值色逐段保留）。
+ * 次行：token 统计 + 费用（dim 档）。有扩展状态则追加第三行。
+ * 右对齐沿用 minPadding=2 + truncateToWidth 逻辑。
+ */
+export function renderFooterLines(input: FooterLayoutInput): string[] {
+	const { width } = input;
+	const minPadding = 2;
+
+	// 右侧：model • thinking；多 provider 且放得下时加 (provider) 前缀
+	let rightPlain = input.modelName;
+	if (input.thinkingLevel !== undefined) {
+		rightPlain += input.thinkingLevel === "off" ? ` • ${t("thinking off")}` : ` • ${input.thinkingLevel}`;
+	}
+	if (input.providerCount > 1 && input.providerName) {
+		const withProvider = `(${input.providerName}) ${rightPlain}`;
+		const leftEstimate = input.contextDisplay ? `${input.pwd} • ${input.contextDisplay}` : input.pwd;
+		if (visibleWidth(leftEstimate) + minPadding + visibleWidth(withProvider) <= width) {
+			rightPlain = withProvider;
+		}
+	}
+
+	// 主行左侧：先做布局数学（纯文本），再逐段着色
+	let leftPlain = input.contextDisplay ? `${input.pwd} • ${input.contextDisplay}` : input.pwd;
+	let leftWidth = visibleWidth(leftPlain);
+	if (leftWidth > width) {
+		leftPlain = truncateToWidth(leftPlain, width, theme.fg("dim", "..."));
+		leftWidth = visibleWidth(leftPlain);
+	}
+	const rightWidth = visibleWidth(rightPlain);
+	let mainPlain: string;
+	if (leftWidth + minPadding + rightWidth <= width) {
+		mainPlain = leftPlain + " ".repeat(width - leftWidth - rightWidth) + rightPlain;
+	} else {
+		const availableForRight = width - leftWidth - minPadding;
+		if (availableForRight > 0) {
+			const truncatedRight = truncateToWidth(rightPlain, availableForRight, "");
+			mainPlain =
+				leftPlain + " ".repeat(Math.max(0, width - leftWidth - visibleWidth(truncatedRight))) + truncatedRight;
+		} else {
+			mainPlain = leftPlain;
+		}
+	}
+
+	// 主行着色：整体 muted，context% 阈值色逐段保留（>90 error / >70 warning）
+	let contextSeg: string = input.contextDisplay;
+	if (input.contextPercentValue !== undefined) {
+		if (input.contextPercentValue > 90) {
+			contextSeg = theme.fg("error", input.contextDisplay);
+		} else if (input.contextPercentValue > 70) {
+			contextSeg = theme.fg("warning", input.contextDisplay);
+		}
+	}
+	let mainLine: string;
+	const at = input.contextDisplay ? mainPlain.indexOf(input.contextDisplay) : -1;
+	if (at >= 0) {
+		mainLine =
+			theme.fg("muted", mainPlain.slice(0, at)) +
+			contextSeg +
+			theme.fg("muted", mainPlain.slice(at + input.contextDisplay.length));
+	} else {
+		mainLine = theme.fg("muted", mainPlain);
+	}
+	const lines = [mainLine];
+
+	// 次行：token 统计 + 费用，dim 档
+	if (input.statsParts.length > 0) {
+		lines.push(truncateToWidth(theme.fg("dim", formatStatsParts(input.statsParts)), width, theme.fg("dim", "...")));
+	}
+
+	// 扩展状态行：按 key 排序（与原来一致）
+	const extensionStatuses = input.extensionStatuses;
+	if (extensionStatuses && extensionStatuses.size > 0) {
+		const sortedStatuses = Array.from(extensionStatuses.entries())
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([, text]) => sanitizeStatusText(text));
+		const statusLine = sortedStatuses.join(" ");
+		lines.push(truncateToWidth(statusLine, width, theme.fg("dim", "...")));
+	}
+
+	return lines;
+}
+
 /**
  * Footer component that shows pwd, token stats, and context usage.
  * Computes token/context stats from session, gets git branch and extension statuses from provider.
@@ -132,8 +233,8 @@ export class FooterComponent implements Component {
 			pwd = `${pwd} • ${sessionName}`;
 		}
 
-		// Build stats line
-		const statsParts = [];
+		// 主行只承载 pwd + context%；token/费用统计下沉到次行
+		const statsParts: string[] = [];
 		if (usageTotals.input) statsParts.push(`↑${formatTokens(usageTotals.input)}`);
 		if (usageTotals.output) statsParts.push(`↓${formatTokens(usageTotals.output)}`);
 		if (usageTotals.cacheRead) statsParts.push(`R${formatTokens(usageTotals.cacheRead)}`);
@@ -151,108 +252,27 @@ export class FooterComponent implements Component {
 			statsParts.push(costStr);
 		}
 
-		// Colorize context percentage based on usage
-		let contextPercentStr: string;
+		// context 显示文本（着色由 renderFooterLines 按阈值负责）
 		const autoIndicator = this.autoCompactEnabled ? t(" (auto)") : "";
-		const contextPercentDisplay =
+		const contextDisplay =
 			contextPercent === "?"
 				? `?/${formatTokens(contextWindow)}${autoIndicator}`
 				: `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
-		if (contextPercentValue > 90) {
-			contextPercentStr = theme.fg("error", contextPercentDisplay);
-		} else if (contextPercentValue > 70) {
-			contextPercentStr = theme.fg("warning", contextPercentDisplay);
-		} else {
-			contextPercentStr = contextPercentDisplay;
-		}
-		statsParts.push(contextPercentStr);
 		if (areExperimentalFeaturesEnabled()) {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", t("xp")))}`);
 		}
 
-		const statsLeft = formatStatsParts(statsParts);
-
-		// Add model name on the right side, plus thinking level if model supports it
-		const modelName = state.model?.id || t("no-model");
-
-		// Merge pwd (with branch/session) into the left side of the single footer line.
-		// pwd stays left-aligned, token/cost/context stats follow, model is right-aligned.
-		let leftContent = pwd;
-		if (statsLeft) {
-			leftContent += ` • ${statsLeft}`;
-		}
-
-		let leftWidth = visibleWidth(leftContent);
-
-		// If the whole left side (pwd + stats) is too wide, truncate it
-		if (leftWidth > width) {
-			leftContent = truncateToWidth(leftContent, width, theme.fg("dim", "..."));
-			leftWidth = visibleWidth(leftContent);
-		}
-
-		// Calculate available space for padding (minimum 2 spaces between stats and model)
-		const minPadding = 2;
-
-		// Add thinking level indicator if model supports reasoning
-		let rightSideWithoutProvider = modelName;
-		if (state.model?.reasoning) {
-			const thinkingLevel = state.thinkingLevel || "off";
-			rightSideWithoutProvider =
-				thinkingLevel === "off" ? `${modelName} • ${t("thinking off")}` : `${modelName} • ${thinkingLevel}`;
-		}
-
-		// Prepend the provider in parentheses if there are multiple providers and there's enough room
-		let rightSide = rightSideWithoutProvider;
-		if (this.footerData.getAvailableProviderCount() > 1 && state.model) {
-			rightSide = `(${state.model!.provider}) ${rightSideWithoutProvider}`;
-			if (leftWidth + minPadding + visibleWidth(rightSide) > width) {
-				// Too wide, fall back
-				rightSide = rightSideWithoutProvider;
-			}
-		}
-
-		const rightSideWidth = visibleWidth(rightSide);
-		const totalNeeded = leftWidth + minPadding + rightSideWidth;
-
-		let statsLine: string;
-		if (totalNeeded <= width) {
-			// Both fit - add padding to right-align model
-			const padding = " ".repeat(width - leftWidth - rightSideWidth);
-			statsLine = leftContent + padding + rightSide;
-		} else {
-			// Need to truncate right side
-			const availableForRight = width - leftWidth - minPadding;
-			if (availableForRight > 0) {
-				const truncatedRight = truncateToWidth(rightSide, availableForRight, "");
-				const truncatedRightWidth = visibleWidth(truncatedRight);
-				const padding = " ".repeat(Math.max(0, width - leftWidth - truncatedRightWidth));
-				statsLine = leftContent + padding + truncatedRight;
-			} else {
-				// Not enough space for right side at all
-				statsLine = leftContent;
-			}
-		}
-
-		// Apply dim to each part separately. leftContent may contain color codes (for context %)
-		// that end with a reset, which would clear an outer dim wrapper. So we dim the parts
-		// before and after the colored section independently.
-		const dimStatsLeft = theme.fg("dim", leftContent);
-		const remainder = statsLine.slice(leftContent.length); // padding + rightSide
-		const dimRemainder = theme.fg("dim", remainder);
-
-		const lines = [dimStatsLeft + dimRemainder];
-
-		// Add extension statuses on a single line, sorted by key alphabetically
-		const extensionStatuses = this.footerData.getExtensionStatuses();
-		if (extensionStatuses.size > 0) {
-			const sortedStatuses = Array.from(extensionStatuses.entries())
-				.sort(([a], [b]) => a.localeCompare(b))
-				.map(([, text]) => sanitizeStatusText(text));
-			const statusLine = sortedStatuses.join(" ");
-			// Truncate to terminal width with dim ellipsis for consistency with footer style
-			lines.push(truncateToWidth(statusLine, width, theme.fg("dim", "...")));
-		}
-
-		return lines;
+		return renderFooterLines({
+			pwd,
+			statsParts,
+			contextDisplay,
+			contextPercentValue,
+			modelName: state.model?.id || t("no-model"),
+			thinkingLevel: state.model?.reasoning ? state.thinkingLevel || "off" : undefined,
+			providerCount: this.footerData.getAvailableProviderCount(),
+			providerName: state.model?.provider,
+			extensionStatuses: this.footerData.getExtensionStatuses(),
+			width,
+		});
 	}
 }
