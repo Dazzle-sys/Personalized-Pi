@@ -16,9 +16,10 @@ export const zhCN: Translations = {
 	lines: "行",
 	chars: "字符",
 	"─── {direction} {count} more ": "─── {direction} 还有 {count} 行 ",
+	" {direction} {count} more ": " {direction} 还有 {count} 行 ",
 	// alt-screen search
 	" Find transcript": " 搜索会话记录",
-	"No matches ": "无匹配 ",
+	"No matches": "无匹配",
 	// clipboard flash
 	"Copied!": "已复制！",
 	"Copy failed": "复制失败",
