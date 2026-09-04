@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { test } from "node:test";
 import { Panel } from "../src/components/panel.ts";
 import { Text } from "../src/components/text.ts";
+import { visibleWidth } from "../src/utils.ts";
 
 // 与 markdown.test.ts 同模式：测试内局部剥 ANSI，utils.ts 无此导出
 function stripAnsi(line: string): string {
@@ -65,15 +66,9 @@ test("Panel CJK 标题宽度按 visibleWidth 计算，边框不串列", () => {
 	});
 	panel.addChild(new Text("y", 0, 0));
 	const lines = panel.render(20);
-	assert.strictEqual(
-		[...lines].every((l) => [...stripAnsi(l)].length === 20 || stripAnsi(l).length <= 20),
-		true,
-	);
 	// 顶行可见宽度恰为 20（CJK 算 2 列）
 	const top = stripAnsi(lines[0]);
-	let w = 0;
-	for (const ch of top) w += ch.charCodeAt(0) > 0x2e80 ? 2 : 1;
-	assert.strictEqual(w, 20);
+	assert.strictEqual(visibleWidth(top), 20);
 });
 
 test("Panel 窄宽度时标题截断不破坏边框", () => {
