@@ -16,7 +16,8 @@
 		"assistantBg": "#1e2130",
 		"panelBg": "#1a1d29",
 		"userMsgBg": "#1e2733",
-		"customMsgBg": "#232336"
+		"customMsgBg": "#232336",
+		"darkGray": "#505050"
 	},
 	"colors": {
 		"accent": "accent",
@@ -33,7 +34,8 @@
 		"thinkingText": "muted",
 
 		"selectedBg": "selectedBg",
-		"scrollbarThumb": "selectedBg",
+		"scrollbarTrack": "darkGray",
+		"scrollbarThumb": "text",
 		"searchMatchBg": "selectedBg",
 		"searchMatchText": "text",
 		"userMessageBg": "userMsgBg",

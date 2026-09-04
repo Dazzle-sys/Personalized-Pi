@@ -140,6 +140,7 @@ export {
 	isFocusable,
 	isViewportTUI,
 	type OverlayAnchor,
+	type OverlayBounds,
 	type OverlayHandle,
 	type OverlayMargin,
 	type OverlayOptions,

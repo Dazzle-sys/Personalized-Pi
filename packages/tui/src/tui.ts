@@ -263,6 +263,14 @@ export interface OverlayUnfocusOptions {
 	target: Component | null;
 }
 
+/** Last rendered terminal-relative overlay rectangle. */
+export interface OverlayBounds {
+	row: number;
+	col: number;
+	width: number;
+	height: number;
+}
+
 /**
  * Handle returned by showOverlay for controlling the overlay
  */
@@ -279,6 +287,8 @@ export interface OverlayHandle {
 	unfocus(options?: OverlayUnfocusOptions): void;
 	/** Check if this overlay currently has focus */
 	isFocused(): boolean;
+	/** Get the most recent rendered bounds for a visible overlay. */
+	getBounds(): OverlayBounds | undefined;
 }
 
 type OverlayStackEntry = {
@@ -287,6 +297,7 @@ type OverlayStackEntry = {
 	preFocus: Component | null;
 	hidden: boolean;
 	focusOrder: number;
+	bounds?: OverlayBounds;
 };
 
 type RenderedOverlayLayout = {
@@ -770,6 +781,10 @@ export abstract class TuiBase extends Container implements TUI {
 				this.requestRender();
 			},
 			isFocused: () => this.focusedComponent === component,
+			getBounds: () => {
+				if (!this.overlayStack.includes(entry) || !this.isOverlayVisible(entry) || !entry.bounds) return undefined;
+				return { ...entry.bounds };
+			},
 		};
 	}
 
@@ -1275,6 +1290,8 @@ export abstract class TuiBase extends Container implements TUI {
 		}
 		const result = [...lines];
 
+		for (const entry of this.overlayStack) entry.bounds = undefined;
+
 		// Pre-render all visible overlays and calculate positions
 		const rendered: { entry: OverlayStackEntry; overlayLines: string[]; row: number; col: number; w: number }[] = [];
 		let minLinesNeeded = result.length;
@@ -1298,6 +1315,7 @@ export abstract class TuiBase extends Container implements TUI {
 
 			// Get final row/col with actual overlay height
 			const { row, col } = this.resolveOverlayLayout(options, overlayLines.length, termWidth, termHeight);
+			entry.bounds = { row, col, width, height: overlayLines.length };
 
 			rendered.push({ entry, overlayLines, row, col, w: width });
 			minLinesNeeded = Math.max(minLinesNeeded, row + overlayLines.length);

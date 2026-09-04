@@ -309,6 +309,13 @@ function buildDebouncePattern(triggerCharacters: string[]): RegExp {
 
 function createScrollBorder(direction: "↑" | "↓", hiddenLineCount: number, width: number): string {
 	const availableWidth = Math.max(0, width);
+	const label = t(" {direction} {count} more ", { direction, count: hiddenLineCount });
+	const labelWidth = visibleWidth(label);
+	if (labelWidth + 2 <= availableWidth) {
+		const leftWidth = Math.floor((availableWidth - labelWidth) / 2);
+		return "─".repeat(leftWidth) + label + "─".repeat(availableWidth - leftWidth - labelWidth);
+	}
+
 	const indicator = t("─── {direction} {count} more ", { direction, count: hiddenLineCount });
 	const remaining = availableWidth - visibleWidth(indicator);
 	if (remaining >= 0) return indicator + "─".repeat(remaining);
@@ -571,6 +578,26 @@ export class Editor implements Component, Focusable {
 		return chars.join("");
 	}
 
+	protected renderTopBorder(width: number, hiddenLineCount: number): string {
+		if (hiddenLineCount > 0) {
+			return this.paintBorder(this.roundScrollBorder(createScrollBorder("↑", hiddenLineCount, width), "╭", "╮"));
+		}
+		if (this.rounded && width >= 2) {
+			return this.paintBorder("╭" + "─".repeat(width - 2) + "╮");
+		}
+		return this.bgFn ? this.paintBorder("─".repeat(width)) : this.borderColor("─".repeat(width));
+	}
+
+	protected renderBottomBorder(width: number, hiddenLineCount: number): string {
+		if (hiddenLineCount > 0) {
+			return this.paintBorder(this.roundScrollBorder(createScrollBorder("↓", hiddenLineCount, width), "╰", "╯"));
+		}
+		if (this.rounded && width >= 2) {
+			return this.paintBorder("╰" + "─".repeat(width - 2) + "╯");
+		}
+		return this.bgFn ? this.paintBorder("─".repeat(width)) : this.borderColor("─".repeat(width));
+	}
+
 	render(width: number): string[] {
 		const maxPadding = Math.max(0, Math.floor((width - 1) / 2));
 		const paddingX = Math.min(this.paddingX, maxPadding);
@@ -582,8 +609,6 @@ export class Editor implements Component, Focusable {
 
 		// Store for cursor navigation (must match wrapping width)
 		this.lastWidth = layoutWidth;
-
-		const horizontal = this.borderColor("─");
 
 		// Layout the text
 		const layoutLines = this.layoutText(layoutWidth);
@@ -616,14 +641,7 @@ export class Editor implements Component, Focusable {
 		const rightPadding = leftPadding;
 
 		// Render top border (with scroll indicator if scrolled down)
-		if (this.scrollOffset > 0) {
-			const border = this.roundScrollBorder(createScrollBorder("↑", this.scrollOffset, width), "╭", "╮");
-			result.push(this.paintBorder(border));
-		} else if (this.rounded && width >= 2) {
-			result.push(this.paintBorder("╭" + "─".repeat(width - 2) + "╮"));
-		} else {
-			result.push(this.bgFn ? this.paintBorder("─".repeat(width)) : horizontal.repeat(width));
-		}
+		result.push(this.renderTopBorder(width, this.scrollOffset));
 
 		// Render each visible layout line
 		// Emit hardware cursor marker when focused so TUI can position the
@@ -676,14 +694,7 @@ export class Editor implements Component, Focusable {
 
 		// Render bottom border (with scroll indicator if more content below)
 		const linesBelow = layoutLines.length - (this.scrollOffset + visibleLines.length);
-		if (linesBelow > 0) {
-			const border = this.roundScrollBorder(createScrollBorder("↓", linesBelow, width), "╰", "╯");
-			result.push(this.paintBorder(border));
-		} else if (this.rounded && width >= 2) {
-			result.push(this.paintBorder("╰" + "─".repeat(width - 2) + "╯"));
-		} else {
-			result.push(this.bgFn ? this.paintBorder("─".repeat(width)) : horizontal.repeat(width));
-		}
+		result.push(this.renderBottomBorder(width, linesBelow));
 
 		// Add autocomplete list if active
 		this.renderedAutocompleteHeight = 0;
