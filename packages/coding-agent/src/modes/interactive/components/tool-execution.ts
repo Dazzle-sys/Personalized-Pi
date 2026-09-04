@@ -6,6 +6,7 @@ import {
 	getCapabilities,
 	Image,
 	MouseRegion,
+	Panel,
 	Spacer,
 	Text,
 	type TUI,
@@ -204,6 +205,23 @@ export class ToolExecutionComponent extends Container {
 		return new Text(text, 0, 0);
 	}
 
+	/** preview/expanded 结果区按状态着色 Panel：pending/success/error 三态。title 模式不走这里；self 壳原样返回。 */
+	private wrapResultPanel(component: Component): Component {
+		if (this.getRenderShell() === "self") return component;
+		const stateBg: "toolErrorBg" | "toolPendingBg" | "toolSuccessBg" = this.result?.isError
+			? "toolErrorBg"
+			: this.isPartial
+				? "toolPendingBg"
+				: "toolSuccessBg";
+		const resultPanel = new Panel({
+			bg: (text: string) => theme.bg(stateBg, text),
+			padX: 1,
+			padY: 0,
+		});
+		resultPanel.addChild(component);
+		return resultPanel;
+	}
+
 	private createResultRegion(component: Component): MouseRegion {
 		return new MouseRegion(component, (event) => {
 			if (!this.result || event.type !== "click" || event.button !== "left") return undefined;
@@ -365,7 +383,7 @@ export class ToolExecutionComponent extends Container {
 				if (!resultRenderer) {
 					const component = this.createResultFallback();
 					if (component) {
-						renderContainer.addChild(this.createResultRegion(component));
+						renderContainer.addChild(this.createResultRegion(this.wrapResultPanel(component)));
 						hasContent = true;
 					}
 				} else {
@@ -381,13 +399,13 @@ export class ToolExecutionComponent extends Container {
 							this.getRenderContext(this.resultRendererComponent),
 						);
 						this.resultRendererComponent = component;
-						renderContainer.addChild(this.createResultRegion(component));
+						renderContainer.addChild(this.createResultRegion(this.wrapResultPanel(component)));
 						hasContent = true;
 					} catch {
 						this.resultRendererComponent = undefined;
 						const component = this.createResultFallback();
 						if (component) {
-							renderContainer.addChild(this.createResultRegion(component));
+							renderContainer.addChild(this.createResultRegion(this.wrapResultPanel(component)));
 							hasContent = true;
 						}
 					}

@@ -1,4 +1,4 @@
-import { Container, LeftBarBox, Markdown, type MarkdownTheme } from "@earendil-works/pi-tui";
+import { Container, LeftBarBox, Markdown, type MarkdownTheme, Panel } from "@earendil-works/pi-tui";
 import type { MarkdownTransformer } from "../../../core/extensions/types.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { createMarkdownTransform } from "./markdown-transform.ts";
@@ -54,7 +54,15 @@ export class UserMessageComponent extends Container {
 				},
 			),
 		);
-		this.addChild(contentBox);
+		// 外层 Panel 铺 userMessageBg 浅底；padX/padY 均为 0——缩进由 LeftBarBox(outputPad)
+		// 负责，轮次间隔由外层 Spacer 三件套负责，避免双重留白。
+		const panel = new Panel({
+			bg: (text: string) => theme.bg("userMessageBg", text),
+			padX: 0,
+			padY: 0,
+		});
+		panel.addChild(contentBox);
+		this.addChild(panel);
 	}
 
 	override render(width: number): string[] {

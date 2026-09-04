@@ -1,5 +1,5 @@
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { Container, Markdown, type MarkdownTheme, MouseRegion, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { Container, Markdown, type MarkdownTheme, MouseRegion, Panel, Spacer, Text, t } from "@earendil-works/pi-tui";
 import type { MarkdownTransformer } from "../../../core/extensions/types.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { createMarkdownTransform } from "./markdown-transform.ts";
@@ -41,7 +41,16 @@ export class AssistantMessageComponent extends Container {
 
 		// Container for text/thinking content
 		this.contentContainer = new Container();
-		this.addChild(this.contentContainer);
+		// 外层 Panel 铺 assistantBg 色块并补全行宽：Panel.paint 统一补右侧空隙，
+		// Spacer 空行 / Text 错误行 / Markdown 行全覆盖，比 Markdown.defaultTextStyle.bgColor
+		// 只盖 Markdown 行更连续，故只用 Panel、不叠加 bgColor，避免双重背景。
+		const panel = new Panel({
+			bg: (text: string) => theme.bg("assistantBg", text),
+			padX: 1,
+			padY: 0,
+		});
+		panel.addChild(this.contentContainer);
+		this.addChild(panel);
 
 		if (message) {
 			this.updateContent(message);

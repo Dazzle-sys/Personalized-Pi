@@ -1,4 +1,4 @@
-import type { Component } from "../tui.ts";
+import { type Component, dispatchMouseEvent, type TuiMouseDispatchResult, type TuiMouseEvent } from "../tui.ts";
 import { applyBackgroundToLine, truncateToWidth, visibleWidth } from "../utils.ts";
 
 export interface PanelOptions {
@@ -44,6 +44,33 @@ export class Panel implements Component {
 
 	invalidate(): void {
 		for (const child of this.children) child.invalidate?.();
+	}
+
+	// 鼠标事件透传：子组件按 contentWidth 堆叠，坐标去 padX/padY（及顶边框行）偏移。
+	// 无此方法时 dispatchMouseEvent 直接返回，Panel 内 MouseRegion（如 thinking 折叠、tool 展开）会失活。
+	handleMouse(event: TuiMouseEvent): TuiMouseDispatchResult | undefined {
+		const { padX, padY, border } = this.options;
+		const contentWidth = Math.max(1, event.width - padX * 2);
+		const topOffset = padY + (border === "line" || border === "rounded" ? 1 : 0);
+		const contentY = event.y - topOffset;
+		const contentX = event.x - padX;
+		if (contentY < 0 || contentX < 0 || contentX >= contentWidth) return undefined;
+
+		let childY = 0;
+		for (const child of this.children) {
+			const childHeight = child.render(contentWidth).length;
+			if (contentY >= childY && contentY < childY + childHeight) {
+				return dispatchMouseEvent(child, {
+					...event,
+					x: contentX,
+					y: contentY - childY,
+					width: contentWidth,
+					height: childHeight,
+				});
+			}
+			childY += childHeight;
+		}
+		return undefined;
 	}
 
 	render(width: number): string[] {
