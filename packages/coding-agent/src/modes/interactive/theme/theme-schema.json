@@ -86,7 +86,10 @@
 				"thinkingMedium",
 				"thinkingHigh",
 				"thinkingXhigh",
-				"bashMode"
+				"bashMode",
+				"assistantBg",
+				"panelBg",
+				"editorBorder"
 			],
 			"properties": {
 				"accent": {
@@ -104,6 +107,10 @@
 				"borderMuted": {
 					"$ref": "#/$defs/colorValue",
 					"description": "Subtle borders"
+				},
+				"editorBorder": {
+					"$ref": "#/$defs/colorValue",
+					"description": "Editor rounded border color"
 				},
 				"success": {
 					"$ref": "#/$defs/colorValue",
@@ -156,6 +163,14 @@
 				"userMessageText": {
 					"$ref": "#/$defs/colorValue",
 					"description": "User message text color"
+				},
+				"assistantBg": {
+					"$ref": "#/$defs/colorValue",
+					"description": "Assistant message panel background"
+				},
+				"panelBg": {
+					"$ref": "#/$defs/colorValue",
+					"description": "Editor and generic panel background"
 				},
 				"customMessageBg": {
 					"$ref": "#/$defs/colorValue",

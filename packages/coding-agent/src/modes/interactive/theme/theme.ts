@@ -42,6 +42,7 @@ export type ThemeColor =
 	| "accent"
 	| "border"
 	| "borderAccent"
+	| "editorBorder"
 	| "borderMuted"
 	| "success"
 	| "error"
@@ -89,6 +90,8 @@ export type ThemeColor =
 
 export type ThemeBg =
 	| "selectedBg"
+	| "assistantBg"
+	| "panelBg"
 	| "scrollbarThumb"
 	| "searchMatchBg"
 	| "userMessageBg"
@@ -106,6 +109,8 @@ type ColorMode = "truecolor" | "256color";
 // in the TUI, and to ``transparent`` in HTML export so it doesn't paint a card with the text color.
 const BG_COLOR_KEYS: Set<string> = new Set([
 	"selectedBg",
+	"assistantBg",
+	"panelBg",
 	"scrollbarThumb",
 	"searchMatchBg",
 	"userMessageBg",
