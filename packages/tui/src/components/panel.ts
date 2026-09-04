@@ -26,7 +26,12 @@ export class Panel implements Component {
 	private options: Required<Pick<PanelOptions, "padX" | "padY">> & PanelOptions;
 
 	constructor(options: PanelOptions = {}) {
-		this.options = { padX: 1, padY: 1, ...options };
+		// 负值钳制为 0，避免 render 中 repeat 抛 RangeError
+		this.options = {
+			...options,
+			padX: Math.max(0, options.padX ?? 1),
+			padY: Math.max(0, options.padY ?? 1),
+		};
 	}
 
 	addChild(component: Component): void {

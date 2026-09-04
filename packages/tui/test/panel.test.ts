@@ -97,3 +97,12 @@ test("Panel invalidate 后重新渲染", () => {
 	const second = panel.render(6);
 	assert.notStrictEqual(stripAnsi(first[0]), stripAnsi(second[0]));
 });
+
+test("Panel 负 padX/padY 被钳制为 0，render 不抛错且行数正常", () => {
+	// 负内边距无意义，构造器钳制为 0 后只剩 1 内容行
+	const panel = new Panel({ padX: -2, padY: -1 });
+	panel.addChild(new Text("hi", 0, 0));
+	const lines = panel.render(10);
+	assert.strictEqual(lines.length, 1);
+	assert.strictEqual(stripAnsi(lines[0]).trim(), "hi");
+});
