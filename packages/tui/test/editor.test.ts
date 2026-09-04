@@ -4198,4 +4198,35 @@ describe("Editor component", () => {
 			assert.equal(editor.getAutocompleteMaxVisible(), 10);
 		});
 	});
+
+	describe("Rounded border + background (Task 3)", () => {
+		it("editor renders rounded corners when enabled", () => {
+			const borderColor = (text: string) => `\x1b[38;5;39m${text}\x1b[39m`;
+			// 激活圆角：EditorTheme 增加可选 rounded 字段
+			const rounded = new Editor(createTestTUI(40), {
+				...defaultEditorTheme,
+				borderColor,
+				rounded: true,
+				bgFn: (t) => `\x1b[48;5;17m${t}\x1b[49m`,
+			});
+			rounded.setText("hello");
+			const lines = rounded.render(40);
+			const top = stripVTControlCharacters(lines[0]);
+			const bottom = stripVTControlCharacters(lines[lines.length - 1]);
+			assert.match(top, /^╭/);
+			assert.match(top, /╮$/);
+			assert.match(bottom, /^╰/);
+			assert.match(bottom, /╯$/);
+			// 内容行有背景
+			assert.ok(lines[1].includes("\x1b[48;5;17m"));
+		});
+
+		it("editor default (no rounded) keeps plain horizontal borders", () => {
+			const editor = new Editor(createTestTUI(40), { ...defaultEditorTheme });
+			editor.setText("hi");
+			const lines = editor.render(40);
+			assert.match(stripVTControlCharacters(lines[0]), /^─+$/);
+			assert.match(stripVTControlCharacters(lines[lines.length - 1]), /^─+$/);
+		});
+	});
 });

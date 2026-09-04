@@ -13,6 +13,7 @@ import {
 } from "../tui.ts";
 import { UndoStack } from "../undo-stack.ts";
 import {
+	applyBackgroundToLine,
 	cjkBreakRegex,
 	getGraphemeSegmenter,
 	getWordSegmenter,
@@ -270,6 +271,10 @@ interface LayoutLine {
 export interface EditorTheme {
 	borderColor: (str: string) => string;
 	selectList: SelectListTheme;
+	/** 圆角边框模式（默认 false = 直线）。 */
+	rounded?: boolean;
+	/** 编辑器整体背景（含边框行与内容行）。 */
+	bgFn?: (text: string) => string;
 }
 
 export interface EditorOptions {
@@ -338,6 +343,10 @@ export class Editor implements Component, Focusable {
 	// Border color (can be changed dynamically)
 	public borderColor: (str: string) => string;
 
+	// 圆角框 + 背景（Task 3：编辑器视觉锚点升级）
+	private rounded: boolean = false;
+	private bgFn?: (text: string) => string;
+
 	// Autocomplete support
 	private autocompleteProvider?: AutocompleteProvider;
 	private autocompleteTriggerCharacters = [...DEFAULT_AUTOCOMPLETE_TRIGGER_CHARACTERS];
@@ -397,6 +406,8 @@ export class Editor implements Component, Focusable {
 		this.tui = tui;
 		this.theme = theme;
 		this.borderColor = theme.borderColor;
+		this.rounded = theme.rounded ?? false;
+		this.bgFn = theme.bgFn;
 		const paddingX = options.paddingX ?? 0;
 		this.paddingX = Number.isFinite(paddingX) ? Math.max(0, Math.floor(paddingX)) : 0;
 		const maxVisible = options.autocompleteMaxVisible ?? 10;
@@ -540,6 +551,26 @@ export class Editor implements Component, Focusable {
 		// No cached state to invalidate currently
 	}
 
+	/**
+	 * 边框行着色 + 背景：先套 borderColor 再套 bgFn，保证背景连续不断裂。
+	 */
+	private paintBorder(border: string): string {
+		const colored = this.borderColor(border);
+		return this.bgFn ? this.bgFn(colored) : colored;
+	}
+
+	/**
+	 * 圆角化滚动指示边框：首字符换左角、末字符换右角，指示文本夹中间。
+	 * 纯文本阶段替换（上色前），角字符与 ─ 同为单列宽，不影响宽度。
+	 */
+	private roundScrollBorder(border: string, left: string, right: string): string {
+		const chars = Array.from(border);
+		if (!this.rounded || chars.length < 2) return border;
+		chars[0] = left;
+		chars[chars.length - 1] = right;
+		return chars.join("");
+	}
+
 	render(width: number): string[] {
 		const maxPadding = Math.max(0, Math.floor((width - 1) / 2));
 		const paddingX = Math.min(this.paddingX, maxPadding);
@@ -586,10 +617,12 @@ export class Editor implements Component, Focusable {
 
 		// Render top border (with scroll indicator if scrolled down)
 		if (this.scrollOffset > 0) {
-			const border = createScrollBorder("↑", this.scrollOffset, width);
-			result.push(this.borderColor(border));
+			const border = this.roundScrollBorder(createScrollBorder("↑", this.scrollOffset, width), "╭", "╮");
+			result.push(this.paintBorder(border));
+		} else if (this.rounded && width >= 2) {
+			result.push(this.paintBorder("╭" + "─".repeat(width - 2) + "╮"));
 		} else {
-			result.push(horizontal.repeat(width));
+			result.push(this.bgFn ? this.paintBorder("─".repeat(width)) : horizontal.repeat(width));
 		}
 
 		// Render each visible layout line
@@ -637,16 +670,19 @@ export class Editor implements Component, Focusable {
 			const lineRightPadding = cursorInPadding ? rightPadding.slice(1) : rightPadding;
 
 			// Render the line (no side borders, just horizontal lines above and below)
-			result.push(`${leftPadding}${displayText}${padding}${lineRightPadding}`);
+			const renderedLine = `${leftPadding}${displayText}${padding}${lineRightPadding}`;
+			result.push(this.bgFn ? applyBackgroundToLine(renderedLine, width, this.bgFn) : renderedLine);
 		}
 
 		// Render bottom border (with scroll indicator if more content below)
 		const linesBelow = layoutLines.length - (this.scrollOffset + visibleLines.length);
 		if (linesBelow > 0) {
-			const border = createScrollBorder("↓", linesBelow, width);
-			result.push(this.borderColor(border));
+			const border = this.roundScrollBorder(createScrollBorder("↓", linesBelow, width), "╰", "╯");
+			result.push(this.paintBorder(border));
+		} else if (this.rounded && width >= 2) {
+			result.push(this.paintBorder("╰" + "─".repeat(width - 2) + "╯"));
 		} else {
-			result.push(horizontal.repeat(width));
+			result.push(this.bgFn ? this.paintBorder("─".repeat(width)) : horizontal.repeat(width));
 		}
 
 		// Add autocomplete list if active
@@ -657,7 +693,8 @@ export class Editor implements Component, Focusable {
 			for (const line of autocompleteResult) {
 				const lineWidth = visibleWidth(line);
 				const linePadding = " ".repeat(Math.max(0, contentWidth - lineWidth));
-				result.push(`${leftPadding}${line}${linePadding}${rightPadding}`);
+				const renderedLine = `${leftPadding}${line}${linePadding}${rightPadding}`;
+				result.push(this.bgFn ? applyBackgroundToLine(renderedLine, width, this.bgFn) : renderedLine);
 			}
 		}
 

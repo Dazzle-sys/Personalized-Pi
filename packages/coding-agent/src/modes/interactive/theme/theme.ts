@@ -1228,8 +1228,10 @@ export function getSelectListTheme(): SelectListTheme {
 
 export function getEditorTheme(): EditorTheme {
 	return {
-		borderColor: (text: string) => theme.fg("borderMuted", text),
+		borderColor: (text: string) => theme.fg("editorBorder", text),
 		selectList: getSelectListTheme(),
+		rounded: true,
+		bgFn: (text: string) => theme.bg("panelBg", text),
 	};
 }
 
