@@ -7,13 +7,13 @@ import {
 	Input,
 	Key,
 	matchesKey,
+	Panel,
 	Spacer,
 	Text,
 	t,
 } from "@earendil-works/pi-tui";
 import { getModelSearchText } from "../model-search.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyText } from "./keybinding-hints.ts";
 
 // EnabledIds: null = all enabled (no filter), string[] = explicit ordered list
@@ -133,37 +133,36 @@ export class ScopedModelsSelectorComponent extends Container implements Focusabl
 		this.filteredItems = this.buildItems();
 
 		// Header
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("accent", theme.bold(t("Model Configuration"))), 0, 0));
-		this.addChild(
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
+		panel.addChild(new Text(theme.fg("accent", theme.bold(t("Model Configuration"))), 0, 0));
+		panel.addChild(
 			new Text(
 				theme.fg("muted", t("Session-only. {keys} to save to settings.", { keys: keyText("app.models.save") })),
 				0,
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		// Search input
 		this.searchInput = new Input();
-		this.addChild(this.searchInput);
-		this.addChild(new Spacer(1));
+		panel.addChild(this.searchInput);
+		panel.addChild(new Spacer(1));
 
 		// List container
 		this.listContainer = new Container();
-		this.addChild(this.listContainer);
+		panel.addChild(this.listContainer);
 
 		// Footer hint
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 		if (config.refreshStatus) {
 			this.refreshStatusText = new Text(theme.fg("muted", `  ${config.refreshStatus}`), 0, 0);
-			this.addChild(this.refreshStatusText);
+			panel.addChild(this.refreshStatusText);
 		}
 		this.footerText = new Text(this.getFooterText(), 0, 0);
-		this.addChild(this.footerText);
-
-		this.addChild(new DynamicBorder());
+		panel.addChild(this.footerText);
 		this.updateList();
 	}
 

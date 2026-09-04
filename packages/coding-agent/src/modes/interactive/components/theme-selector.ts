@@ -1,5 +1,6 @@
 import {
 	Container,
+	Panel,
 	type SelectItem,
 	SelectList,
 	type SelectListLayoutOptions,
@@ -8,7 +9,6 @@ import {
 	t,
 } from "@earendil-works/pi-tui";
 import { getAvailableThemes, getSelectListTheme, theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 
 const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	minPrimaryColumnWidth: 12,
@@ -39,10 +39,11 @@ export class ThemeSelectorComponent extends Container {
 		}));
 
 		// Top border, title, and separator
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.bold(theme.fg("accent", t("Theme"))), 0, 0));
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
+		panel.addChild(new Text(theme.bold(theme.fg("accent", t("Theme"))), 0, 0));
+		panel.addChild(new Spacer(1));
 
 		// Create selector
 		this.selectList = new SelectList(themeItems, 15, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
@@ -65,12 +66,11 @@ export class ThemeSelectorComponent extends Container {
 			this.onPreview(item.value);
 		};
 
-		this.addChild(this.selectList);
+		panel.addChild(this.selectList);
 
 		// Bottom hint and border
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("dim", t("  Enter to select · Esc to cancel")), 0, 0));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
+		panel.addChild(new Text(theme.fg("dim", t("  Enter to select · Esc to cancel")), 0, 0));
 	}
 
 	getSelectList(): SelectList {

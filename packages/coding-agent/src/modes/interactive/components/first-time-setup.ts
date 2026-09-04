@@ -1,7 +1,6 @@
-import { Container, getKeybindings, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Panel, Spacer, Text, t } from "@earendil-works/pi-tui";
 import { APP_NAME } from "../../../config.ts";
 import { type TerminalTheme, theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 export interface FirstTimeSetupResult {
@@ -48,36 +47,38 @@ export class FirstTimeSetupComponent extends Container {
 	// Rebuild the whole dialog on every change so theme previews recolor all text.
 	private update(): void {
 		this.clear();
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
-		this.addChild(new Spacer(1));
-		this.addChild(
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
+		panel.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
+		panel.addChild(new Spacer(1));
+		panel.addChild(
 			new Text(
 				theme.fg("accent", theme.bold(t("Welcome to {name}, the minimal coding agent.", { name: APP_NAME }))),
 				1,
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		if (this.step === "theme") {
-			this.addChild(new Text(theme.fg("text", t("Pick a theme.")), 1, 0));
-			this.addChild(
+			panel.addChild(new Text(theme.fg("text", t("Pick a theme.")), 1, 0));
+			panel.addChild(
 				new Text(
 					theme.fg("muted", t("Detected system appearance: {theme}", { theme: this.options.detectedTheme })),
 					1,
 					0,
 				),
 			);
-			this.addChild(new Spacer(1));
+			panel.addChild(new Spacer(1));
 			this.addOptionList(
+				panel,
 				THEME_OPTIONS.map((option) => t(option.label)),
 				this.themeIndex,
 			);
 		} else {
-			this.addChild(new Text(theme.fg("text", t("Opt-in to anonymous usage data sharing?")), 1, 0));
-			this.addChild(
+			panel.addChild(new Text(theme.fg("text", t("Opt-in to anonymous usage data sharing?")), 1, 0));
+			panel.addChild(
 				new Text(
 					theme.fg(
 						"muted",
@@ -89,15 +90,16 @@ export class FirstTimeSetupComponent extends Container {
 					0,
 				),
 			);
-			this.addChild(new Spacer(1));
+			panel.addChild(new Spacer(1));
 			this.addOptionList(
+				panel,
 				ANALYTICS_OPTIONS.map((option) => t(option.label)),
 				this.analyticsIndex,
 			);
 		}
 
-		this.addChild(new Spacer(1));
-		this.addChild(
+		panel.addChild(new Spacer(1));
+		panel.addChild(
 			new Text(
 				rawKeyHint("↑↓", "navigate") +
 					"  " +
@@ -108,16 +110,15 @@ export class FirstTimeSetupComponent extends Container {
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 	}
 
-	private addOptionList(labels: string[], selectedIndex: number): void {
+	private addOptionList(panel: Panel, labels: string[], selectedIndex: number): void {
 		for (let i = 0; i < labels.length; i++) {
 			const isSelected = i === selectedIndex;
 			const prefix = isSelected ? theme.fg("accent", "→ ") : "  ";
 			const label = isSelected ? theme.fg("accent", labels[i]) : theme.fg("text", labels[i]);
-			this.addChild(new Text(`${prefix}${label}`, 1, 0));
+			panel.addChild(new Text(`${prefix}${label}`, 1, 0));
 		}
 	}
 

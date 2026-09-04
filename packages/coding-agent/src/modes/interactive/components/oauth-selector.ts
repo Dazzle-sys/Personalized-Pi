@@ -5,12 +5,12 @@ import {
 	fuzzyFilter,
 	getKeybindings,
 	Input,
+	Panel,
 	Spacer,
 	TruncatedText,
 	t,
 } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 
 export type AuthSelectorProvider = {
 	id: string;
@@ -66,13 +66,14 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 		this.onCancelCallback = onCancel;
 
 		// Add top border
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 
 		// Add title
 		const title = mode === "login" ? t("Select provider to configure:") : t("Select provider to logout:");
-		this.addChild(new TruncatedText(theme.fg("accent", theme.bold(title)), 1, 0));
-		this.addChild(new Spacer(1));
+		panel.addChild(new TruncatedText(theme.fg("accent", theme.bold(title)), 1, 0));
+		panel.addChild(new Spacer(1));
 
 		this.searchInput = new Input();
 		if (initialSearchInput) {
@@ -84,17 +85,14 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 				this.onSelectCallback(selectedProvider.id, selectedProvider.authType);
 			}
 		};
-		this.addChild(this.searchInput);
-		this.addChild(new Spacer(1));
+		panel.addChild(this.searchInput);
+		panel.addChild(new Spacer(1));
 
 		// Create list container
 		this.listContainer = new Container();
-		this.addChild(this.listContainer);
+		panel.addChild(this.listContainer);
 
-		this.addChild(new Spacer(1));
-
-		// Add bottom border
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 
 		// Initial render
 		this.filterProviders(initialSearchInput ?? "");

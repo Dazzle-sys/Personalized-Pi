@@ -8,6 +8,7 @@ import {
 	type Focusable,
 	getKeybindings,
 	Input,
+	Panel,
 	Spacer,
 	Text,
 	t,
@@ -18,7 +19,6 @@ import { KeybindingsManager } from "../../../core/keybindings.ts";
 import type { SessionInfo, SessionListProgress } from "../../../core/session-manager.ts";
 import { canonicalizePath as _canonicalizePath } from "../../../utils/paths.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, keyText } from "./keybinding-hints.ts";
 import { filterAndSortSessions, hasSessionName, type NameFilter, type SortMode } from "./session-selector-search.ts";
 
@@ -746,15 +746,15 @@ export class SessionSelectorComponent extends Container implements Focusable {
 	private buildBaseLayout(content: Component, options?: { showHeader?: boolean }): void {
 		this.clear();
 		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder((s) => theme.fg("accent", s)));
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (s: string) => theme.fg("accent", s), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 		if (options?.showHeader ?? true) {
-			this.addChild(this.header);
-			this.addChild(new Spacer(1));
+			panel.addChild(this.header);
+			panel.addChild(new Spacer(1));
 		}
-		this.addChild(content);
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder((s) => theme.fg("accent", s)));
+		panel.addChild(content);
+		panel.addChild(new Spacer(1));
 	}
 
 	constructor(
@@ -884,7 +884,7 @@ export class SessionSelectorComponent extends Container implements Focusable {
 		this.renameInput.focused = true;
 
 		const panel = new Container();
-		panel.addChild(new Text(theme.bold(t("Rename Session")), 1, 0));
+		panel.addChild(new Text(theme.bold(theme.fg("accent", t("Rename Session"))), 1, 0));
 		panel.addChild(new Spacer(1));
 		panel.addChild(this.renameInput);
 		panel.addChild(new Spacer(1));

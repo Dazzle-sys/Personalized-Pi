@@ -6,6 +6,7 @@ import {
 	getKeybindings,
 	Input,
 	matchesKey,
+	Panel,
 	type SelectItem,
 	SelectList,
 	type SelectListLayoutOptions,
@@ -14,7 +15,6 @@ import {
 	t,
 } from "@earendil-works/pi-tui";
 import { getSelectListTheme, theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyDisplayText } from "./keybinding-hints.ts";
 
 const THINKING_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
@@ -36,6 +36,7 @@ const LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
  * Component that renders a thinking level selector with borders
  */
 export class ThinkingSelectorComponent extends Container implements Focusable {
+	private panel: Panel;
 	private searchInput: Input;
 	private selectList: SelectList;
 	private selectListChildIndex: number;
@@ -77,29 +78,29 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 		}));
 
 		// Add top border
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.bold(theme.fg("accent", t("Thinking Level"))), 0, 0));
-		this.addChild(new Spacer(1));
-		this.addChild(
+		this.panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(this.panel);
+		this.panel.addChild(new Spacer(1));
+		this.panel.addChild(new Text(theme.bold(theme.fg("accent", t("Thinking Level"))), 0, 0));
+		this.panel.addChild(new Spacer(1));
+		this.panel.addChild(
 			new Text(t("{keys} cycles thinking levels in-session", { keys: keyDisplayText("app.thinking.cycle") }), 0, 0),
 		);
-		this.addChild(new Spacer(1));
+		this.panel.addChild(new Spacer(1));
 
 		this.searchInput = new Input();
 		this.searchInput.onSubmit = () => this.selectList.handleInput("\r");
-		this.addChild(this.searchInput);
-		this.addChild(new Spacer(1));
+		this.panel.addChild(this.searchInput);
+		this.panel.addChild(new Spacer(1));
 
 		// Create selector
 		this.selectList = this.buildSelectList(this.allItems, currentLevel);
-		this.selectListChildIndex = this.children.length;
-		this.addChild(this.selectList);
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("dim", t("  Enter to select · Ctrl+S to set as default · Esc to cancel")), 0, 0));
-
-		// Add bottom border
-		this.addChild(new DynamicBorder());
+		this.selectListChildIndex = this.panel.children.length;
+		this.panel.addChild(this.selectList);
+		this.panel.addChild(new Spacer(1));
+		this.panel.addChild(
+			new Text(theme.fg("dim", t("  Enter to select · Ctrl+S to set as default · Esc to cancel")), 0, 0),
+		);
 	}
 
 	private buildSelectList(items: SelectItem[], preselect?: ThinkingLevel): SelectList {
@@ -119,7 +120,7 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 			: this.allItems;
 		const selectedValue = this.selectList.getSelectedItem()?.value as ThinkingLevel | undefined;
 		const newList = this.buildSelectList(filtered, selectedValue);
-		this.children[this.selectListChildIndex] = newList;
+		this.panel.children[this.selectListChildIndex] = newList;
 		this.selectList = newList;
 	}
 

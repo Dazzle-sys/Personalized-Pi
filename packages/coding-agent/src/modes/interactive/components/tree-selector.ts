@@ -5,6 +5,7 @@ import {
 	getKeybindings,
 	Input,
 	type Keybinding,
+	Panel,
 	Spacer,
 	sliceByColumn,
 	Text,
@@ -1376,16 +1377,16 @@ export class TreeSelectorComponent extends Container implements Focusable {
 		this.labelInputContainer = new Container();
 
 		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
-		this.addChild(new Text(theme.bold(theme.fg("accent", t("Session Tree"))), 1, 0));
-		this.addChild(new TreeHelp());
-		this.addChild(new SearchLine(this.treeList));
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(this.treeContainer);
-		this.addChild(this.labelInputContainer);
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Text(theme.bold(theme.fg("accent", t("Session Tree"))), 1, 0));
+		panel.addChild(new TreeHelp());
+		panel.addChild(new SearchLine(this.treeList));
+		panel.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
+		panel.addChild(this.treeContainer);
+		panel.addChild(this.labelInputContainer);
+		panel.addChild(new Spacer(1));
 
 		if (tree.length === 0) {
 			setTimeout(() => onCancel(), 100);

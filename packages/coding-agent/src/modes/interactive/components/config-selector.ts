@@ -11,6 +11,7 @@ import {
 	getKeybindings,
 	Input,
 	matchesKey,
+	Panel,
 	Spacer,
 	t,
 	truncateToWidth,
@@ -22,7 +23,6 @@ import { toPosixPath } from "../../../core/package-manager.ts";
 import type { PackageSource, SettingsManager } from "../../../core/settings-manager.ts";
 import { canonicalizePath, isLocalPath, resolvePath } from "../../../utils/paths.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 type ResourceType = "extensions" | "skills" | "prompts" | "themes";
@@ -905,11 +905,12 @@ export class ConfigSelectorComponent extends Container implements Focusable {
 
 		// Add header
 		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 		this.header = new ConfigSelectorHeader(this.writeScope, projectModeAvailable);
-		this.addChild(this.header);
-		this.addChild(new Spacer(1));
+		panel.addChild(this.header);
+		panel.addChild(new Spacer(1));
 
 		// Resource list
 		this.resourceList = new ResourceList(
@@ -929,11 +930,10 @@ export class ConfigSelectorComponent extends Container implements Focusable {
 				requestRender();
 			};
 		}
-		this.addChild(this.resourceList);
+		panel.addChild(this.resourceList);
 
 		// Bottom border
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 	}
 
 	private switchWriteScope(): void {

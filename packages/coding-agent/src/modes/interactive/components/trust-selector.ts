@@ -1,11 +1,10 @@
-import { Container, getKeybindings, Spacer, Text, t } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Panel, Spacer, Text, t } from "@earendil-works/pi-tui";
 import {
 	getProjectTrustOptions,
 	type ProjectTrustOption,
 	type ProjectTrustStoreEntry,
 } from "../../../core/trust-manager.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 export type TrustSelection = Pick<ProjectTrustOption, "trusted" | "updates">;
@@ -49,12 +48,13 @@ export class TrustSelectorComponent extends Container {
 		this.onSelectCallback = options.onSelect;
 		this.onCancelCallback = options.onCancel;
 
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("accent", theme.bold(t("Project trust"))), 1, 0));
-		this.addChild(new Text(theme.fg("muted", options.cwd), 1, 0));
-		this.addChild(new Spacer(1));
-		this.addChild(
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
+		panel.addChild(new Text(theme.fg("accent", theme.bold(t("Project trust"))), 1, 0));
+		panel.addChild(new Text(theme.fg("muted", options.cwd), 1, 0));
+		panel.addChild(new Spacer(1));
+		panel.addChild(
 			new Text(
 				theme.fg(
 					"muted",
@@ -66,7 +66,7 @@ export class TrustSelectorComponent extends Container {
 				0,
 			),
 		);
-		this.addChild(
+		panel.addChild(
 			new Text(
 				theme.fg(
 					"muted",
@@ -76,12 +76,12 @@ export class TrustSelectorComponent extends Container {
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		this.listContainer = new Container();
-		this.addChild(this.listContainer);
-		this.addChild(new Spacer(1));
-		this.addChild(
+		panel.addChild(this.listContainer);
+		panel.addChild(new Spacer(1));
+		panel.addChild(
 			new Text(
 				rawKeyHint("↑↓", "navigate") +
 					"  " +
@@ -92,8 +92,7 @@ export class TrustSelectorComponent extends Container {
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 
 		this.updateList();
 	}

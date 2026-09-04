@@ -4,10 +4,9 @@
  * Mirrors the LoginDialogComponent prompt/append/input pattern.
  */
 
-import { Container, getKeybindings, Input, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Input, Panel, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
 import type { ModelsJsonProvider } from "../../../core/model-config.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint } from "./keybinding-hints.ts";
 import {
 	API_CHOICES,
@@ -57,11 +56,12 @@ export class ProviderWizardDialog extends Container {
 		this.askChoiceCallback = askChoice;
 		this.initialProviderId = initialProviderId;
 
-		this.addChild(new DynamicBorder());
-		this.addChild(new Text(theme.fg("accent", theme.bold(t("Add custom provider"))), 1, 0));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Text(theme.fg("accent", theme.bold(t("Add custom provider"))), 1, 0));
 
 		this.contentContainer = new Container();
-		this.addChild(this.contentContainer);
+		panel.addChild(this.contentContainer);
 
 		this.input = new Input();
 		this.input.onSubmit = () => {
@@ -74,8 +74,6 @@ export class ProviderWizardDialog extends Container {
 			}
 		};
 		this.input.onEscape = () => this.cancel();
-
-		this.addChild(new DynamicBorder());
 	}
 
 	get signal(): AbortSignal {

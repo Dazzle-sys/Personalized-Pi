@@ -4,6 +4,7 @@ import {
 	fuzzyFilter,
 	getKeybindings,
 	Input,
+	Panel,
 	type SelectItem,
 	SelectList,
 	type SelectListLayoutOptions,
@@ -30,6 +31,7 @@ export interface SelectSubmenuOptions {
  * With `searchable: true`, typing filters the list using fuzzy matching.
  */
 export class SelectSubmenu extends Container {
+	private panel: Panel;
 	private selectList: SelectList;
 	private listChildIndex: number;
 	private allOptions: SelectItem[];
@@ -58,38 +60,40 @@ export class SelectSubmenu extends Container {
 		this.onSelectionChangeCb = onSelectionChange;
 
 		// Title
-		this.addChild(new Text(theme.bold(theme.fg("accent", title)), 0, 0));
+		this.panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(this.panel);
+		this.panel.addChild(new Text(theme.bold(theme.fg("accent", title)), 0, 0));
 
 		// Description
 		if (description) {
-			this.addChild(new Spacer(1));
-			this.addChild(new Text(theme.fg("muted", description), 0, 0));
+			this.panel.addChild(new Spacer(1));
+			this.panel.addChild(new Text(theme.fg("muted", description), 0, 0));
 		}
 
 		// Search input
 		if (submenuOptions?.searchable) {
-			this.addChild(new Spacer(1));
+			this.panel.addChild(new Spacer(1));
 			this.searchInput = new Input();
 			this.searchInput.onSubmit = () => {
 				this.selectList.handleInput("\r");
 			};
-			this.addChild(this.searchInput);
+			this.panel.addChild(this.searchInput);
 		}
 
 		// Spacer
-		this.addChild(new Spacer(1));
+		this.panel.addChild(new Spacer(1));
 
 		// Select list
 		this.selectList = this.buildSelectList(options, currentValue);
-		this.listChildIndex = this.children.length;
-		this.addChild(this.selectList);
+		this.listChildIndex = this.panel.children.length;
+		this.panel.addChild(this.selectList);
 
 		// Hint
-		this.addChild(new Spacer(1));
+		this.panel.addChild(new Spacer(1));
 		const hint = submenuOptions?.searchable
 			? t("  Type to filter \u00b7 Enter to select \u00b7 Esc to go back")
 			: t("  Enter to select \u00b7 Esc to go back");
-		this.addChild(new Text(theme.fg("dim", hint), 0, 0));
+		this.panel.addChild(new Text(theme.fg("dim", hint), 0, 0));
 	}
 
 	private buildSelectList(options: SelectItem[], preselect: string): SelectList {
@@ -114,7 +118,7 @@ export class SelectSubmenu extends Container {
 			: this.allOptions;
 
 		const newList = this.buildSelectList(filtered, "");
-		this.children[this.listChildIndex] = newList;
+		this.panel.children[this.listChildIndex] = newList;
 		this.selectList = newList;
 	}
 

@@ -1,6 +1,14 @@
-import { type Component, Container, getKeybindings, Spacer, Text, t, truncateToWidth } from "@earendil-works/pi-tui";
+import {
+	type Component,
+	Container,
+	getKeybindings,
+	Panel,
+	Spacer,
+	Text,
+	t,
+	truncateToWidth,
+} from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 
 interface UserMessageItem {
 	id: string; // Entry ID in the session
@@ -129,19 +137,19 @@ export class UserMessageSelectorComponent extends Container {
 			),
 		);
 		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 
 		// Create message list
 		this.messageList = new UserMessageList(messages, initialSelectedId);
 		this.messageList.onSelect = onSelect;
 		this.messageList.onCancel = onCancel;
 
-		this.addChild(this.messageList);
+		panel.addChild(this.messageList);
 
 		// Add bottom border
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 
 		// Auto-cancel if no messages
 		if (messages.length === 0) {

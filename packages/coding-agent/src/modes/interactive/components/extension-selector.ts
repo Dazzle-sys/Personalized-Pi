@@ -3,10 +3,9 @@
  * Displays a list of string options with keyboard navigation.
  */
 
-import { Container, getKeybindings, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Panel, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
 import { theme } from "../theme/theme.ts";
 import { CountdownTimer } from "./countdown-timer.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 export interface ExtensionSelectorOptions {
@@ -41,12 +40,13 @@ export class ExtensionSelectorComponent extends Container {
 		this.onToggleToolsExpanded = opts?.onToggleToolsExpanded;
 		this.baseTitle = title;
 
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 
 		this.titleText = new Text(theme.fg("accent", theme.bold(title)), 1, 0);
-		this.addChild(this.titleText);
-		this.addChild(new Spacer(1));
+		panel.addChild(this.titleText);
+		panel.addChild(new Spacer(1));
 
 		if (opts?.timeout && opts.timeout > 0 && opts.tui) {
 			this.countdown = new CountdownTimer(
@@ -61,9 +61,9 @@ export class ExtensionSelectorComponent extends Container {
 		}
 
 		this.listContainer = new Container();
-		this.addChild(this.listContainer);
-		this.addChild(new Spacer(1));
-		this.addChild(
+		panel.addChild(this.listContainer);
+		panel.addChild(new Spacer(1));
+		panel.addChild(
 			new Text(
 				rawKeyHint("↑↓", "navigate") +
 					"  " +
@@ -74,8 +74,7 @@ export class ExtensionSelectorComponent extends Container {
 				0,
 			),
 		);
-		this.addChild(new Spacer(1));
-		this.addChild(new DynamicBorder());
+		panel.addChild(new Spacer(1));
 
 		this.updateList();
 	}

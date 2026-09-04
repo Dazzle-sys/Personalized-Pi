@@ -4,6 +4,7 @@ import {
 	type Component,
 	Container,
 	getCapabilities,
+	Panel,
 	type ScrollViewScrollbar,
 	type SelectItem,
 	type SettingItem,
@@ -21,7 +22,6 @@ import type {
 	WarningSettings,
 } from "../../../core/settings-manager.ts";
 import { getSettingsListTheme, parseAutoThemeSetting, type TerminalTheme, theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyDisplayText } from "./keybinding-hints.ts";
 import { SelectSubmenu, SteppedSubmenu, type SteppedSubmenuStep } from "./settings-submenu.ts";
 
@@ -852,7 +852,8 @@ export class SettingsSelectorComponent extends Container {
 		});
 
 		// Add borders
-		this.addChild(new DynamicBorder());
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
 
 		this.settingsList = new SettingsList(
 			items,
@@ -972,8 +973,7 @@ export class SettingsSelectorComponent extends Container {
 			{ enableSearch: true },
 		);
 
-		this.addChild(this.settingsList);
-		this.addChild(new DynamicBorder());
+		panel.addChild(this.settingsList);
 	}
 
 	getSettingsList(): SettingsList {

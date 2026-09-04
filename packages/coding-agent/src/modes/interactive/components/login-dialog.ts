@@ -1,8 +1,17 @@
 import type { AuthInfoLink, OAuthDeviceCodeInfo } from "@earendil-works/pi-ai";
-import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI, t } from "@earendil-works/pi-tui";
+import {
+	Container,
+	type Focusable,
+	getKeybindings,
+	Input,
+	Panel,
+	Spacer,
+	Text,
+	type TUI,
+	t,
+} from "@earendil-works/pi-tui";
 import { openBrowser } from "../../../utils/open-browser.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint } from "./keybinding-hints.ts";
 
 /**
@@ -42,14 +51,15 @@ export class LoginDialogComponent extends Container implements Focusable {
 		const title = titleOverride ?? t("Login to {provider}", { provider: providerName });
 
 		// Top border
-		this.addChild(new DynamicBorder());
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
 
 		// Title
-		this.addChild(new Text(theme.fg("accent", theme.bold(title)), 1, 0));
+		panel.addChild(new Text(theme.fg("accent", theme.bold(title)), 1, 0));
 
 		// Dynamic content area
 		this.contentContainer = new Container();
-		this.addChild(this.contentContainer);
+		panel.addChild(this.contentContainer);
 
 		// Input (always present, used when needed)
 		this.input = new Input();
@@ -65,9 +75,6 @@ export class LoginDialogComponent extends Container implements Focusable {
 		this.input.onEscape = () => {
 			this.cancel();
 		};
-
-		// Bottom border
-		this.addChild(new DynamicBorder());
 	}
 
 	get signal(): AbortSignal {

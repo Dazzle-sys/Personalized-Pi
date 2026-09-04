@@ -6,6 +6,7 @@ import {
 	getKeybindings,
 	Input,
 	matchesKey,
+	Panel,
 	Spacer,
 	Text,
 	type TUI,
@@ -15,7 +16,6 @@ import type { ModelRuntime } from "../../../core/model-runtime.ts";
 import { refreshModelCatalogs } from "../model-catalog-refresh.ts";
 import { getModelSelectorSearchText } from "../model-search.ts";
 import { theme } from "../theme/theme.ts";
-import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint } from "./keybinding-hints.ts";
 
 interface ModelItem {
@@ -99,23 +99,24 @@ export class ModelSelectorComponent extends Container implements Focusable {
 		this.onCancelCallback = onCancel;
 
 		// Add top border
-		this.addChild(new DynamicBorder());
-		this.addChild(new Spacer(1));
+		const panel = new Panel({ border: "line", borderColor: (t: string) => theme.fg("border", t), padX: 0, padY: 0 });
+		this.addChild(panel);
+		panel.addChild(new Spacer(1));
 
 		// Title
-		this.addChild(new Text(theme.bold(theme.fg("accent", t("Select model"))), 0, 0));
+		panel.addChild(new Text(theme.bold(theme.fg("accent", t("Select model"))), 0, 0));
 
 		// Add hint about model filtering
 		if (scopedModels.length > 0) {
 			this.scopeText = new Text(this.getScopeText(), 0, 0);
-			this.addChild(this.scopeText);
+			panel.addChild(this.scopeText);
 			this.scopeHintText = new Text(this.getScopeHintText(), 0, 0);
-			this.addChild(this.scopeHintText);
+			panel.addChild(this.scopeHintText);
 		} else {
 			const hintText = t("Only showing models from configured providers. Use /login to add providers.");
-			this.addChild(new Text(theme.fg("warning", hintText), 0, 0));
+			panel.addChild(new Text(theme.fg("warning", hintText), 0, 0));
 		}
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		// Create search input
 		this.searchInput = new Input();
@@ -128,19 +129,19 @@ export class ModelSelectorComponent extends Container implements Focusable {
 				this.handleSelect(this.filteredModels[this.selectedIndex].model);
 			}
 		};
-		this.addChild(this.searchInput);
+		panel.addChild(this.searchInput);
 
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		// Create list container
 		this.listContainer = new Container();
-		this.addChild(this.listContainer);
+		panel.addChild(this.listContainer);
 
-		this.addChild(new Spacer(1));
+		panel.addChild(new Spacer(1));
 
 		// Hint
 		if (this.onSelectAsDefaultCallback) {
-			this.addChild(
+			panel.addChild(
 				new Text(
 					theme.fg("dim", t("  Enter to select \u00b7 Ctrl+S to set as default \u00b7 Esc to cancel")),
 					0,
@@ -148,9 +149,6 @@ export class ModelSelectorComponent extends Container implements Focusable {
 				),
 			);
 		}
-
-		// Add bottom border
-		this.addChild(new DynamicBorder());
 
 		// Render the current snapshot immediately, then refresh in the background.
 		this.loadModelsFromSnapshot();
